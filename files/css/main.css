@@ -1,0 +1,40 @@
+.error {
+	background-color: red;
+	border: thin solid darkred;
+	padding: .5rem;
+}
+
+body {
+	margin: 4rem;
+}
+
+nav {
+        top: 0;
+        left: 0;
+        position: absolute;
+        margin: 0;
+        width: 100%;
+        height: 2rem;
+        background-color: lightgrey;
+}
+
+nav > ul {
+        margin: 0;
+        padding: 0;
+}
+
+nav > ul > li {
+        /* not quite needed */
+        display: inline-block;
+        float: left;
+}
+
+nav > ul:nth-child(2) {
+        float: right;
+}
+
+nav > ul > li {
+        display: block;
+        padding: .5rem;
+        height: 1rem;
+}
