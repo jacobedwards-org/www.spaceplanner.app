@@ -18,9 +18,11 @@ function api_parse_response(response) {
 function api_status(response) {
         // response.code is from appleboy's golang JWT LoginHandler
 	// May figure out how to change in the future
-	if (response.code >= 200 || response.code < 300 ||
-	    response.status == "ok") {
+	if (response.code >= 200 || response.code < 300) {
 		return Promise.resolve(response)
+	}
+	if (response.status == "ok") {
+		return response.body
 	}
 
 	if (response.error) {
