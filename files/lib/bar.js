@@ -8,7 +8,7 @@ function link(name, href) {
 function additem(list, element) {
 	let i = document.createElement("li")
 	i.appendChild(element)
-	return list.append(i)
+	list.append(i)
 }
 
 function show_bar(on) {
