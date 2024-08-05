@@ -60,8 +60,10 @@ function api_update_token(token) {
 	console.log("api_update_token(" + token + ")")
 	if (!token) {
 		localStorage.removeItem("token")
+		localStorage.removeItem("username")
 	} else {
 		localStorage.setItem("token", token)
+		localStorage.setItem("username", api_token_payload(token)["id"])
 	}
 }
 
