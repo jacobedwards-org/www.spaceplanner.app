@@ -14,6 +14,48 @@ function main() {
 				})
 		})
 		.catch(errfunc)
+
+	profile = document.createElement("h2")
+	profile.appendChild(document.createTextNode("Profile"))
+	document.body.append(profile)
+	del = delete_form()
+	del.onsubmit = delete_user
+	document.body.append(del)
+}
+
+function delete_form() {
+	form = document.createElement("form")
+	form.id = "delete_user_form"
+
+	label = document.createElement("label")
+	label.setAttribute("for", "delete_user_confirm")
+	label.appendChild(document.createTextNode("Confirm "))
+	form.append(label)
+
+	check = document.createElement("input")
+	check.id = "delete_user_confirm"
+	check.type = "checkbox"
+	check.setAttribute("required", true)
+	form.append(check)
+
+	submit = document.createElement("input")
+	submit.type = "submit"
+	submit.value = "Delete User"
+	form.append(submit)
+
+	form.appendChild(document.createTextNode("This action cannot be undone."))
+
+	return form
+}
+
+function delete_user() {
+	api_fetch("DELETE", "users/" + localStorage.getItem("username"))
+		.then(function() {
+			api_update_token(null)
+			document.location.href = "/"
+		})
+		.catch(function(err) { set_error("Unable to delete user: " + err, document.getElementById("#delete_form")) })
+	return false
 }
 
 function show_settings(current, params) {
@@ -91,4 +133,4 @@ function create_input(name, setting, current_value) {
 	return input
 }
 
-window.onload = init
+window.onload = handle_wrap(init)

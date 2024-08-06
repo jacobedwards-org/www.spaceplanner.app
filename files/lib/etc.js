@@ -21,3 +21,14 @@ function set_error(message, on) {
                 on.before(err_elem)
         }
 }
+
+function handle_wrap(func, on) {
+	return function() {
+		try {
+			func()
+		}
+		catch(err) {
+			set_error("There was an issue with the page: " + err, on)
+		}
+	}
+}

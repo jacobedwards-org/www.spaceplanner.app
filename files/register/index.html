@@ -1,23 +1,23 @@
 <!DOCTYPE HTML>
 <head>
-	<title>Spaceplanner Login</title>
+	<title>Spaceplanner - Register</title>
 	<link rel="stylesheet" type="text/css" href="/css/main.css">
 	<script src="/lib/api.js" async></script>
 	<script src="/lib/etc.js" async></script>
 	<script src="./main.js" async></script>
 </head>
 <html>
-	<p>Don't have an account? <a href="/register">signup</a></p>
+	<p>Already have an account? <a href="/login">login</a> instead.</p>
 
-	<h1>Login</h1>
+	<h1>Create New Account</h1>
 
-	<form id="login">
+	<form id="register">
 		<label for="username">Username:</label>
 		<input id="username" autocomplete="username" name="username"/>
 
 		<label for="password">Password:</label>
-		<input id="password" autocomplete="current-password" type="password" name="password"/>
+		<input id="password" autocomplete="new-password" type="password" name="password"/>
 
-		<input type="submit" value="Login"/>
+		<input type="submit" value="Create User"/>
 	</form>
 </html>

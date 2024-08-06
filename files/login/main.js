@@ -35,4 +35,4 @@ function init() {
 	};
 }
 
-window.onload = init
+window.onload = handle_wrap(init)

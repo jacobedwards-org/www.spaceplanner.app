@@ -5,4 +5,4 @@ function init() {
 	window.location.href = default_page 
 }
 
-window.onload = init
+window.onload = handle_wrap(init)
