@@ -1,18 +1,21 @@
-default_page = "/floorplans"
+import * as api from "/lib/api.js"
+import * as etc from "/lib/etc.js"
+
+let default_page = "/floorplans"
 
 function handle_creation(resp) {
 	window.location.href = "/login"
 }
 
 function register(username, password, err_callback) {
-	api_fetch("POST", "users", { "username": username, "password": password })
+	api.fetch("POST", "users", { "username": username, "password": password })
 		.then(handle_creation)
 		.catch(err_callback)
 	return false;
 }
 
 function init() {
-	if (api_authorized_duration() > 0) {
+	if (api.authorized_duration() > 0) {
 		// Maybe don't do this?
 		window.location.href = default_page
 	}
@@ -30,9 +33,9 @@ function init() {
 	form.onsubmit = function () {
 		return register(
 			username_input.value, password_input.value,
-			function (error) { return set_error(error, form) }
+			function (error) { return etc.error(error, form) }
 		);
 	};
 }
 
-window.onload = handle_wrap(init)
+window.onload = etc.handle_wrap(init)

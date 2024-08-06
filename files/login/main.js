@@ -1,19 +1,22 @@
+import * as api from "/lib/api.js"
+import * as etc from "/lib/etc.js"
+
 let default_page = "/floorplans"
 
 function handle_token(resp) {
-	api_update_token(resp.token)
+	api.update_token(resp.token)
 	window.location.href = default_page
 }
 
 function login(username, password, err_callback) {
-	api_fetch("POST", "tokens", { "username": username, "password": password })
+	api.fetch("POST", "tokens", { "username": username, "password": password })
 		.then(handle_token)
 		.catch(err_callback)
 	return false;
 }
 
 function init() {
-	if (api_authorized_duration() > 0) {
+	if (api.authorized_duration() > 0) {
 		window.location.href = default_page
 	}
 
@@ -30,9 +33,9 @@ function init() {
 	login_form.onsubmit = function () {
 		return login(
 			username_input.value, password_input.value,
-			function (error) { return set_error(error, login_form) }
+			function (error) { return etc.error(error, login_form) }
 		);
 	};
 }
 
-window.onload = handle_wrap(init)
+window.onload = etc.handle_wrap(init)

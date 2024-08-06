@@ -1,7 +1,11 @@
+import * as api from "/lib/api.js"
+import * as etc from "/lib/etc.js"
+
 function init() {
-	authorize()
-	show_bar()
-	display_button = document.getElementById("display_method")
+	etc.authorize()
+	etc.bar()
+
+	let display_button = document.getElementById("display_method")
 	if (!display_button) {
 		throw new Error("Expected #display_method")
 	}
@@ -9,7 +13,7 @@ function init() {
 
 	display_button.addEventListener("click", toggle_display_method_func(display_button), false)
 
-	api_fetch("GET", "floorplans/" + localStorage.getItem("username"))
+	api.fetch("GET", "floorplans/" + localStorage.getItem("username"))
 		.then(show_floorplans)
 }
 
@@ -20,16 +24,16 @@ function toggle_display_method_func(button) {
 }
 
 function set_display_method(button, method) {
-	floorplans = document.getElementById("floorplans")
+	let floorplans = document.getElementById("floorplans")
 	if (!floorplans) {
 		throw new Error("expected #floorplans")
 	}
 	if (method === "list") {
 		floorplans.removeAttribute("class")
-		other = "grid"
+		var other = "grid"
 	} else if (method === "grid") {
 		floorplans.setAttribute("class", "grid")
-		other = "list"
+		var other = "list"
 	} else {
 		throw new Error("Invalid method")
 	}
@@ -40,29 +44,29 @@ function set_display_method(button, method) {
 
 function edit_floorplan_func(item, floorplan) {
 	return function() {
-		set_error("Edit not implemented", item)
+		etc.error("Edit not implemented", item)
 	}
 }
 
 function delete_floorplan_func(item, floorplan) {
 	return function() {
-		api_fetch("DELETE", "floorplans/" + floorplan.user + "/" + floorplan.name)
+		api.fetch("DELETE", "floorplans/" + floorplan.user + "/" + floorplan.name)
 			.then(function() {
 				item.parentElement.remove()
 			})
 			.catch(function(err) {
-				set_error("Unable to delete floorplan: " + err, item)
+				etc.error("Unable to delete floorplan: " + err, item)
 			})
 	}
 }
 
 function create_floorplan(floorplan) {
-	root = document.createElement("div")
+	let root = document.createElement("div")
 	root.setAttribute("class", "floorplan")
 
-	aside = document.createElement("aside")
+	let aside = document.createElement("aside")
 
-	button = document.createElement("input")
+	let button = document.createElement("input")
 	button.addEventListener("click", edit_floorplan_func(root, floorplan), false)
 	button.type = "image"
 	button.src = "/icons/create-outline.svg"
@@ -82,19 +86,19 @@ function create_floorplan(floorplan) {
 
 	root.append(aside)
 
-	header = document.createElement("header")
-	heading = document.createElement("h2")
+	let header = document.createElement("header")
+	let heading = document.createElement("h2")
 	header.append(heading)
-	link = document.createElement("a")
+	let link = document.createElement("a")
 	heading.append(link)
 	if (floorplan.synopsis) {
-		synopsis = document.createElement("span")
+		let synopsis = document.createElement("span")
 		synopsis.setAttribute("class", "synopsis")
 		synopsis.appendChild(document.createTextNode(floorplan.synopsis))
 		header.append(synopsis)
 	}
 	if (floorplan.address) {
-		address = document.createElement("address")
+		let address = document.createElement("address")
 		address.appendChild(document.createTextNode(floorplan.address))
 		header.append(address)
 	}
@@ -104,7 +108,7 @@ function create_floorplan(floorplan) {
 	root.append(header)
 
 	if (floorplan.user != localStorage.getItem("username")) {
-		footer = document.createElement("footer")
+		let footer = document.createElement("footer")
 		// TODO: Link to user page, when it exists
 		footer.append(document.createTextNode("By " + floorplan.user))
 		root.append(footer)
@@ -114,16 +118,16 @@ function create_floorplan(floorplan) {
 }
 
 function show_floorplans(floorplans) {
-	list = document.getElementById("floorplans")
+	let list = document.getElementById("floorplans")
 	if (!list) {
 		throw new Error("expected #floorplans")
 	}
 
-	for (i in floorplans) {
-		item = document.createElement("li")
+	for (let i in floorplans) {
+		let item = document.createElement("li")
 		item.append(create_floorplan(floorplans[i]))
 		list.append(item)
 	}
 }
 
-window.onload = handle_wrap(init)
+window.onload = etc.handle_wrap(init)
