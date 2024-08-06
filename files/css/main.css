@@ -38,3 +38,7 @@ nav > ul > li {
         padding: .5rem;
         height: 1rem;
 }
+
+aside {
+	float: right;
+}
