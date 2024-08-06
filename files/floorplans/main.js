@@ -15,8 +15,9 @@ function create_floorplan(floorplan) {
 	link = document.createElement("a")
 	heading.append(link)
 	if (floorplan.synopsis) {
-		synopsis = document.createElement("p")
-		synopsis.appendChild(document.createTextNode(document.synopsis))
+		synopsis = document.createElement("span")
+		synopsis.setAttribute("class", "synopsis")
+		synopsis.appendChild(document.createTextNode(floorplan.synopsis))
 		header.append(synopsis)
 	}
 	if (floorplan.address) {
