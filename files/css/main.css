@@ -41,7 +41,8 @@ input[type="image"].icon {
 	width: 2em;
 	image-rendering: crisp-edges;
 	margin: .15rem;
-	border: .15em solid rgba(0, 0, 0, .2);
+	padding: .15rem;
+	border: .05em solid rgba(0, 0, 0, .2);
 	border-radius: .4em;
 }
 

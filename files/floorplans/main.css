@@ -1,4 +1,4 @@
-#floorplans {
+#floorplans.grid {
 	list-style: none;
 	display: grid;
 	grid-template-columns: 1fr 1fr 1fr;
@@ -7,11 +7,11 @@
 	padding: 0;
 }
 
-#floorplans > li {
+#floorplans.grid > li {
 	aspect-ratio: 1;
 }
 
-.floorplan {
+#floorplans.grid > li > .floorplan {
 	box-sizing: border-box;
 	display: block;
 	height: 100%;
@@ -22,16 +22,16 @@
 	overflow: hidden;
 }
 
-.floorplan > header {
+#floorplans.grid > li > .floorplan > header {
 	padding: 4%;
 	background-color: rgba(0, 0, 0, .1);
 }
 
-.floorplan > header > h2 {
+#floorplans.grid > li > .floorplan > header > h2 {
 	margin: 0 0 .5rem 0 ;
 }
 
-.floorplan > footer {
+#floorplans.grid > li > .floorplan > footer {
 	background-color: rgba(0, 0, 0, .05);
 	position: absolute;
 	bottom: 0;
@@ -41,6 +41,6 @@
 	border-radius: .2rem 0 0 0;
 }
 
-.floorplan:hover > footer {
+#floorplans.grid > li > .floorplan:hover > footer {
 	opacity: 100%;
 }

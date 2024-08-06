@@ -1,8 +1,41 @@
 function init() {
 	authorize()
 	show_bar()
+	display_button = document.getElementById("display_method")
+	if (!display_button) {
+		throw new Error("Expected #display_method")
+	}
+	set_display_method(display_button, "grid")
+
+	display_button.addEventListener("click", toggle_display_method_func(display_button), false)
+
 	api_fetch("GET", "floorplans/" + localStorage.getItem("username"))
 		.then(show_floorplans)
+}
+
+function toggle_display_method_func(button) {
+	return function() {
+		set_display_method(button, button.value)
+	}
+}
+
+function set_display_method(button, method) {
+	floorplans = document.getElementById("floorplans")
+	if (!floorplans) {
+		throw new Error("expected #floorplans")
+	}
+	if (method === "list") {
+		floorplans.removeAttribute("class")
+		other = "grid"
+	} else if (method === "grid") {
+		floorplans.setAttribute("class", "grid")
+		other = "list"
+	} else {
+		throw new Error("Invalid method")
+	}
+	button.value = other
+	button.src = "/icons/" + other + "-outline.svg"
+	button.setAttribute("title", "Switch to " + other + " layout")
 }
 
 function edit_floorplan_func(item, floorplan) {
