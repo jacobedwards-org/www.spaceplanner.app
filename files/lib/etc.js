@@ -21,13 +21,18 @@ function set_error(message, on) {
         if (err_elem) {
                 err_elem.textContent = message
         } else {
-                let err_elem = document.createElement("p")
-                err_elem.textContent = message
-                err_elem.classList = "error"
+                let err_elem = document.createElement("div")
+                err_elem.setAttribute("class", "error")
 
-		let close = document.createElement("button")
+		let msg = document.createElement("p")
+		msg.appendChild(document.createTextNode(message))
+		err_elem.append(msg)
+
+		let close = document.createElement("input")
+		close.type = "image"
+		close.src = "/icons/close-outline.svg"
 		close.addEventListener("click", delete_element_func(err_elem), false)
-		close.appendChild(document.createTextNode("X"))
+		close.setAttribute("class", "icon")
 
 		err_elem.append(close)
 

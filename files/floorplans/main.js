@@ -29,18 +29,22 @@ function create_floorplan(floorplan) {
 
 	aside = document.createElement("aside")
 
-	button = document.createElement("button")
+	button = document.createElement("input")
 	button.addEventListener("click", edit_floorplan_func(root, floorplan), false)
-	// ! instead of a pencil for now
-	button.appendChild(document.createTextNode("!"))
-	button.setAttribute("title", "Edit metadata")
+	button.type = "image"
+	button.src = "/icons/create-outline.svg"
+	button.alt = "Edit"
+	button.setAttribute("title", "Edit floorplan")
+	button.setAttribute("class", "icon")
 	aside.append(button)
 
-	button = document.createElement("button")
+	button = document.createElement("input")
 	button.addEventListener("click", delete_floorplan_func(root, floorplan), false)
-	// # instead of a trashcan for now
-	button.appendChild(document.createTextNode("#"))
+	button.type = "image"
+	button.src = "/icons/trash-outline.svg"
+	button.alt = "Delete"
 	button.setAttribute("title", "Delete floorplan")
+	button.setAttribute("class", "icon")
 	aside.append(button)
 
 	root.append(aside)
