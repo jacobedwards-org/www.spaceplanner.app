@@ -1,0 +1,45 @@
+#floorplans {
+	list-style: none;
+	display: grid;
+	grid-template-columns: 1fr 1fr 1fr;
+	grid-gap: 5%;
+	width: 100%;
+}
+
+#floorplans > li {
+	aspect-ratio: 1;
+}
+
+.floorplan {
+	box-sizing: border-box;
+	display: block;
+	width: 100%;
+	height: 100%;
+	border: medium solid black;
+	border-radius: .4rem;
+	/* NOTE: Required for footers to be slapped on the bottom, not sure why */
+	position: relative;
+}
+
+.floorplan > header {
+	padding: 4%;
+	background-color: rgba(0, 0, 0, .1);
+}
+
+.floorplan > header > h2 {
+	margin: 0 0 .5rem 0 ;
+}
+
+.floorplan > footer {
+	background-color: rgba(0, 0, 0, .05);
+	position: absolute;
+	bottom: 0;
+	right: 0;
+	padding: 4%;
+	opacity: 60%;
+	border-radius: .2rem 0 0 0;
+}
+
+.floorplan:hover > footer {
+	opacity: 100%;
+}
