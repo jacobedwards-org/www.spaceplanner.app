@@ -1,5 +1,6 @@
 import * as api from "/lib/api.js"
 import * as etc from "/lib/etc.js"
+import * as ui from "/lib/ui.js"
 
 function init() {
 	etc.authorize()
@@ -9,37 +10,21 @@ function init() {
 	if (!display_button) {
 		throw new Error("Expected #display_method")
 	}
-	set_display_method(display_button, "grid")
-
-	display_button.addEventListener("click", toggle_display_method_func(display_button), false)
+	display_button.replaceWith(
+		ui.toggle(
+			ui.button("List", "Switch to list view", "list"),
+			function() {
+				document.getElementById("floorplans").removeAttribute("class")
+			},
+			ui.button("Grid", "Switch to grid view", "grid"),
+			function() {
+				document.getElementById("floorplans").setAttribute("class", "grid")
+			}
+		)
+	)
 
 	api.fetch("GET", "floorplans/" + localStorage.getItem("username"))
 		.then(show_floorplans)
-}
-
-function toggle_display_method_func(button) {
-	return function() {
-		set_display_method(button, button.value)
-	}
-}
-
-function set_display_method(button, method) {
-	let floorplans = document.getElementById("floorplans")
-	if (!floorplans) {
-		throw new Error("expected #floorplans")
-	}
-	if (method === "list") {
-		floorplans.removeAttribute("class")
-		var other = "grid"
-	} else if (method === "grid") {
-		floorplans.setAttribute("class", "grid")
-		var other = "list"
-	} else {
-		throw new Error("Invalid method")
-	}
-	button.value = other
-	button.src = "/icons/" + other + "-outline.svg"
-	button.setAttribute("title", "Switch to " + other + " layout")
 }
 
 function edit_floorplan_func(item, floorplan) {
@@ -65,24 +50,8 @@ function create_floorplan(floorplan) {
 	root.setAttribute("class", "floorplan")
 
 	let aside = document.createElement("aside")
-
-	let button = document.createElement("input")
-	button.addEventListener("click", edit_floorplan_func(root, floorplan), false)
-	button.type = "image"
-	button.src = "/icons/create-outline.svg"
-	button.alt = "Edit"
-	button.setAttribute("title", "Edit floorplan")
-	button.setAttribute("class", "icon")
-	aside.append(button)
-
-	button = document.createElement("input")
-	button.addEventListener("click", delete_floorplan_func(root, floorplan), false)
-	button.type = "image"
-	button.src = "/icons/trash-outline.svg"
-	button.alt = "Delete"
-	button.setAttribute("title", "Delete floorplan")
-	button.setAttribute("class", "icon")
-	aside.append(button)
+	aside.append(ui.button("Edit", "Edit floorplan", "create", edit_floorplan_func(root, floorplan)))
+	aside.append(ui.button("Delete", "Delete floorplan", "trash", delete_floorplan_func(root, floorplan)))
 
 	root.append(aside)
 
