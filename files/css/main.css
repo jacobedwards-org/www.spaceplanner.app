@@ -4,6 +4,10 @@
 	padding: .5rem;
 }
 
+.error > button {
+	float: right;
+}
+
 body {
 	margin: 4rem;
 }

@@ -6,6 +6,12 @@ function authorize() {
         }
 }
 
+function delete_element_func(element) {
+	return function() {
+		element.remove()
+	}
+}
+
 function set_error(message, on) {
         if (!on) {
                 on = document.body
@@ -18,6 +24,13 @@ function set_error(message, on) {
                 let err_elem = document.createElement("p")
                 err_elem.textContent = message
                 err_elem.classList = "error"
+
+		let close = document.createElement("button")
+		close.addEventListener("click", delete_element_func(err_elem), false)
+		close.appendChild(document.createTextNode("X"))
+
+		err_elem.append(close)
+
                 on.before(err_elem)
         }
 }
