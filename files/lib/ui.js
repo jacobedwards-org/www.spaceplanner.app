@@ -13,12 +13,20 @@ export function button(name, memo, icon, func) {
 
 export function toggle(a, afunc, b, bfunc) {
 	a.addEventListener("click", function() {
-		afunc()
-		a.replaceWith(b)
+		let r = afunc()
+		if (r && typeof r.then == "function") {
+			r.then(function() { a.replaceWith(b) })
+		} else {
+			a.replaceWith(b)
+		}
 	}, false)
 	b.addEventListener("click", function() {
-		bfunc()
-		b.replaceWith(a)
+		let r = bfunc()
+		if (r && typeof r.then == "function") {
+			r.then(function() { b.replaceWith(a) })
+		} else {
+			b.replaceWith(a)
+		}
 	}, false)
 	return a
 }
