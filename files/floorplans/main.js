@@ -10,21 +10,24 @@ function init() {
 	if (!display_button) {
 		throw new Error("Expected #display_method")
 	}
+	gridview()
 	display_button.replaceWith(
 		ui.toggle(
-			ui.button("List", "Switch to list view", "list"),
-			function() {
-				document.getElementById("floorplans").removeAttribute("class")
-			},
-			ui.button("Grid", "Switch to grid view", "grid"),
-			function() {
-				document.getElementById("floorplans").setAttribute("class", "grid")
-			}
+			ui.button("List", "Switch to list view", "list"), listview,
+			ui.button("Grid", "Switch to grid view", "grid"), gridview,
 		)
 	)
 
 	api.fetch("GET", "floorplans/" + localStorage.getItem("username"))
 		.then(show_floorplans)
+}
+
+function listview() {
+	document.getElementById("floorplans").removeAttribute("class")
+}
+
+function gridview() {
+	document.getElementById("floorplans").setAttribute("class", "grid")
 }
 
 function edit_floorplan_func(item, floorplan) {
