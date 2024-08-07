@@ -1,4 +1,5 @@
 import * as api from "/lib/api.js"
+import * as ui from "/lib/ui.js"
 
 function link(name, href) {
 	let a = document.createElement("a")
@@ -47,14 +48,8 @@ export function authorize() {
         }
 }
 
-function delete_element_func(element) {
-	return function() {
-		element.remove()
-	}
-}
-
 export function error(message, on) {
-        if (!on) {
+        if (!on || !on.parentElement) {
                 on = document.body
         }
 
@@ -68,14 +63,7 @@ export function error(message, on) {
 		let msg = document.createElement("p")
 		msg.appendChild(document.createTextNode(message))
 		err_elem.append(msg)
-
-		let close = document.createElement("input")
-		close.type = "image"
-		close.src = "/icons/close-outline.svg"
-		close.addEventListener("click", delete_element_func(err_elem), false)
-		close.setAttribute("class", "icon")
-
-		err_elem.append(close)
+		err_elem.append(ui.button("Dismiss", "Dismiss error", "close", function() { err_elem.remove() }))
 
                 on.before(err_elem)
         }
