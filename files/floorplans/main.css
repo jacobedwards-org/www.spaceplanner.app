@@ -44,3 +44,15 @@
 #floorplans.grid > li > .floorplan:hover > footer {
 	opacity: 100%;
 }
+
+input.fp_name {
+	font-size: larger;
+}
+
+input.fp_address {
+	font-style: italic;
+}
+
+input {
+	display: block;
+}
