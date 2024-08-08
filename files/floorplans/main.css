@@ -45,19 +45,30 @@
 	opacity: 100%;
 }
 
-.floorplan > header {
+#floorplans.grid > li > .floorplan > header {
 	min-height: 25%;
 }
 
-input.fp_name {
-	font-size: larger;
+#floorplans:not(.grid) > li > .floorplan {
+	margin: 2rem;
 }
 
-input.fp_address {
+#floorplans:not(.grid) > li {
+	max-width: 32rem;
+}
+
+.fp_name {
+	font-size: large;
+	margin-bottom: .75em;
+}
+
+.fp_address {
 	font-style: italic;
 }
 
-input {
+/* Maybe I should give these elements two classes: fp_metadata and
+ * one of the following: */
+input.fp_name, input.fp_synopsis, input.fp_address {
 	display: block;
-	max-width: 80%;
+	max-width: 60%;
 }
