@@ -21,7 +21,7 @@ function init() {
 		)
 	)
 
-	api.fetch("GET", "floorplans/" + localStorage.getItem("username"))
+	api.fetch("GET", "floorplans/" + etc.url_literal(localStorage.getItem("username")))
 		.then(show_floorplans)
 }
 
@@ -76,7 +76,7 @@ function commit_editable_floorplan_func(element, data) {
 			return
 		}
 
-		return api.fetch("PATCH", "floorplans/" + localStorage.getItem("username") + "/" + data.name, patches)
+		return api.fetch("PATCH", "floorplans/" + etc.url_literal(localStorage.getItem("username")) + "/" + etc.url_literal(data.name), patches)
 			.then(function(rdata) {
 				for (let i in rdata) {
 					data[i] = rdata[i]
@@ -103,7 +103,7 @@ function editable_floorplan_create_func(element) {
 			}
 		}
 
-		return api.fetch("POST", "floorplans/" + localStorage.getItem("username"), data)
+		return api.fetch("POST", "floorplans/" + etc.url_literal(localStorage.getItem("username")), data)
 			.then(function(rdata) {
 				for (let i in rdata) {
 					data[i] = rdata[i]
@@ -184,7 +184,7 @@ function make_input(name, options) {
 
 function delete_floorplan_func(item, floorplan) {
 	return function() {
-		api.fetch("DELETE", "floorplans/" + floorplan.user + "/" + floorplan.name)
+		api.fetch("DELETE", "floorplans/" + etc.url_literal(floorplan.user) + "/" + etc.url_literal(floorplan.name))
 			.then(function() {
 				item.parentElement.remove()
 			})

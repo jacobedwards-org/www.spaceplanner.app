@@ -79,3 +79,7 @@ export function handle_wrap(func, on) {
 		}
 	}
 }
+
+export function url_literal(text) {
+	return encodeURIComponent(text)
+}
