@@ -77,11 +77,46 @@ function commit_editable_floorplan_func(element, data) {
 		}
 
 		return api.fetch("PATCH", "floorplans/" + localStorage.getItem("username") + "/" + data.name, patches)
-			.then(function(data) {
-				for (let i in data) {
-					data[i] = data[i]
+			.then(function(rdata) {
+				for (let i in rdata) {
+					data[i] = rdata[i]
 				}
 				update_display()
+			})
+			.catch(function(err) {
+				etc.error(err, element)
+				throw err
+			})
+	}
+}
+
+function editable_floorplan_create_func(element) {
+	return function () {
+		let data = {}
+		let fields = Array.from(element.querySelectorAll("header > input"))
+		for (let i in fields) {
+			let name = floorplan_info_name(fields[i].getAttribute("class"))
+			let value = fields[i].value
+			console.debug(fields[i], name, value)
+			if (value) {
+				data[name] = value
+			}
+		}
+
+		return api.fetch("POST", "floorplans/" + localStorage.getItem("username"), data)
+			.then(function(rdata) {
+				for (let i in rdata) {
+					data[i] = rdata[i]
+				}
+				for (let i in fields) {
+					fields[i].value = ""
+				}
+				/* NOTE: I was going to try and not
+				 * have these floorplans know anything
+				 * about where they are, but I'm living
+				 * with this.
+				 */
+				element.parentElement.after(create_floorplan_item(data))
 			})
 			.catch(function(err) {
 				etc.error(err, element)
@@ -159,42 +194,54 @@ function delete_floorplan_func(item, floorplan) {
 	}
 }
 
-function create_floorplan(floorplan) {
-	if (!floorplan.name) {
-		throw new Error("Expected floorplan name")
-	}
+function create_floorplan_item(floorplan) {
+	let item = document.createElement("li")
+	item.append(create_floorplan(floorplan))
+	return item
+}
 
+function create_floorplan(floorplan) {
 	let root = document.createElement("div")
 	root.setAttribute("class", "floorplan")
 
 	let aside = document.createElement("aside")
-	aside.append(
-		ui.toggle(
-			ui.button("Edit", "Edit floorplan", "create"), editable_floorplan_func(root, floorplan),
-			ui.button("Save", "Save floorplan", "save"), commit_editable_floorplan_func(root, floorplan),
-		)
-	)
 
-	aside.append(ui.button("Delete", "Delete floorplan", "trash", delete_floorplan_func(root, floorplan)))
+	if (floorplan) {
+		aside.append(
+			ui.toggle(
+				ui.button("Edit", "Edit floorplan", "create"), editable_floorplan_func(root, floorplan),
+				ui.button("Save", "Save floorplan", "save"), commit_editable_floorplan_func(root, floorplan),
+			)
+		)
+		aside.append(ui.button("Delete", "Delete floorplan", "trash", delete_floorplan_func(root, floorplan)))
+	} else {
+		aside.append(ui.button("Create", "Create floorplan", "create", editable_floorplan_create_func(root)))
+	}
 
 	root.append(aside)
-
 	let header = document.createElement("header")
-	header.append(create_field.name(floorplan.name))
-	if (floorplan.synopsis) {
-		header.append(create_field.synopsis(floorplan.synopsis))
-	}
-	if (floorplan.address) {
-		header.append(create_field.address(floorplan.address))
-	}
-
 	root.append(header)
 
-	if (floorplan.user != localStorage.getItem("username")) {
-		let footer = document.createElement("footer")
-		// TODO: Link to user page, when it exists
-		footer.append(document.createTextNode("By " + floorplan.user))
-		root.append(footer)
+	if (!floorplan) {
+		editable_floorplan_func(root, {})()
+	} else {
+		if (!floorplan.name) {
+			throw new Error("Expected floorplan name")
+		}
+		header.append(create_field.name(floorplan.name))
+		if (floorplan.synopsis) {
+			header.append(create_field.synopsis(floorplan.synopsis))
+		}
+		if (floorplan.address) {
+			header.append(create_field.address(floorplan.address))
+		}
+
+		if (floorplan.user != localStorage.getItem("username")) {
+			let footer = document.createElement("footer")
+			// TODO: Link to user page, when it exists
+			footer.append(document.createTextNode("By " + floorplan.user))
+			root.append(footer)
+		}
 	}
 
 	return root
@@ -232,10 +279,9 @@ function show_floorplans(floorplans) {
 		throw new Error("expected #floorplans")
 	}
 
+	list.append(create_floorplan_item())
 	for (let i in floorplans) {
-		let item = document.createElement("li")
-		item.append(create_floorplan(floorplans[i]))
-		list.append(item)
+		list.append(create_floorplan_item(floorplans[i]))
 	}
 }
 
