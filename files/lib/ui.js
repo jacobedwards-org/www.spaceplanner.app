@@ -11,22 +11,32 @@ export function button(name, memo, icon, func) {
 	return button
 }
 
-export function toggle(a, afunc, b, bfunc) {
-	a.addEventListener("click", function() {
-		let r = afunc()
+export function toggle(a, b, options) {
+	if (!options) {
+		options = {}
+	}
+	if (options.swap) {
+		let t = a
+		a = b
+		b = t
+	}
+	if (options.init) {
+		// Should this be run like in the event listener, handling .then methods?
+		b.func()
+	}
+	toggle_setup_button(a, b)
+	toggle_setup_button(b, a)
+	return a.button
+}
+
+function toggle_setup_button(a, b) {
+	a.button.addEventListener("click", function() {
+		let swap = function() { a.button.replaceWith(b.button) }
+		let r = a.func()
 		if (r && typeof r.then == "function") {
-			r.then(function() { a.replaceWith(b) })
+			r.then(swap)
 		} else {
-			a.replaceWith(b)
+			swap()
 		}
 	}, false)
-	b.addEventListener("click", function() {
-		let r = bfunc()
-		if (r && typeof r.then == "function") {
-			r.then(function() { b.replaceWith(a) })
-		} else {
-			b.replaceWith(a)
-		}
-	}, false)
-	return a
 }

@@ -13,13 +13,16 @@ function init() {
 	if (!display_button) {
 		throw new Error("Expected #display_method")
 	}
-	gridview()
-	display_button.replaceWith(
-		ui.toggle(
-			ui.button("List", "Switch to list view", "list"), listview,
-			ui.button("Grid", "Switch to grid view", "grid"), gridview,
-		)
-	)
+
+	let list = { button: ui.button("List", "Switch to list view", "list"), func: listview }
+	let grid = { button: ui.button("Grid", "Switch to grid view", "grid"), func: gridview }
+	let toggle
+	if (localStorage.getItem("fp_gridview")) {
+		toggle = ui.toggle(list, grid, { init: true })
+	} else {
+		toggle = ui.toggle(grid, list, { init: true })
+	}
+	display_button.replaceWith(toggle)
 
 	api.fetch("GET", "floorplans/" + etc.url_literal(localStorage.getItem("username")))
 		.then(show_floorplans)
@@ -27,10 +30,12 @@ function init() {
 
 function listview() {
 	document.getElementById("floorplans").removeAttribute("class")
+	localStorage.removeItem("fp_gridview")
 }
 
 function gridview() {
 	document.getElementById("floorplans").setAttribute("class", "grid")
+	localStorage.setItem("fp_gridview", "list")
 }
 
 function commit_editable_floorplan_func(element, data) {
@@ -209,8 +214,8 @@ function create_floorplan(floorplan) {
 	if (floorplan) {
 		aside.append(
 			ui.toggle(
-				ui.button("Edit", "Edit floorplan", "create"), editable_floorplan_func(root, floorplan),
-				ui.button("Save", "Save floorplan", "save"), commit_editable_floorplan_func(root, floorplan),
+				{ button: ui.button("Edit", "Edit floorplan", "create"), func: editable_floorplan_func(root, floorplan) },
+				{ button: ui.button("Save", "Save floorplan", "save"), func: commit_editable_floorplan_func(root, floorplan) },
 			)
 		)
 		aside.append(ui.button("Delete", "Delete floorplan", "trash", delete_floorplan_func(root, floorplan)))
