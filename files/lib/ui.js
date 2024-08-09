@@ -1,13 +1,28 @@
-export function button(name, memo, icon, func) {
-	let button = document.createElement("input")
-	button.alt = name
-	button.type = "image"
-	button.src = "/icons/" + icon + "-outline.svg"
+export function input(name, memo, attributes) {
+	if (!name) {
+		throw new Error("No name provided")
+	}
+
+	let input = document.createElement("input")
+	input.name = name
+	input.placeholder = name
+	for (let i in attributes) {
+		input.setAttribute(i, attributes[i])
+	}
+	return input
+}
+
+export function button(name, memo, icon, func, options) {
+	let button = input(name, memo, {
+		alt: name,
+		title: memo,
+		type: "image",
+		class: "icon",
+	 	src: "/icons/" + icon + "-outline.svg"
+	})
 	if (func) {
 		button.addEventListener("click", func, false)
 	}
-	button.setAttribute("title", memo)
-	button.setAttribute("class", "icon")
 	return button
 }
 

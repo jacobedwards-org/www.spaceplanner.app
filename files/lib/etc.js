@@ -91,23 +91,3 @@ export function require_id(id) {
 	}
 	return e
 }
-
-export function create_input(name, options) {
-	if (!name) {
-		throw new Error("No name provided")
-	}
-	if (!options) {
-		options = {}
-	}
-
-	let input = document.createElement("input")
-	input.name = name
-	input.placeholder = name
-	if (options["type"]) {
-		input.type = options["type"]
-	}
-	if (options["value"]) {
-		input.value = options["value"]
-	}
-	return input
-}

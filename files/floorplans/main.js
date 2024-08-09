@@ -139,11 +139,11 @@ function editable_floorplan_func(element, data) {
 			let c = floorplan_info_class(editables[i])
 			let e = parent.querySelector("." + c) // .getElementsByClassName()
 			if (e) {
-				input = etc.create_input(editables[i], { value: e.textContent })
+				input = ui.input(editables[i], { value: e.textContent })
 				input.setAttribute("class", c)
 				e.replaceWith(input)
 			} else {
-				input = etc.create_input(editables[i])
+				input = ui.input(editables[i])
 				input.setAttribute("class", c)
 				if (prev) {
 					prev.after(input)
