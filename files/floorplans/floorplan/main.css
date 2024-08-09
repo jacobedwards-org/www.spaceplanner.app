@@ -1,0 +1,13 @@
+svg {
+	border: thin solid black;
+}
+
+#debug_cursor_text {
+	position: absolute;
+	top: 5%;
+	left: 5%;
+	border-radius: .1em;
+	padding: 1em;
+	background-color: rgba(0, 0, 0, .85);
+	color: red;
+}

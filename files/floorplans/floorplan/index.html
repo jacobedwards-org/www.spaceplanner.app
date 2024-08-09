@@ -1,0 +1,23 @@
+<!DOCTYPE HTML>
+<head>
+	<title>Spaceplanner - Floorplans</title>
+	<link rel="stylesheet" type="text/css" href="/css/main.css">
+	<link rel="stylesheet" type="text/css" href="./main.css">
+	<!-- Not sure why I can't include it directly in floorplan svg, but this can work -->
+	<link rel="stylesheet" type="text/css" href="./svg.css"/>
+	<script type="module" src="./main.js"></script>
+</head>
+<html>
+	<body>
+		<h1 class="fp_name">Floorplan</h1>
+
+		<div id="mode_selector"></div>
+
+		<svg id="floorplan" width="1600" height="1600" viewbox="400 400 800 800">
+			<script type="module" href="./svg.js"></script>
+			<title>Floorplan</title>
+
+			<polyline id="walls"/>
+		</svg>
+	</body>
+</html>

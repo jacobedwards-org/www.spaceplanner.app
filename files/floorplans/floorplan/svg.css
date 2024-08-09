@@ -1,0 +1,23 @@
+* {
+	stroke-width: 1em;
+}
+
+#walls {
+	fill: none;
+	stroke: black;
+}
+
+.preview {
+	fill: lightgrey;
+	stroke: lightgrey;
+}
+
+#grid_1 > line {
+	stroke: black;
+	stroke-width: 1px;
+}
+
+#grid_2 > line {
+	stroke: #FAFAFA;
+	stroke-width: 1px;
+}
