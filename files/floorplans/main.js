@@ -198,9 +198,9 @@ function create_floorplan(floorplan) {
 				{ button: ui.button("Save", "Save floorplan", "save"), func: commit_editable_floorplan_func(root, floorplan) },
 			)
 		)
-		aside.append(ui.button("Delete", "Delete floorplan", "trash", delete_floorplan_func(root, floorplan)))
+		aside.append(ui.button("Delete", "Delete floorplan", "trash", { handlers: { click: delete_floorplan_func(root, floorplan) } }))
 	} else {
-		aside.append(ui.button("Create", "Create floorplan", "create", editable_floorplan_create_func(root)))
+		aside.append(ui.button("Create", "Create floorplan", "create", { handlers: { click: editable_floorplan_create_func(root) } }))
 	}
 
 	root.append(aside)
@@ -237,7 +237,7 @@ var create_field = {
 		let heading = document.createElement("h2")
 		heading.setAttribute("class", floorplan_info_class("name"))
 		let link = document.createElement("a")
-		link.href = "floorplans/" + localStorage.getItem("username") + "/" + text
+		link.href = "./floorplan/?name=" + etc.url_literal(text)
 		link.appendChild(document.createTextNode(text))
 		heading.append(link)
 		return heading

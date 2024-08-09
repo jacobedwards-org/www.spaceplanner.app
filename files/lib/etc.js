@@ -63,7 +63,7 @@ export function error(message, on) {
 		let msg = document.createElement("p")
 		msg.appendChild(document.createTextNode(message))
 		err_elem.append(msg)
-		err_elem.append(ui.button("Dismiss", "Dismiss error", "close", function() { err_elem.remove() }))
+		err_elem.append(ui.button("Dismiss", "Dismiss error", "close", { handlers: { click: { function() { err_elem.remove() } } } }))
 
                 on.before(err_elem)
         }

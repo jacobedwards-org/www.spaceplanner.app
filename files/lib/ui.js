@@ -1,4 +1,4 @@
-export function input(name, memo, attributes) {
+export function input(name, memo, options) {
 	if (!name) {
 		throw new Error("No name provided")
 	}
@@ -7,28 +7,38 @@ export function input(name, memo, attributes) {
 	e.name = name
 	e.placeholder = name
 	e.setAttribute("title", memo)
-	for (let i in attributes) {
-		console.log(i,attributes[i])
-		e.setAttribute(i, attributes[i])
+
+	if (!options) {
+		options = {}
 	}
+	if (options.attributes) {
+		for (let i in options.attributes) {
+			console.debug("Input", name, i, options.attributes[i])
+			e.setAttribute(i, options.attributes[i])
+		}
+	}
+	if (options.handlers) {
+		for (let i in options.handlers) {
+			e.addEventListener(i, options.handlers[i], false)
+		}
+	}
+
 	return e
 }
 
-export function button(name, memo, icon, func, options) {
-	let button_options = {
+export function button(name, memo, icon, options) {
+	let button = input(name, memo, options)
+	let attrs = {
 		alt: name,
 		type: "image",
 		class: "icon",
-	 	src: "/icons/" + icon + "-outline.svg",
+	 	src: "/icons/" + icon + "-outline.svg"
 	}
-	let button = input(name, memo, options)
-	for (let i in button_options) {
-		button.setAttribute(i, button_options[i])
+	for (let i in attrs) {
+		console.debug("Button", name, i, attrs[i])
+		button.setAttribute(i, attrs[i])
 	}
 
-	if (func) {
-		button.addEventListener("click", func, false)
-	}
 	return button
 }
 
