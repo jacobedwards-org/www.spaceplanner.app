@@ -139,11 +139,11 @@ function editable_floorplan_func(element, data) {
 			let c = floorplan_info_class(editables[i])
 			let e = parent.querySelector("." + c) // .getElementsByClassName()
 			if (e) {
-				input = make_input(editables[i], { value: e.textContent })
+				input = etc.create_input(editables[i], { value: e.textContent })
 				input.setAttribute("class", c)
 				e.replaceWith(input)
 			} else {
-				input = make_input(editables[i])
+				input = etc.create_input(editables[i])
 				input.setAttribute("class", c)
 				if (prev) {
 					prev.after(input)
@@ -165,26 +165,6 @@ function floorplan_info_name(classname) {
 		throw new Error("Expected floorplan info class")
 	}
 	return classname.substring(3)
-}
-
-function make_input(name, options) {
-	if (!name) {
-		throw new Error("No name provided")
-	}
-	if (!options) {
-		options = {}
-	}
-
-	let input = document.createElement("input")
-	input.name = name
-	input.placeholder = name
-	if (options["type"]) {
-		input.type = options["type"]
-	}
-	if (options["value"]) {
-		input.value = options["value"]
-	}
-	return input
 }
 
 function delete_floorplan_func(item, floorplan) {

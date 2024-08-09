@@ -83,3 +83,31 @@ export function handle_wrap(func, on) {
 export function url_literal(text) {
 	return encodeURIComponent(text)
 }
+
+export function require_id(id) {
+	let e = document.getElementById(id)
+	if (!e) {
+		throw new Error("'#" + id + "' is required to exist, but doesn't")
+	}
+	return e
+}
+
+export function create_input(name, options) {
+	if (!name) {
+		throw new Error("No name provided")
+	}
+	if (!options) {
+		options = {}
+	}
+
+	let input = document.createElement("input")
+	input.name = name
+	input.placeholder = name
+	if (options["type"]) {
+		input.type = options["type"]
+	}
+	if (options["value"]) {
+		input.value = options["value"]
+	}
+	return input
+}
