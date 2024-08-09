@@ -3,23 +3,29 @@ export function input(name, memo, attributes) {
 		throw new Error("No name provided")
 	}
 
-	let input = document.createElement("input")
-	input.name = name
-	input.placeholder = name
+	let e = document.createElement("input")
+	e.name = name
+	e.placeholder = name
+	e.setAttribute("title", memo)
 	for (let i in attributes) {
-		input.setAttribute(i, attributes[i])
+		console.log(i,attributes[i])
+		e.setAttribute(i, attributes[i])
 	}
-	return input
+	return e
 }
 
 export function button(name, memo, icon, func, options) {
-	let button = input(name, memo, {
+	let button_options = {
 		alt: name,
-		title: memo,
 		type: "image",
 		class: "icon",
-	 	src: "/icons/" + icon + "-outline.svg"
-	})
+	 	src: "/icons/" + icon + "-outline.svg",
+	}
+	let button = input(name, memo, options)
+	for (let i in button_options) {
+		button.setAttribute(i, button_options[i])
+	}
+
 	if (func) {
 		button.addEventListener("click", func, false)
 	}
