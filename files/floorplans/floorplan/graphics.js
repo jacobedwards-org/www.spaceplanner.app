@@ -16,3 +16,7 @@ export const svg = {
 export function point(x, y) {
 	return { x: x, y: y }
 }
+
+export function rect(x, y, width, height) {
+	return { x: x, y: y, width: width, height: height }
+}

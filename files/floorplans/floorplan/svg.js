@@ -15,7 +15,7 @@ const units = {
 	// systems
 	imperial: {
 		inch: 10,
-		foot:  10 * 12
+		foot: 10 * 12
 	},
 	metric: {
 		meter: 254,
@@ -23,8 +23,8 @@ const units = {
 	}
 }
 
+
 function init() {
-	console.warn(modes)
 	let state = {
 		walls: etc.require_id("walls"),
 		// [ { x: X, y: Y }, ... ]
@@ -32,6 +32,9 @@ function init() {
 		points: [],
 		units: units["imperial"],
 		svg: etc.require_id("floorplan"),
+		svg_ui: etc.require_id("svg_ui"),
+		svg_data: etc.require_id("svg_data"),
+		scale: 1,
 		flags: {}
 	}
 
@@ -45,12 +48,19 @@ function init() {
 	}
 	state.svg.before(mode_selector)
 
-	state.svg.prepend(make_grid(state.units, state.svg.getAttribute("width"), state.svg.getAttribute("height")))
+	let size = canvas_size(state)
+	etc.require_id("floorplan").prepend(make_grid(state.units, size.width, size.height))
+	//let view = ..XXXJKLDJF
+	//set_scale(state, view.width / size.width)
+	set_scale(state, 2)
+
+	update_movable(state)
 }
 
 function make_grid(units, width, height) {
 	let grid = graphics.svg.element("g")
 	grid.id = "grid"
+	grid.setAttribute("class", "scales")
 
 	let sorted = sort_units(units)
 	for (let i in sorted) {
@@ -123,10 +133,11 @@ let modes = {
 			event.preventDefault()
 		},
 		mousedown: viewbox_movement_handler,
-		mousemove: [freedraw_move_handler, viewbox_movement_handler, debug_mouse_position],
+		mousemove: [freedraw_move_handler, viewbox_movement_handler, debug_mouse_position_handler],
 		mouseleave: viewbox_movement_handler,
 		mouseup: viewbox_movement_handler,
-		click: freedraw_click_handler
+		click: freedraw_click_handler,
+		auxclick: viewbox_scale_handler
 	},
 	add: {
 		mousemove:  freedraw_move_handler,
@@ -134,11 +145,28 @@ let modes = {
 	}
 }
 
+// Listen on auxclick
+function viewbox_scale_handler(state, click) {
+	if (click.button != 1) {
+		return
+	}
+	console.log("scale handler")
+	let from = graphics.point(click.offsetX, click.offsetY)
+
+	if (click.shiftKey) {
+		set_scale(state, state.scale - .5, from)
+	} else {
+		set_scale(state, state.scale + .5, from)
+	}
+	click.preventDefault()
+}
+
+// Listen on mousedown, mouseup, mouseleave, and mousemove
 function viewbox_movement_handler(state, mouse) {
 	if (mouse.type === "mouseleave") {
 		state.flags.moving = false
 		console.debug("Movement (left)", state.flags.moving)
-	} else if (mouse.button & 2) {
+	} else if (mouse.button === 2) {
 		if (mouse.type === "mousedown") {
 			state.flags.moving = true
 		} else if (mouse.type === "mouseup") {
@@ -147,59 +175,44 @@ function viewbox_movement_handler(state, mouse) {
 		console.debug("Movement (up/down)", state.flags.moving)
 	}
 	if (state.flags.moving && mouse.type === "mousemove") {
-		let docwidth = state.svg.getAttribute("width")
-		let docheight = state.svg.getAttribute("height")
-		let view = state.svg.viewBox.animVal
-		let x = view.x - mouse.movementX
-		let y = view.y - mouse.movementY
-		if (mouse.movementX > 0 && x < 0) {
-			x = 0
-		} else if (x + view.width > docwidth) {
-			x  = docwidth - view.width
+		let view = viewbox(state)
+		let newpos =
+			graphics.point(view.x - mouse.movementX, view.y - mouse.movementY)
+
+		let size = canvas_size(state)
+		if (newpos.x < 0) {
+			newpos.x = 0
+		} else if (newpos.x + view.width > size.width) {
+			newpos.x = size.width - view.width
 		}
-		if (mouse.movementY > 0 && y < 0) {
-			y = 0
-		} else if (y + view.height > docheight) {
-			y = docheight - view.height;
+		if (newpos.y < 0) {
+			newpos.y = 0
+		} else if (newpos.y + view.height > size.height) {
+			newpos.y = size.height - view.height
 		}
-		state.svg.setAttribute("viewBox", [x, y, state.svg.viewBox.animVal.width, state.svg.viewBox.animVal.height].join(' '))
+
+		update_viewbox(state, graphics.rect(newpos.x, newpos.y, view.width, view.height))
+		update_movable(state)
+		console.debug("Move", newpos.x, newpos.y)
 	}
 }
 
-// listen on mousemove
-function debug_mouse_position(state, mouse) {
-	let cursor = document.getElementById("debug_cursor")
-	if (!cursor) {
-		cursor = graphics.svg.element("circle")
-		cursor.id = "debug_cursor"
-		cursor.setAttribute("fill", "red")
-		cursor.setAttribute("r", ".25em")
-		state.svg.append(cursor)
-	}
-	let text = document.getElementById("debug_cursor_text")
-	if (!text) {
-		text = document.createElement("span")
-		text.id = "debug_cursor_text"
-		text.setAttribute("position", "absolute")
-		text.setAttribute("color", "red")
-		document.body.append(text)
-	}
-	let p = view_to_canvas_point(state, { x: mouse.offsetX, y: mouse.offsetY })
-	text.textContent = [mouse.offsetX, mouse.offsetY].join(", ")
-	cursor.setAttribute("cx", p.x)
-	cursor.setAttribute("cy", p.y)
-}
-
+// Listen on mousemove
 function freedraw_move_handler(state, mouse) {
 	let line =  document.querySelector("line.preview")
 	if (!line) {
 		line = graphics.svg.element("line")
-		line.setAttribute("class","preview")
+		line.setAttribute("class","preview scales")
 		state.svg.append(line)
+		update_scalable(state)
 	}
 
 	let last = last_point(state)
-	let mp = state["preview_point"] = view_to_canvas_point(state, graphics.point(mouse.offsetX, mouse.offsetY))
+
+	let p = real_to_absolute(state, view_to_real(state, graphics.point(mouse.offsetX, mouse.offsetY)))
+
+	state["preview_point"] = p
+
 	if (!last) {
 		line.setAttribute("hidden", true)
 	} else {
@@ -208,17 +221,44 @@ function freedraw_move_handler(state, mouse) {
 		}
 		line.removeAttribute("hidden")
 		line.setAttribute("x1", last.x)
-		line.setAttribute("y1",last.y)
-		line.setAttribute("x2", mp.x)
-		line.setAttribute("y2", mp.y)
+		line.setAttribute("y1", last.y)
+		line.setAttribute("x2", p.x)
+		line.setAttribute("y2", p.y)
 	}
 }
 
+// Listen on click
 function freedraw_click_handler(state, click) {
+	if (click.button != 0) {
+		return
+	}
 	if (!state["preview_point"]) {
 		throw new Error("Expected preview_point")
 	}
 	add_points(state, state["preview_point"])
+	click.preventDefault()
+}
+
+// listen on mousemove
+function debug_mouse_position_handler(state, mouse) {
+	let cursor = document.getElementById("debug_cursor")
+	if (!cursor) {
+		cursor = graphics.svg.element("circle")
+		cursor.id = "debug_cursor"
+		cursor.setAttribute("class", "moves")
+		state.svg_ui.append(cursor)
+	}
+	let text = document.getElementById("debug_cursor_text")
+	if (!text) {
+		text = document.createElement("span")
+		text.id = "debug_cursor_text"
+		document.body.append(text)
+	}
+
+	let p = view_to_real_scaled(state, graphics.point(mouse.offsetX, mouse.offsetY))
+	text.textContent = `Mouse: ${p["x"]}x${p["y"]}`
+	cursor.setAttribute("cx", p.x)
+	cursor.setAttribute("cy", p.y)
 }
 
 function remove_mode_handlers(element, mode_handlers) {
@@ -236,6 +276,21 @@ function add_mode_handlers(element, mode_handlers) {
 			console.debug("add mode handler", event, handler, "from", element)
 			element.addEventListener(event, mode_handlers[event][handler], false)
 		}
+	}
+}
+
+function update_movable(state) {
+	let moving = Array.from(document.getElementsByClassName("moves"))
+	let view = viewbox(state)
+	for (let i in moving) {
+		moving[i].setAttribute("transform", "translate(" + view.x + "," + view.y + ")")
+	}
+}
+
+function update_scalable(state) {
+	let scaling = Array.from(document.getElementsByClassName("scales"))
+	for (let i in scaling) {
+		scaling[i].setAttribute("transform", "scale(" + state.scale + ")")
 	}
 }
 
@@ -278,21 +333,72 @@ function axis_snap_which(a, b) {
 	}
 }
 
-function view_to_canvas_point(state, viewbox_point) {
-	let view = viewbox(state)
-
-	// NOTE:: I'm dividing by 2 because it works, but I'm not
-	// sure if this is because of a universal property or the
-	// mousemove offset[XY] values
-	return { x: (viewbox_point.x / 2) + view.x, y: (viewbox_point.y / 2) + view.y }
-}
-
 function viewbox(state) {
 	let a = state.svg.getAttribute("viewBox").split(' ')
 	for (let i in a) {
 		a[i] = Number(a[i])
 	}
-	return { x: a[0], y: a[1], width: a[2], height: a[3] }
+	return graphics.rect(a[0], a[1], a[2], a[3])
+}
+
+function update_viewbox(state, newview) {
+	console.debug("Update viewbox:", newview)
+	state.svg.setAttribute("viewBox", [newview.x, newview.y, newview.width, newview.height].join(' '))
+}
+
+function canvas_size(state) {
+	return { width: Number(state.svg.getAttribute("width")), height: Number(state.svg.getAttribute("height")) }
+}
+
+function set_scale(state, scale, from) {
+	if (typeof scale !== "number") {
+		throw new Error(scale + ": Invalid scale")
+	}
+
+	let size = canvas_size(state)
+	let view = viewbox(state)
+	let furthest = Math.min(view.width / size.width, view.height / size.height)
+	console.log(furthest)
+	if (scale < furthest) {
+		scale = furthest
+	}
+
+	state["scale"] = scale
+	update_scalable(state)
+	console.log("Scale", scale)
+}
+
+function view_to_real(state, p) {
+	let view = viewbox(state)
+	let size = canvas_size(state)
+	let scale = state["scale"] * 1
+
+	let r = graphics.point(
+		((p.x / (size.width / view.width))) / scale,
+		((p.y / (size.height / view.height))) / scale
+	)
+	console.debug(`Viewbox to real coord: ${p.x}x${p.y} -> ${r.x}x${r.y} [scale ${state.scale}] [view ${viewbox(state).x}, ${viewbox(state).width}] [canvas ${canvas_size(state).width}]`)
+	return r
+}
+
+function view_to_real_scaled(state, p) {
+	let r = view_to_real(state, p)
+	let rs = graphics.point(
+		r.x * state["scale"],
+		r.y * state["scale"]
+	)
+
+	console.debug(`Real to real scaled coord: ${r.x}x${r.y} -> ${rs.x}x${rs.y} [scale ${state.scale}] [view ${viewbox(state).x}, ${viewbox(state).width}] [canvas ${canvas_size(state).width}]`)
+	return rs
+}
+
+function real_to_absolute(state, p) {
+	let view = viewbox(state)
+
+	return graphics.point(
+		p.x + (view.x / state["scale"]),
+		p.y+ (view.y / state["scale"])
+	)
 }
 
 init()

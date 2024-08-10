@@ -1,5 +1,5 @@
 * {
-	stroke-width: 1em;
+	stroke-width: 6;
 }
 
 #walls {
@@ -14,10 +14,15 @@
 
 #grid_1 > line {
 	stroke: black;
-	stroke-width: 1px;
+	stroke-width: 1;
 }
 
 #grid_2 > line {
 	stroke: #FAFAFA;
-	stroke-width: 1px;
+	stroke-width: 1;
+}
+
+#debug_cursor {
+	fill: red;
+	r: .25em;
 }
