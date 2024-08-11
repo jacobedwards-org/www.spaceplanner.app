@@ -49,11 +49,15 @@ function init() {
 
 	let size = canvas_size(state)
 	etc.require_id("floorplan").prepend(make_grid(state.units, size.width, size.height))
-	//let view = ..XXXJKLDJF
-	//set_scale(state, view.width / size.width)
-	set_scale(state, 2)
+	let view = viewbox(state)
+	set_scale(state, view.width / size.width)
 
-	update_movable(state)
+	/*
+	 * Already called in set_scale, I suppose set_scale and the like should
+	 * set a flag, and whenever  the user interface should be updated (say
+	 * on a timer) call this.
+	 */
+	update_transforms(state)
 }
 
 function make_grid(units, width, height) {
