@@ -10,6 +10,15 @@ export const svg = {
 		line.setAttribute("x2", x2)
 		line.setAttribute("y2", y2)
 		return line
+	},
+
+	transform: function(svg, element, method, ...values) {
+		let t = svg.createSVGTransform()
+		console.debug("transform", method, values)
+		t[method](...values)
+
+		element.transform.baseVal.appendItem(t)
+		return t
 	}
 }
 

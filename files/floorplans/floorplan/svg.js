@@ -23,7 +23,6 @@ const units = {
 	}
 }
 
-
 function init() {
 	let state = {
 		walls: etc.require_id("walls"),
@@ -150,9 +149,7 @@ function viewbox_scale_handler(state, click) {
 	if (click.button != 1) {
 		return
 	}
-	console.log("scale handler")
-	let from = graphics.point(click.offsetX, click.offsetY)
-
+	let from = view_to_real(state, graphics.point(click.offsetX, click.offsetY))
 	if (click.shiftKey) {
 		set_scale(state, state.scale - .5, from)
 	} else {
@@ -175,25 +172,15 @@ function viewbox_movement_handler(state, mouse) {
 		console.debug("Movement (up/down)", state.flags.moving)
 	}
 	if (state.flags.moving && mouse.type === "mousemove") {
+		let offset = view_to_real_scaled(state,
+			graphics.point(mouse.movementX, mouse.movementY))
 		let view = viewbox(state)
-		let newpos =
-			graphics.point(view.x - mouse.movementX, view.y - mouse.movementY)
-
-		let size = canvas_size(state)
-		if (newpos.x < 0) {
-			newpos.x = 0
-		} else if (newpos.x + view.width > size.width) {
-			newpos.x = size.width - view.width
-		}
-		if (newpos.y < 0) {
-			newpos.y = 0
-		} else if (newpos.y + view.height > size.height) {
-			newpos.y = size.height - view.height
-		}
-
-		update_viewbox(state, graphics.rect(newpos.x, newpos.y, view.width, view.height))
+		let p = graphics.point(view.x - offset.x, view.y - offset.y)
+		update_viewbox(state, graphics.rect(
+			p.x, p.y, view.width, view.height)
+		)
 		update_movable(state)
-		console.debug("Move", newpos.x, newpos.y)
+
 	}
 }
 
@@ -279,20 +266,33 @@ function add_mode_handlers(element, mode_handlers) {
 	}
 }
 
-function update_movable(state) {
-	let moving = Array.from(document.getElementsByClassName("moves"))
+function update_transforms(state) {
 	let view = viewbox(state)
-	for (let i in moving) {
-		moving[i].setAttribute("transform", "translate(" + view.x + "," + view.y + ")")
+	let elements = Array.from(document.querySelectorAll(".scales, .moves"))
+
+	for (let i in elements) {
+		elements[i].transform.baseVal.clear()
+		if (elements[i].classList.contains("scales")) {
+			graphics.svg.transform(state.svg, elements[i], "setScale", state["scale"], state["scale"])
+		}
+		if (elements[i].classList.contains("moves")) {
+			graphics.svg.transform(state.svg, elements[i], "setTranslate", view.x, view.y)
+		}
 	}
 }
 
-function update_scalable(state) {
-	let scaling = Array.from(document.getElementsByClassName("scales"))
-	for (let i in scaling) {
-		scaling[i].setAttribute("transform", "scale(" + state.scale + ")")
-	}
+/*
+  * In the future I may make seperate implementations for these, not sure yet.
+  * Keeping possibilities open
+  */
+function update_movable(state) {
+	update_transforms(state)
 }
+
+function update_scalable(state) {
+	update_transforms(state)
+}
+
 
 function update_points_display(state) {
 	let s = ""
@@ -341,15 +341,38 @@ function viewbox(state) {
 	return graphics.rect(a[0], a[1], a[2], a[3])
 }
 
+// Newview is graphics.rect
 function update_viewbox(state, newview) {
-	console.debug("Update viewbox:", newview)
+	limit_viewbox_position(state, newview)
+	console.log("Viewbox", newview)
 	state.svg.setAttribute("viewBox", [newview.x, newview.y, newview.width, newview.height].join(' '))
 }
+
+function limit_viewbox_position(state, view) {
+		let maxsize = scale(state, canvas_size(state))
+		let maxp = graphics.point(maxsize.width - view.width, maxsize.height - view.height)
+		if (view.x < 0) {
+			view.x = 0
+		} else if (view.x > maxp.x) {
+			console.log(`viewbox x restricted to max of ${maxp.x}`)
+			view.x = maxp.x
+		}
+		if (view.y < 0) {
+			view.y = 0
+		} else if (view.y > maxp.y) {
+			console.log(`viewbox y restricted to max of ${maxp.y}`)
+			view.y = maxp.y
+		}
+
+		return view;
+}
+
 
 function canvas_size(state) {
 	return { width: Number(state.svg.getAttribute("width")), height: Number(state.svg.getAttribute("height")) }
 }
 
+// from is a viewbox coordinate, obviously I guess
 function set_scale(state, scale, from) {
 	if (typeof scale !== "number") {
 		throw new Error(scale + ": Invalid scale")
@@ -358,13 +381,30 @@ function set_scale(state, scale, from) {
 	let size = canvas_size(state)
 	let view = viewbox(state)
 	let furthest = Math.min(view.width / size.width, view.height / size.height)
-	console.log(furthest)
 	if (scale < furthest) {
+		console.log(`Unable to zoom out any further than ${furthest} (no more content)`)
 		scale = furthest
+	}
+	if (state["scale"] === scale) {
+		return
 	}
 
 	state["scale"] = scale
-	update_scalable(state)
+
+	if (!from) {
+		from = graphics.point(
+			view.width / 2,
+			view.height / 2
+		)
+	}
+	update_viewbox(state, graphics.rect(
+			from.x / view.width,
+			from.y / view.height,
+			view.width,
+			view.height
+		)
+	)
+	update_transforms(state)
 	console.log("Scale", scale)
 }
 
@@ -377,19 +417,12 @@ function view_to_real(state, p) {
 		((p.x / (size.width / view.width))) / scale,
 		((p.y / (size.height / view.height))) / scale
 	)
-	console.debug(`Viewbox to real coord: ${p.x}x${p.y} -> ${r.x}x${r.y} [scale ${state.scale}] [view ${viewbox(state).x}, ${viewbox(state).width}] [canvas ${canvas_size(state).width}]`)
+	//console.debug(`Viewbox to real coord: ${p.x}x${p.y} -> ${r.x}x${r.y} [scale ${state.scale}] [view ${viewbox(state).x}, ${viewbox(state).width}] [canvas ${canvas_size(state).width}]`)
 	return r
 }
 
 function view_to_real_scaled(state, p) {
-	let r = view_to_real(state, p)
-	let rs = graphics.point(
-		r.x * state["scale"],
-		r.y * state["scale"]
-	)
-
-	console.debug(`Real to real scaled coord: ${r.x}x${r.y} -> ${rs.x}x${rs.y} [scale ${state.scale}] [view ${viewbox(state).x}, ${viewbox(state).width}] [canvas ${canvas_size(state).width}]`)
-	return rs
+	return scale(state, view_to_real(state, p))
 }
 
 function real_to_absolute(state, p) {
@@ -401,4 +434,24 @@ function real_to_absolute(state, p) {
 	)
 }
 
+function scale(state, obj) {
+	for (let i in obj) {
+		if (typeof obj[i] !== "number") {
+			throw new Error("expected number")
+		}
+		obj[i] *= state["scale"]
+	}
+	return obj
+}
+
+function unscale(state, obj) {
+	for (let i in obj) {
+		if (typeof obj[i] !== "number") {
+			throw new Error("expected number")
+		}
+		obj[i] /= state["scale"]
+	}
+	return obj
+}
+			
 init()
