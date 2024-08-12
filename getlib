@@ -1,0 +1,33 @@
+#!/bin/sh
+
+set -e
+
+base="${1:%@*}"
+tag="${1#*@}"
+url=https://"$base"
+dir=lib/"$base"/src
+
+if ! test -d "$dir"
+then
+	git clone -q "$url" "$dir"
+	fetch=false
+fi
+
+cd "$dir"
+
+${fetch:-true} &&
+	git fetch -q
+git checkout -q "$tag"
+
+# Reset would work, but this seems safer
+# (In case the git directory is somehow deleted, etc.)
+git restore *
+
+if test -d ../patches; then
+	for p in ../patches/*
+	do
+		patch -suNp1 < "$p"
+	done
+fi
+
+echo "$dir"

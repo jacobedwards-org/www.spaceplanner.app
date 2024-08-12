@@ -1,28 +1,15 @@
-* {
-	stroke-width: 6;
-}
+/* SVG element CSS */
 
-#walls {
-	fill: none;
+#walls > line {
 	stroke: black;
+	stroke-width: 2;
 }
 
-.preview {
+.point {
+	r: 2;
 	fill: lightgrey;
-	stroke: lightgrey;
 }
 
-#grid_1 > line {
-	stroke: black;
-	stroke-width: 1;
-}
-
-#grid_2 > line {
-	stroke: #FAFAFA;
-	stroke-width: 1;
-}
-
-#debug_cursor {
-	fill: red;
-	r: .25em;
+.point.selected {
+	fill: blue;
 }

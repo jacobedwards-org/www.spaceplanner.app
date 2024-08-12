@@ -1,0 +1,10 @@
+diff --git a/src/svg.panzoom.js b/src/svg.panzoom.js
+index cb4d5dc..70989c3 100644
+--- a/src/svg.panzoom.js
++++ b/src/svg.panzoom.js
+@@ -1,4 +1,4 @@
+-import { Svg, on, off, extend, Matrix, Box } from '@svgdotjs/svg.js'
++import { Svg, on, off, extend, Matrix, Box } from '/lib/github.com/svgdotjs/svg.js/main.js'
+ 
+ const normalizeEvent = ev =>
+   ev.touches || [{ clientX: ev.clientX, clientY: ev.clientY }]

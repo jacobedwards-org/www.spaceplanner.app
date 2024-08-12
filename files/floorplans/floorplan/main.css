@@ -1,13 +1,52 @@
-svg {
-	border: thin solid black;
+body {
+	display: flex;
+	flex-flow: column;
+	box-sizing: border-box;
+	height: 100vh;
+	background-color: #F3F3F3;
+	margin: 0;
+	padding: min(2vh, 2vw);
 }
 
-#debug_cursor_text {
-	position: absolute;
-	top: 5%;
-	left: 5%;
-	border-radius: .1em;
-	padding: 1em;
-	background-color: rgba(0, 0, 0, .85);
-	color: red;
+header > h1 {
+	padding: 0;
+	margin: 0;
+	font-weight: normal;
+}
+
+header > .toolbar {
+	list-style: none;
+	padding: 0;
+	margin: .25em;
+}
+
+svg {
+	flex: 1;
+	border:  ridge thin;
+	background-color: white;
+}
+
+.modes_selector > ul {
+	display: inline;
+	padding: 0;
+	list-style: none;
+}
+
+.modes_selector > ul > li {
+	display: inline;
+}
+
+.mode_selector {
+	margin: .25em;
+	background: none;
+	border: none;
+	border-bottom: medium solid lightgrey;
+}
+
+.mode_selector:hover {
+	border-color: grey;
+}
+
+.mode_selector.selected {
+	border-color: blue;
 }

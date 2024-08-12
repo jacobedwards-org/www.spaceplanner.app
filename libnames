@@ -1,0 +1,8 @@
+#!/bin/sh
+
+set -e
+
+printf '%s\n' "$@" | awk -F '/' -vOFS=/ '{
+	sub("@[^/]+$", "", $0)
+	print
+}'
