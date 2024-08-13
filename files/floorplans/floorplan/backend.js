@@ -203,7 +203,7 @@ export class FloorplanBackend {
 			throw new Error("Point must have x and y be numbers")
 		}
 		// I suppose point could have other keys, that's okay though
-		return this.addData("points", point, options)
+		return this.addData("points", { x: Math.round(point.x), y: Math.round(point.y) }, options)
 	}
 
 	removePoint(id, options) {
