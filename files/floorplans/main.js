@@ -138,12 +138,15 @@ function editable_floorplan_func(element, data) {
 			let input
 			let c = floorplan_info_class(editables[i])
 			let e = parent.querySelector("." + c) // .getElementsByClassName()
+			let memo = "Edit floorplan " + editables[i]
 			if (e) {
-				input = ui.input(editables[i], { value: e.textContent })
+				input = ui.input(editables[i], memo, {
+					attributes: { value: e.textContent }
+				})
 				input.setAttribute("class", c)
 				e.replaceWith(input)
 			} else {
-				input = ui.input(editables[i])
+				input = ui.input(editables[i], memo)
 				input.setAttribute("class", c)
 				if (prev) {
 					prev.after(input)
