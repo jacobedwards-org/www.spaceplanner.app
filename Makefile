@@ -4,7 +4,7 @@ libs =\
 	github.com/svgdotjs/svg.panzoom.js@2.1.2
 
 install:
-	rsync "$$(libnames ${libs} | sed 's/^/--exclude=/')" -va --del files/ ${prefix}
+	rsync $$(libnames ${libs} | sed 's/^/--exclude=lib\//') -va --del files/ ${prefix}
 
 uninstall:
 	rm -rf ${prefix}/*
