@@ -90,7 +90,7 @@ let modes = {
 }
 
 // click
-function addWallHandler(click, state) {
+function addWallHandler(click, editor) {
 	if (click.type !== "click") {
 		throw new Error("Expected click event")
 	}
@@ -98,16 +98,11 @@ function addWallHandler(click, state) {
 		return
 	}
 
-	state.addPoint(state.draw.point(click.clientX, click.clientY))
-		.on("click", function(event) {
-			if (event.shiftKey) {
-				this.select()
-				event.preventDefault()
-			}
-		})
-	if (state.draw.findOne("#points").children().length >= 2) {
-		state.addWall()
+	editor.addPoint(editor.draw.point(click.clientX, click.clientY))
+	if (editor.draw.findOne("#points").children().length >= 2) {
+		editor.mapPoints("wall")
 	}
+	editor.finishAction()
 	click.preventDefault()
 }
 
