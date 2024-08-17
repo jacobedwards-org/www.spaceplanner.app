@@ -72,28 +72,34 @@ function init() {
 	toolbar.classList.add("toolbar")
 
 	toolbar.append(pushpull)
-
-	let li = document.createElement("li")
-	li.append(modesSelector(editor, "Modes:"))
-	toolbar.append(li)
+	toolbar.append(item(
+		selector(editor, editor.modes, function(mode) { editor.useMode(mode) },
+			{ current: editor.mode, text: "Modes:" }
+		)
+	))
 
 	editor.backend.pull()
 }
 
-function modesSelector(editor, text) {
+function selector(editor, things, select, options) {
+	options = options ?? {}
+
 	let form = document.createElement("form")
-	form.classList.add("modes_selector")
-	if (text) {
-		form.appendChild(document.createTextNode(text))
+	form.classList.add("selection")
+
+	if (options.text) {
+		form.appendChild(document.createTextNode(options.text))
 	}
 
 	let list = form.appendChild(document.createElement("ul"))
-	for (let mode in editor.modes) {
-		let selector = list.appendChild(document.createElement("li"))
-			.appendChild(ui.input(mode, "Switch to " + mode + " mode", {
-				attributes: { type: "button", value: mode },
+	for (let thing in things) {
+		console.log("selector", options.text ?? "something", thing)
+		let item = list.appendChild(document.createElement("li"))
+		let selector = item
+			.appendChild(ui.input(thing, "Select " + thing, {
+				attributes: { type: "button", value: thing },
 				handlers: { click: function(event) {
-					editor.useMode(event.target.name)
+					select(event.target.name)
 					event.target.parentNode.parentNode
 						.querySelectorAll("li > .selected")
 						.forEach(function(sel) {
@@ -102,8 +108,8 @@ function modesSelector(editor, text) {
 					event.target.classList.add("selected")
 				}}
 			}))
-		selector.classList.add("mode_selector")
-		if (mode == editor.mode) {
+		selector.classList.add("selector")
+		if (thing == options.current) {
 			selector.classList.add("selected")
 		}
 	}
@@ -172,6 +178,12 @@ function notify(message, id) {
 		document.body.prepend(e)
 	}
 	setTimeout(function() { e.remove() }, messageTimeout)
+}
+
+function item(node) {
+	let i = document.createElement("li")
+	i.append(node)
+	return i
 }
 
 window.onload = init

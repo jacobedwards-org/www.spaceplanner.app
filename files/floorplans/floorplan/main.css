@@ -38,28 +38,28 @@ svg {
 	background-color: white;
 }
 
-.modes_selector > ul {
+.selection > ul {
 	display: inline;
 	padding: 0;
 	list-style: none;
 }
 
-.modes_selector > ul > li {
+.selection > ul > li {
 	display: inline;
 }
 
-.mode_selector {
+.selector {
 	margin: .25em;
 	background: none;
 	border: none;
 	border-bottom: medium solid lightgrey;
 }
 
-.mode_selector:hover {
+.selector:hover {
 	border-color: grey;
 }
 
-.mode_selector.selected {
+.selector.selected {
 	border-color: blue;
 }
 
