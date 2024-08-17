@@ -1,5 +1,28 @@
+import * as api from "/lib/api.js"
+
 export class FloorplanBackend {
-	constructor() {
+	constructor(floorplan, options) {
+		if (!options) {
+			options = {}
+		}
+
+		if (!floorplan || !floorplan.user || !floorplan.name) {
+			throw new Error("Requires floorplan")
+		}
+		this.floorplan = floorplan
+
+		if (!options.server) {
+			// This does nothing at the moment
+			this.server = "https://api.spaceplanner.app"
+		} else {
+			this.server = options.server
+		}
+
+
+		if (options.callbacks) {
+			this.callbacks = options.callbacks
+		}
+
 		// Cache for server (both from and to)
 		this.cache = {
 			// { pointId: { x: Number, y: Number } }
@@ -51,12 +74,16 @@ export class FloorplanBackend {
 		 * 		diff: <JSON Patch>
 		 * 	}
 		 * 	[...]
-		 * }
+		 * ]
 		 */
 		this.diffs = []
 
 		// The cache's state in relation to the diffs
 		this.diff = null
+	}
+
+	get endpoint() {
+		return "floorplans/" + this.floorplan.user + "/" + this.floorplan.name + "/data"
 	}
 
 	// Start writing new differences to a new diff set
@@ -73,11 +100,12 @@ export class FloorplanBackend {
 			diff: []
 		}) - 1
 		console.debug("newDiff", this.diff)
+		this.cb("newdiff")
 		return this.diff
 	}
 
 	// Add to current diff
-	addToDiff(op, path, value, dirty) {
+	addToDiff(op, path, value, options) {
 		if (!op || !path) {
 			throw new Error("Requires op and path")
 		}
@@ -98,8 +126,11 @@ export class FloorplanBackend {
 			value: value,
 			time: Date.now()
 		}
-		if (dirty) {
+		if (!options.clean) {
 			diff.dirty = true
+		}
+		if (options.new) {
+			diff.new = true
 		}
 		this.diffs[this.diff].diff.push(diff)
 		console.debug("Backend.addToDiff", diff)
@@ -117,21 +148,13 @@ export class FloorplanBackend {
 	// to get from time1 to time2
 	updatesBetween(time1, time2) {
 		let updates = []
-		let reverse = true
+		let reverse = false
 
 		if (this.diffs.length === 0 || this.diffs[0].length === 0) {
 			return []
 		}
 
-		if (!time1) {
-			time1 = this.diffs[0].diff[0].time
-		}
-		if (!time2) {
-			// Could use Date.now() I suppose
-			time2 = this.diffs.at(-1).diff.at(-1).time
-		}
-
-		if (time1 > time2) {
+		if (time1 && time2 && time1 > time2) {
 			reverse = !reverse
 			let t = time1
 			time1 = time2
@@ -141,9 +164,9 @@ export class FloorplanBackend {
 		for (let i in this.diffs) {
 			for (let j in this.diffs[i].diff) {
 				let diff = this.diffs[i].diff[j]
-				if (diff.time >= time1) {
+				if (!time1 || diff.time >= time1) {
 					updates.push(diff)
-				} else if (diff.time > time2) {
+				} else if (time2 && diff.time > time2) {
 					return reverse ? updates.reverse() : updates
 				}
 			}
@@ -160,7 +183,7 @@ export class FloorplanBackend {
 	 */
 	addData(type, value, key, options) {
 		if (!options) {
-			options = { diff: true, clean: false }
+			options = {}
 		}
 
 		if (!key) {
@@ -172,27 +195,33 @@ export class FloorplanBackend {
 			 */
 			key = uniqueKey(this.cache[type])
 		}
+
 		console.debug("Backend.addData", type, key, value)
+		if (!this.cache[type][key]) {
+			options.new = true
+		}
 		this.cache[type][key] = value
 
 		// May want to use replace op if it's appropriate.
-		if (options.diff) {
-			this.addToDiff("add", diffPath(type, key), this.cache[type][key], !options.clean)
+		// Doing this first so it can set new appropriately.
+		if (!options.nodiff) {
+			this.addToDiff("add", diffPath(type, key), this.cache[type][key], options)
 		}
+
 		return key
 	}
 
 	removeData(type, key, options) {
 		if (!options) {
-			options = { diff: true, clean: false }
+			options = {}
 		}
 
 		console.debug("Backend.removeData", type, key)
 		if (!this.cache[type][key]) {
 			throw new Error("Expected " + key + " to exist")
 		}
-		if (options.diff) {
-			this.addToDiff("remove", diffPath(type, key), null, !options.clean)
+		if (!options.nodiff) {
+			this.addToDiff("remove", diffPath(type, key), null, options)
 		}
 		delete this.cache[type][key]
 	}
@@ -218,6 +247,8 @@ export class FloorplanBackend {
 		if (!this.cache.points[a] || !this.cache.points[b]) {
 			throw new Error("Pointmap must reference existing points")
 		}
+
+		// NOTE: For now, a and b are numbers. May not always be the case
 		return this.addData("pointmaps", {
 			type: type,
 			a: a,
@@ -232,7 +263,7 @@ export class FloorplanBackend {
 	reqId(type, id) {
 		let obj = this.byId(type, id)
 		if (!obj) {
-			throw new Error(id + " for " + type + "doesn't exist")
+			throw new Error(id + " for " + type + " doesn't exist")
 		}
 		return obj
 	}
@@ -244,29 +275,156 @@ export class FloorplanBackend {
 		return this.cache[type][id]
 	}
 
+	dirty() {
+		let a = []
+		for (let i = 0; i <= this.diff; ++i) {
+			for (let diff in this.diffs[i].diff) {
+				if (this.diffs[i].diff[diff].dirty) {
+					a.push(this.diffs[i].diff[diff])
+				}
+			}
+		}
+		console.debug("Backend.dirty", a)
+		return a
+	}
+
+	cb(name, arg) {
+		if (this.callbacks[name]) {
+			this.callbacks[name](arg)
+		}
+	}
+
 	// Push updates to the server
-	//push() {}
+	push() {
+		// Need a method of making sure we're only sending these once...
+		let dirty = this.dirty()
+		let patch = []
+
+		for (let i in dirty) {
+			let op
+			if (dirty[i].op != "add") {
+				op = dirty[i].op
+			} else {
+				if (dirty[i].new) {
+					op = "new"
+				} else {
+					op = "replace"
+				}
+			}
+			patch.push( { op: op, path: dirty[i].path, value: dirty[i].value })
+
+			let ref = parsePath(dirty[i].path)
+			if (ref.type === "pointmaps") {
+				dirty[i].value.a = Number(dirty[i].value.a)
+				dirty[i].value.b = Number(dirty[i].value.b)
+			}
+		}
+
+		console.debug("Backend.push (patch)", patch)
+
+		let backend = this
+		api.fetch("PATCH", this.endpoint, patch)
+			.then(function(data) {
+				updateIds(backend, data)
+				for (let i in dirty) {
+					delete dirty[i].dirty
+					delete dirty[i].new
+				}
+				backend.cb("push")
+			})
+	}
 
 	/*
 	 * Pull updates from the server.
 	 * (Set AddData diff option to false, and call newDiff()
 	 * once at the end.)
 	 */
-	//pull() {}
+	pull() {
+		let backend = this
+		api.fetch("GET", this.endpoint)
+			.then(function(data) {
+				let diff = gendiff("", backend.cache, data)
+				console.log("Backend.Pull (diff)", diff)
+				backend.newDiff()
+				let options = { clean: true }
+				for (let i in diff) {
+					let ref = parsePath(diff[i].path)
+					if (diff[i].op === "remove") {
+						backend.removeData(ref.type, ref.id, options)
+					} else {
+						backend.addData(ref.type, diff[i].value, ref.id, options)
+					}
+				}
+				backend.newDiff()
+				backend.cb("pull")
+			})
+	}
+}
+
+function gendiff(path, a, b) {
+	let diffs = []
+
+	for (let ak in a) {
+		let p = path + "/" + ak
+		if (!b[ak]) {
+			diffs.push({ op: "remove", path: p })
+		} else if (typeof a === "object") {
+			diffs = diffs.concat(gendiff(p, a[ak], b[ak]))
+		} else if (a[ak] != b[ak]) {
+			diffs.push({ op: "replace", path: p, value: b[ak] })
+		}
+	}
+	for (let bk in b) {
+		if (!a[bk]) {
+			diffs.push({ op: "add", path: path + "/" + bk, value: b[bk] })
+		}
+	}
+
+	return diffs
+}
+
+function updateIds(backend, newdata) {
+	for (let type in newdata) {
+		for (let id in newdata[type]) {
+			let x = newdata[type][id]
+			if (x.old_id) {
+				console.debug("Backend.updateIds", `ID ${x.old_id} > ${id}`)
+				if (backend.cache[type][id]) {
+					throw new Error("ERROR: Pull id conflict")
+				}
+				backend.cache[type][id] = backend.cache[type][x.old_id]
+				// Both old and new exist at the moment, hense;
+				backend.cb("updateId", { type: type, old: x.old_id, new: id })
+				delete backend.cache[type][x.old_id]
+			}
+		}
+	}
 }
 
 function diffPath(type, id) {
-	return type + "/" + id
+	return "/" + type + "/" + id
 }
 
-function uniqueKey(obj, prefix) {
+export function parsePath(path) {
+	let a = path.split("/")
+	if (a.length != 3) {
+		throw new Error("Invalid path")
+	}
+	return newRef(a[1], a[2])
+}
+
+export function newRef(type, id) {
+	return { type: type, id: id }
+}
+
+function uniqueKey(obj) {
 	let key
 	do {
-		key = (prefix ? prefix : "") + Math.random().toString().split(".").join("")
+		key = Number(Math.random().toString().split(".").join(""))
 	} while (obj[key])
 
 	// Wonder if there's an atomic way of testing whether a key is undefined and doing this?
 	// Doesn't matter much for my purposes probably.
-	obj[key] = true
+	obj[key] = null
 	return key
 }

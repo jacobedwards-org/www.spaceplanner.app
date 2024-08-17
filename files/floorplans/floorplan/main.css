@@ -20,6 +20,11 @@ header > .toolbar {
 	margin: .25em;
 }
 
+header > .toolbar > li {
+	float: left;
+	padding-right: 1em;
+}
+
 svg {
 	flex: 1;
 	border:  ridge thin;
@@ -49,4 +54,17 @@ svg {
 
 .mode_selector.selected {
 	border-color: blue;
+}
+
+aside.message {
+	position: absolute;
+	box-sizing: border-box;
+	bottom: 0;
+	left: 0;
+	width: 100vw;
+	background-color: rgba(0, 0, 0, 0.6);
+	color: white;
+	border: thin solid darkgrey;
+	border-radius: 0;
+	padding: .2em;
 }

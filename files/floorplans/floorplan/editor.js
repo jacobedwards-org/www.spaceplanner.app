@@ -1,5 +1,5 @@
 import { default as SVG } from "/lib/github.com/svgdotjs/svg.js/svg.js"
-import { FloorplanBackend as Backend } from "./backend.js"
+import * as backend from "./backend.js"
 
 SVG.extend(SVG.Element, {
 	select: function() {
@@ -41,17 +41,31 @@ SVG.extend(SVG.Circle, {
 })
 
 export class FloorplanEditor {
-	constructor(svg) {
+	constructor(svg, floorplan, options) {
+		if (!options) {
+			options = {}
+		}
+
 		this.draw = svg
 		this.mode
 		this.modes = {}
 		this.mode_states = {}
-		this.backend = new Backend()
+
+		if (!options.backend) {
+			options.backend = {}
+		}
+		if (!options.backend.callbacks) {
+			options.backend.callbacks = {}
+		}
+
+		let editor = this
+		options.backend.callbacks.updateId = function(ids) { editor.updateId(ids) }
+		this.backend = new backend.FloorplanBackend(floorplan, options.backend)
 		this.updated = null // last time updated from backend
 
-		let floorplan = this.draw.group().attr({ id: "floorplan" })
-		floorplan.group().attr({ id: "walls" }) // lines
-		floorplan.group().attr({ id: "points" }) // circles
+		let data = this.draw.group().attr({ id: "floorplan" })
+		data.group().attr({ id: "walls" }) // lines
+		data.group().attr({ id: "points" }) // circles
 	}
 
 	addMode(name, mode) {
@@ -178,11 +192,11 @@ export class FloorplanEditor {
 	}
 
 	updateDisplay() {
-		let diffs = this.backend.updatesSince(this.updated + 1)
+		let diffs = this.backend.updatesSince(this.updated ? this.updated + 1 : null)
 		if (diffs.length === 0) {
 			return
 		}
-		this.updated = diffs[0].time
+		this.updated = diffs.at(-1).time
 		this.applyDiff(diffs)
 	}
 
@@ -241,7 +255,7 @@ export class FloorplanEditor {
 						wall.plot(a.x, a.y, b.x, b.y)
 					} else {
 						wall = editor.draw.findExactlyOne("#walls")
-							.line(a.x, a.y, b.x, b.y).stroke("black")
+							.line(a.x, a.y, b.x, b.y).stroke("black").attr({ id: name })
 					}
 				}
 			},
@@ -260,20 +274,26 @@ export class FloorplanEditor {
 			throw new Error("Unexpected patch operation")
 		}
 
-		let path = diff.path.split("/")
-		if (path.length != 2) {
-			throw new Error("Expected only two path elements")
-		}
-		let type = path[0]
-		let id = path[1]
+		let ref = backend.parsePath(diff.path)
 		let op = reverse ? reverseOps[diff.op] : diff.op
 
-		if (!ops[op][type]) {
+		if (!ops[op][ref.type]) {
 			throw new Error("Unhandled patch")
 		}
-		ops[op][type](type + "_" + id, diff.value)
+		ops[op][ref.type](refId(ref), diff.value)
+	}
+
+	updateId(ids) {
+		let e = this.findRef(backend.newRef(ids.type, ids.old))
+		e.attr({ id: refId(backend.newRef(ids.type, ids.new)) })
+		console.log("Editor.updateId", `${ids.old} -> ${ids.new}`)
+	}
+
+	findRef(ref) {
+		return this.draw.findExactlyOne(byId(refId(ref)))
 	}
 }
+
 
 function remove_mode_handlers(target, mode_handlers) {
 	for (let event in mode_handlers) {
@@ -295,4 +315,8 @@ function add_mode_handlers(target, mode_handlers) {
 
 function byId(id) {
 	return "#" + id
+}
+
+function refId(ref) {
+	return ref.type + "_" + ref.id
 }
