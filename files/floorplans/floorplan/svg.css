@@ -2,11 +2,11 @@
 
 #walls > line {
 	stroke: black;
-	stroke-width: 2;
+	stroke-width: 400;
 }
 
 .point {
-	r: 2;
+	r: 250;
 	fill: lightgrey;
 }
 
