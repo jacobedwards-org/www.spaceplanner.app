@@ -9,7 +9,7 @@ install:
 uninstall:
 	rm -rf ${prefix}/*
 
-install_libs:
+install_libs: update_libs
 	for lib in $$(libnames ${libs}); do \
 		rm -rf ${prefix}/lib/"$$lib"; \
 		mkdir -p ${prefix}/lib/"$$lib"; \
