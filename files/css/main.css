@@ -1,48 +1,64 @@
+:root {
+	--main-color: #8ACFFF;
+}
+
 body {
-	margin: 4rem;
+	margin-top: 2.5em !important;
 }
 
-nav {
-        top: 0;
-        left: 0;
+#bar {
         position: absolute;
-        margin: 0;
-        width: 100%;
-        height: 2rem;
-        background-color: lightgrey;
+	box-sizing: border-box;
+	top: 0;
+	left: 0;
+	width: 100vw;
+	max-width: 100%;
+        height: 2em;
+        background-color: var(--main-color);
+	border-bottom: medium ridge var(--main-color);
+	display: flex;
+	align-items: center;
+	padding: .4em;
 }
 
-nav > ul {
-        margin: 0;
-        padding: 0;
+#bar > ul {
+	list-style: none;
+	display: inline-block;
+	padding: 0;
+	margin: 0;
 }
 
-nav > ul > li {
-        /* not quite needed */
-        display: inline-block;
-        float: left;
+#bar > ul.right {
+	margin-top: .3em;
+	margin-left: auto;
 }
 
-nav > ul:nth-child(2) {
-        float: right;
+#bar > ul > li {
+	display: inline-block;
 }
 
-nav > ul > li {
-        display: block;
-        padding: .5rem;
-        height: 1rem;
+#bar > ul > li > a {
+	padding: 0.1em;
+}
+
+#bar > ul > li > a > img.icon {
+	width: 1.5em;
+	border-radius: .2em;
 }
 
 aside {
 	float: right;
 }
 
+.icon {
+	image-rendering: crisp-edges;
+	border: thin solid rgba(0, 0, 0, .2);
+}
+
 input[type="image"].icon {
 	width: 2em;
-	image-rendering: crisp-edges;
 	margin: .15rem;
 	padding: .15rem;
-	border: .05em solid rgba(0, 0, 0, .2);
 	border-radius: .4em;
 }
 

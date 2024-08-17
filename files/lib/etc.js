@@ -1,10 +1,18 @@
 import * as api from "/lib/api.js"
 import * as ui from "/lib/ui.js"
 
-function link(name, href) {
+function link(name, href, icon) {
 	let a = document.createElement("a")
 	a.href = href
-	a.appendChild(document.createTextNode(name))
+	if (icon) {
+		let i = document.createElement("img")
+		i.setAttribute("src", "/icons/" + icon + "-outline.svg")
+		i.setAttribute("alt", name + " icon")
+		i.classList.add("icon")
+		a.appendChild(i)
+	} else {
+		a.appendChild(document.createTextNode(name))
+	}
 	return a
 }
 
@@ -16,25 +24,25 @@ function additem(list, element) {
 
 export function bar(on) {
 	if (!on) {
-		on = document.querySelector("body")
+		on = document.body
 	}
 
 	let nav = document.createElement("nav")
-	let left = document.createElement("ul")
-	nav.appendChild(left)
-	let right = document.createElement("ul")
-	nav.appendChild(right)
+	nav.id = "bar"
+
+	let left = nav.appendChild(document.createElement("ul"))
+	left.classList.add("left")
+
+	let right = nav.appendChild(document.createElement("ul"))
+	right.classList.add("right")
 
 	if (!api.logged_in()) {
-		additem(right, link("Login", "/login"))
+		additem(right, link("Login", "/login", "log-in"))
 	} else {
-		let jwt_payload = api.token_payload()
-		let li = document.createElement("li")
-		li.appendChild(document.createTextNode("Welcome "))
-		li.appendChild(link(jwt_payload["id"], "/settings"))
-		left.appendChild(li)
-		additem(right, link("Floorplans", "/floorplans"))
-		additem(right, link("Logout", "/logout"))
+		additem(left, link("Floorplans", "/floorplans"))
+
+		additem(right, link("Settings", "/settings", "settings"))
+		additem(right, link("Logout", "/logout", "log-out"))
 	}
 
 	on.prepend(nav)

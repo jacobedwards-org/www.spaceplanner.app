@@ -14,6 +14,7 @@ const buttons = {
 	
 function init() {
 	etc.authorize()
+	etc.bar()
 
 	let floorplan = (new URLSearchParams(new URL(document.URL).search)).get("name")
 	if (!floorplan) {
@@ -24,7 +25,7 @@ function init() {
 	let suffix = h1.appendChild(document.createTextNode(""))
 
 	let draw = SVG()
-		.addTo("#floorplan_container")
+		.addTo("#editor")
 		.viewbox("0 0 400 400")
 		.panZoom({
 			panButton: buttons.right,
