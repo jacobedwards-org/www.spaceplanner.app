@@ -140,12 +140,36 @@ export class FloorplanEditor {
 
 		let editor = this
 		options.backend.callbacks.updateId = function(ids) { editor.updateId(ids) }
+
 		this.backend = new backend.FloorplanBackend(floorplan, options.backend)
 		this.updated = null // last time updated from backend
+
+		this.grids = {}
+		for (let system in this.units.systems) {
+			this.grids[system] = gridSystem(this, system)
+		}
+
+		this.draw.rect().attr({ id: "grid" })
 
 		let data = this.draw.group().attr({ id: "floorplan" })
 		data.group().attr({ id: "walls" }) // lines
 		data.group().attr({ id: "points" }) // circles
+
+		// Resize grid when appropriate
+		this.draw.on("zoom", function(event) {
+			editor.updateGrid(event.detail.box)
+		})
+		this.draw.on("panning", function(event) {
+			editor.updateGrid(event.detail.box)
+		})
+		let resize = new ResizeObserver(function(entries) {
+			if (entries[0].target != editor.draw.node) {
+				throw new Error("Expected draw node")
+			}
+			console.debug("Editor resized")
+			editor.updateGrid()
+		})
+		resize.observe(editor.draw.node)
 	}
 
 	addMode(name, mode) {
@@ -218,6 +242,34 @@ export class FloorplanEditor {
 		this.mode = newmode
 		console.log("Mode", this.mode)
 		return this
+	}
+
+	useGrid(system) {
+		let grid = this.draw.findExactlyOne("#grid")
+		if (!system) {
+			grid.attr("visibility", "hidden")
+		} else {
+			grid.fill(this.grids[system].url()).attr("visibility", null)
+		}
+	}
+
+	updateGrid(box) {
+		let grid = this.draw.findExactlyOne("#grid")
+		if (!box) {
+			box = this.draw.viewbox()
+		}
+
+		const swap = { x: "y", y: "x", width: "height", height: "width" }
+		const map = { width: "x", height: "y" }
+
+		// Reads easy, right?
+		let real = this.draw.node.getBoundingClientRect()
+		let base = (real.width > real.height) ? "height" : "width"
+		let val = real[swap[base]] * (box[base] / real[base])
+		let diff = val - box[swap[base]]
+		box[map[swap[base]]] -= diff / 2
+		box[swap[base]] = val
+		grid.size(box.width, box.height).move(box.x, box.y)
 	}
 
 	// Should be called after each user "action"
@@ -374,7 +426,6 @@ export class FloorplanEditor {
 	}
 }
 
-
 function remove_mode_handlers(target, mode_handlers) {
 	for (let event in mode_handlers) {
 		for (let handler in mode_handlers[event]) {
@@ -391,6 +442,28 @@ function add_mode_handlers(target, mode_handlers) {
 			target.on(event, mode_handlers[event][handler])
 		}
 	}
+}
+
+function gridPattern(editor, unit, using) {
+	let n = editor.units.get(unit)
+	return editor.draw.pattern(n, n, function(on) {
+		if (using) {
+			on.rect(n, n).fill(using.url())
+		}
+		on.path(`M ${n} 0 L 0 0 0 ${n}`)
+			.fill("none")
+			.stroke({ width: n / 50, color: "grey" })
+	}).attr({ id: "grid_" + unit + "_pattern", patternUnits: "userSpaceOnUse" })
+}
+
+function gridSystem(editor, system) {
+	let unit = editor.units.systems[system]
+	let last
+
+	do {
+		last = gridPattern(editor, unit, last)
+	} while ((unit = editor.units.data[unit].next));
+	return last
 }
 
 function byId(id) {

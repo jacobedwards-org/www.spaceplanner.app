@@ -66,6 +66,7 @@ function init() {
 		editor.addMode(mode, modes[mode])
 	}
 	editor.useMode("testing")
+	editor.useGrid("imperial")
 
 	let toolbar = document.querySelector("header")
 		.appendChild(document.createElement("ul"))
@@ -75,6 +76,11 @@ function init() {
 	toolbar.append(item(
 		selector(editor, editor.modes, function(mode) { editor.useMode(mode) },
 			{ current: editor.mode, text: "Modes:" }
+		)
+	))
+	toolbar.append(item(
+		selector(editor, editor.grids, function(system) { editor.useGrid(system) },
+			{ current: "imperial", text: "Grid systems:" }
 		)
 	))
 
