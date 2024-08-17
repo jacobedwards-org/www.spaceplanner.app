@@ -51,14 +51,14 @@ function api_fetch(method, endpoint, body) {
 export { api_fetch as fetch }
 
 export function refresh_token() {
-	api_fetch("GET", "tokens/refresh")
+	api_fetch("GET", "tokens")
 		.then(function(resp) {
 			update_token(resp.token)
 		})
 }
 
 export function update_token(t) {
-	console.log("update_token(" + t + ")")
+	console.log("update_token", t)
 	if (!t) {
 		localStorage.removeItem("token")
 		localStorage.removeItem("username")
@@ -69,9 +69,7 @@ export function update_token(t) {
 }
 
 export function token() {
-	let t = localStorage.getItem("token")
-	console.debug("token() > " + t)
-	return t
+	return localStorage.getItem("token")
 }
 
 export function token_payload(t) {

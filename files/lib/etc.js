@@ -46,6 +46,17 @@ export function authorize() {
                 // back to the page that was trying to be accessed
                 window.location.href = "/login"
         }
+	keep_authorized()
+}
+
+function keep_authorized() {
+	return setInterval(function() {
+		let left = api.authorized_duration() / 60
+		if (left < 10) {
+			console.log("keep_authorized", "refreshing", left, "minutes left")
+			api.refresh_token()
+		}
+	}, 1000 * 30)
 }
 
 export function error(message, on) {
