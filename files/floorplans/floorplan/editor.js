@@ -40,6 +40,79 @@ SVG.extend(SVG.Circle, {
 	}
 })
 
+class Units {
+	constructor() {
+		this.data = {}
+		this.systems = {}
+	}
+
+	add(name, factor, options) {
+		options = options ?? {}
+
+		if (!name || !factor) {
+			throw new Error("Requires name and factor")
+		}
+		if (this.data[name]) {
+			throw new Error("Already exists")
+		}
+		if (options.base && (!this.data[options.base] || this.data[options.base].next)) {
+			throw new Error("Invalid base (already used or does not exist)")
+		}
+		if (options.base && options.system) {
+			throw new Error("Class may only be set on base units")
+		}
+		if (options.system && this.systems[options.system]) {
+			throw new Error("Unit system already exists")
+		}
+
+		this.data[name] = {
+			name: name,
+			factor: factor,
+		}
+		if (options.system) {
+			this.data[name].system = options.system
+			this.systems[options.system] = name
+		}
+		if (options.symbol) {
+			this.data[name].symbol = options.symbol
+		}
+		if (options.base) {
+			this.data[options.base].next = name
+			this.data[name].base = options.base
+		}
+	}
+
+	get(name, num) {
+		if (!name || !this.data[name]) {
+			throw new Error("Invalid unit")
+		}
+		let n = this.data[name].factor
+		if (this.data[name].base) {
+			n *= this.get(this.data[name].base)
+		}
+		return n * (num ?? 1)
+	}
+
+	system(name) {
+		return this.data[this.smallest(name)].system
+	}
+
+	smallest(name) {
+		return traverse(name, "base")
+	}
+
+	biggest(name) {
+		return traverse(name, "next")
+	}
+
+	walk(name, key) {
+		while (this.data[name][key]) {
+			name = this.data[name][key]
+		}
+		return name
+	}
+}
+
 export class FloorplanEditor {
 	constructor(svg, floorplan, options) {
 		if (!options) {
@@ -50,6 +123,13 @@ export class FloorplanEditor {
 		this.mode
 		this.modes = {}
 		this.mode_states = {}
+
+		// Setup units
+		this.units = new Units()
+		this.units.add("inch", 96, { symbol: '"', system: "imperial" })
+		this.units.add("foot", 12, { base: "inch", symbol: "'" })
+		this.units.add("centimeter", this.units.get("inch") / 2.54, { system: "metric" })
+		this.units.add("meter", 100, { base: "centimeter" })
 
 		if (!options.backend) {
 			options.backend = {}

@@ -26,11 +26,11 @@ function init() {
 
 	let draw = SVG()
 		.addTo("#editor")
-		.viewbox("0 0 400 400")
 		.panZoom({
 			panButton: buttons.right,
-			zoomMin: .25,
-			zoomMax: 4,
+			// These need to be set using device size
+			zoomMin: .025,
+			zoomMax: .5,
 			zoomFactor: .5
 		})
 
@@ -52,6 +52,7 @@ function init() {
 			}
 		}
 	})
+	editor.draw.viewbox(0, 0, editor.units.get("foot", 40), editor.units.get("foot", 40))
 
 	let push = ui.button("Push", "Push updates", "arrow-up",
 		{ handlers: { click: function() { editor.backend.push(); notify("Pushed floorplan", "pushpull") } } })
