@@ -2,8 +2,11 @@
 
 set -e
 
-base="${1:%@*}"
-tag="${1#*@}"
+base="${1%%@*}"
+tag="${1##*@}"
+test "$tag" = "$1" &&
+	tag=''
+
 url=https://"$base"
 dir=lib/"$base"/src
 
@@ -17,7 +20,8 @@ cd "$dir"
 
 ${fetch:-true} &&
 	git fetch -q
-git checkout -q "$tag"
+test "$tag" &&
+	git checkout -q "$tag"
 
 # Reset would work, but this seems safer
 # (In case the git directory is somehow deleted, etc.)
