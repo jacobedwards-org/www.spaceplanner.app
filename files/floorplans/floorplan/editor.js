@@ -44,6 +44,7 @@ class Units {
 	constructor() {
 		this.data = {}
 		this.systems = {}
+		this.symbols = {}
 	}
 
 	add(name, factor, options) {
@@ -64,6 +65,9 @@ class Units {
 		if (options.system && this.systems[options.system]) {
 			throw new Error("Unit system already exists")
 		}
+		if (options.symbol && this.symbols[options.symbol]) {
+			throw new Error("Symbol already exists")
+		}
 
 		this.data[name] = {
 			name: name,
@@ -75,6 +79,7 @@ class Units {
 		}
 		if (options.symbol) {
 			this.data[name].symbol = options.symbol
+			this.symbols[options.symbol] = name
 		}
 		if (options.base) {
 			this.data[options.base].next = name
