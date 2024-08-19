@@ -177,6 +177,18 @@ export class FloorplanEditor {
 		resize.observe(editor.draw.node)
 	}
 
+	useUnits(system) {
+		if (!this.units.systems[system]) {
+			throw new Error("No such system")
+		}
+		this.unitSystem = system
+		this.useGrid(system)
+	}
+
+	get unit() {
+		return this.units.systems[this.unitSystem]
+	}
+
 	addMode(name, mode) {
 		if (this.modes[name]) {
 			throw new Error("Mode already exists")
