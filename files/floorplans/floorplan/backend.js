@@ -323,7 +323,7 @@ export class FloorplanBackend {
 		console.debug("Backend.push (patch)", patch)
 
 		let backend = this
-		api.fetch("PATCH", this.endpoint, patch)
+		return api.fetch("PATCH", this.endpoint, patch)
 			.then(function(data) {
 				updateIds(backend, data)
 				for (let i in dirty) {
@@ -341,7 +341,7 @@ export class FloorplanBackend {
 	 */
 	pull() {
 		let backend = this
-		api.fetch("GET", this.endpoint)
+		return api.fetch("GET", this.endpoint)
 			.then(function(data) {
 				let diff = gendiff("", backend.cache, data)
 				console.log("Backend.Pull (diff)", diff)
