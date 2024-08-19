@@ -1,7 +1,8 @@
 prefix = /var/www/htdocs/www.spaceplanner.app
 libs =\
 	github.com/svgdotjs/svg.js@3.2.4 \
-	github.com/svgdotjs/svg.panzoom.js@2.1.2
+	github.com/svgdotjs/svg.panzoom.js@2.1.2 \
+	github.com/ros2jsguy/threejs-math@9a7b4c81c58b200b11670fd597edadd5972c0ae5 \
 
 install:
 	rsync $$(libnames ${libs} | sed 's/^/--exclude=lib\//') -va --del files/ ${prefix}

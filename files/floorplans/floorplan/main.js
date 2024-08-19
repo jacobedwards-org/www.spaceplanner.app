@@ -3,8 +3,33 @@ import "/lib/github.com/svgdotjs/svg.panzoom.js/svg.panzoom.js"
 import * as ui from "/lib/ui.js"
 import * as etc from "/lib/etc.js"
 import { FloorplanEditor as Editor } from "./editor.js"
+import { Vector2 } from "/lib/github.com/ros2jsguy/threejs-math/math/Vector2.js"
+
+SVG.extend(SVG.Point, {
+	vec: function() {
+		return new Vector2(this.x, this.y)
+	}
+})
+
+SVG.extend(SVG.Line, {
+	vecs: function() {
+		let a = this.array()
+		let vecs = []
+		for (let i in a) {
+			vecs.push(new Vector2(a[i][0], a[i][1]))
+		}
+		return vecs
+	}
+})
+
+SVG.extend(SVG.Shape, {
+	vec: function() {
+		return new Vector2(this.x(), this.y())
+	}
+})
 
 const messageTimeout = 4000
+const movingAddTimeout = 250
 
 const buttons = {
 	left: 0,
@@ -52,6 +77,7 @@ function init() {
 			}
 		}
 	})
+	editor.useUnits("imperial")
 	editor.draw.viewbox(0, 0, editor.units.get("foot", 40), editor.units.get("foot", 40))
 
 	let push = ui.button("Push", "Push updates", "arrow-up",
@@ -65,8 +91,7 @@ function init() {
 	for (let mode in modes) {
 		editor.addMode(mode, modes[mode])
 	}
-	editor.useMode("testing")
-	editor.useGrid("imperial")
+	editor.useMode("Precise")
 
 	let toolbar = document.querySelector("header")
 		.appendChild(document.createElement("ul"))
@@ -79,12 +104,17 @@ function init() {
 		)
 	))
 	toolbar.append(item(
-		selector(editor, editor.grids, function(system) { editor.useGrid(system) },
-			{ current: "imperial", text: "Grid systems:" }
+		selector(editor, editor.units.systems, function(system) { editor.useUnits(system) },
+			{ current: editor.unitSystem, text: "Units:" }
 		)
 	))
 
 	editor.backend.pull()
+		.then(function() {
+			if (editor.draw.findExactlyOne("#points").children().length === 0) {
+				editor.addPoint({ x: 0, y: 0 })
+			}
+		})
 }
 
 function selector(editor, things, select, options) {
@@ -124,12 +154,12 @@ function selector(editor, things, select, options) {
 }
 
 let modes = {
-	none: {
+	None: {
 		handlers: {
 			contextmenu: preventDefaultHandler
 		}
 	},
-	testing: {
+	Testing: {
 		points: true,
 		handlers: {
 			/*
@@ -140,7 +170,222 @@ let modes = {
 			contextmenu: preventDefaultHandler,
 			click: addWallHandler
 		}
+	},
+	Precise: {
+		points: true,
+		handlers: {
+			contextmenu: preventDefaultHandler,
+			mousedown: preciseAddWallHandler,
+			mousemove: preciseAddWallHandler,
+			mouseup: preciseAddWallHandler,
+			keydown: preciseAddWallHandler
+		}
 	}
+}
+
+// mousedown, mousemove, mouseup, keydown
+function preciseAddWallHandler(event, editor, state) {
+	const cleanup = function() {
+		state.line.remove()
+		state.point.remove()
+		state.terminal.remove()
+		for (let i in state) {
+			delete state[i]
+		}
+	}
+	const updatePoint = function(p, options) {
+		options = options ?? {}
+		let origin = state.from.vec()
+		state.point.move(p.x, p.y)
+		let instead = editor.pointAt(p)
+		if (instead && instead != state.from) {
+			state.point.hide()
+			p = instead.select().pos()
+			state.gotsnapped = true
+		} else if (state.gotsnapped) {
+			state.gotsnapped = false
+			state.point.show().select()
+		}
+		state.line.plot(origin.x, origin.y, p.x, p.y)
+		if (!options.leave_input) {
+			state.len.value = userLength(editor,
+			    editor.units.snapTo(origin.distanceTo(p), editor.unit))
+		}
+	}
+	const addWall = function() {
+		state.point.remove()
+		let p = editor.addPoint(state.point.pos())
+		editor.mapPoints("wall", state.from, p)
+		cleanup()
+		editor.finishAction()
+	}
+
+	if (!event.key && event.button !== buttons.left) {
+		return
+	}
+
+	let p = editor.draw.point(event.clientX, event.clientY).vec()
+	if (event.type === "mousedown") {
+		if (state.point) {
+			if (!state.moving &&
+			    (Date.now() - state.lastmoving <= movingAddTimeout)) {
+				if (state.from.vec().distanceTo(p) > 0) {
+					addWall()
+				} else {
+					cleanup();
+				}
+				event.preventDefault()
+				return
+			}
+			if (state.point.inside(p.x, p.y)) {
+				state.moving = true
+			}
+			event.preventDefault()
+			return
+		}
+
+		state.from = editor.pointAt(p)
+		if (!state.from) {
+			return
+		}
+		state.moving = true
+		state.line = editor.ui.line()
+			.addClass("wall")
+			.addClass("preview")
+		state.point = editor.ui.circle()
+			.addClass("point")
+			.addClass("preview")
+			.select()
+		state.terminal = document.body
+			.appendChild(document.createElement("aside"))
+		state.terminal.classList.add("terminal")
+		state.len = state.terminal
+			.appendChild(document.createElement("input"))
+		state.len.value = 0
+		state.len.addEventListener("input", function(event) {
+			let vecs = state.line.vecs()
+			let len
+			try {
+				len = editor.units.snapTo(
+					parseUserLength(editor, event.target.value), editor.unit
+				)
+			}
+			catch (err) {
+				state.len.classList.add("invalid")
+				console.log("Invalid input length", err)
+				return
+			}
+			state.len.classList.remove("invalid")
+			if (len> 0) {
+				vecs[1] = setLength(vecs[0], vecs[1], len)
+				updatePoint(vecs[1], { leave_input: true })
+			}
+		})
+		event.preventDefault()
+		return
+	}
+
+	if (!state.line) {
+		return
+	}
+
+	if (event.type === "mousemove") {
+		if (!state.moving) {
+			return
+		}
+		let sp = state.from.vec()
+		p = snap(editor.units.snapTo(p, editor.unit), sp, 8)
+		updatePoint(p)
+	} else if (event.type === "mouseup") {
+		state.moving = false
+		state.lastmoving = Date.now()
+	} else if (event.type === "keydown") {
+		if (event.key === "Enter") {
+			addWall()
+			return
+		} else if (event.key !== "Escape") {
+			return
+		}
+		cleanup();
+	}  else {
+		return
+	}		
+	event.preventDefault()
+}
+
+function parseUserLength(editor, length) {
+	let a = length.replaceAll(" ", "").split(/([0-9]+)/)
+	let amount
+	let rebuilt = []
+	for (let i in a) {
+		if (a[i].length === 0) {
+			;
+		} else  if (!amount) {
+			amount = Number(a[i])
+			if (amount === NaN) {
+				throw new Error("Invalid number")
+			}
+		} else {
+			if (!editor.units.symbols[a[i]]) {
+				throw new Error("Invalid user length")
+			}
+			rebuilt.push({ symbol: a[i], amount: amount })
+			amount = null
+		}
+	}
+	if (amount) {
+		rebuilt.push({ unit: editor.unit, amount: amount })
+	}
+	
+	return editor.units.combine(rebuilt)
+}
+
+function userLength(editor, units) {
+	let a = editor.units.separate(units, editor.unitSystem)
+	let words = []
+	for (let i in a) {
+		if (!a[i].unit) {
+			// We don't allow anything smaller than smallest defined unit,
+			// though maybe this should be an error condition
+			continue
+		}
+		words.push(String(a[i].amount) + (a[i].symbol ?? a[i].name))
+	}
+	return words.join(" ")
+}
+
+// I suppose this is why math is important...
+// and the internet:
+// <https://stackoverflow.com/questions/42510144/calculate-coordinates-for-45-degree-snap>
+// UPDATE: Probably find an easy way using threejs-math now
+function snap(point, on, directions) {
+	let factor = (directions ?? 4) / 2
+	let dx = point.x - on.x
+	let dy = point.y - on.y
+	let dist = Math.sqrt(Math.pow(dx, 2) + Math.pow(dy, 2))
+	let angle = Math.atan2(dy, dx)
+	angle = Math.round(angle / Math.PI * factor) / factor * Math.PI
+	return new Vector2(
+		on.x + dist * Math.cos(angle),
+		on.y + dist * Math.sin(angle)
+	)
+}
+
+function setLength(a, b, length) {
+	/*
+	 * Not sure if a zero length line is worth supporting, it doesn't
+	 * really work naturally. To support it you would need another
+	 * store of information in addition to the vector
+	 */
+	if (length <= 0) {
+		throw new Error("Zero length line wouldn't be able to be lengthened again")
+		length = 0
+	}
+	/*
+	 * Basically make it's origin zero, normalize it to be from
+	 * 0-1, multiply it by length, then add the origin back to it.
+	 */
+	return b.sub(a).normalize().multiplyScalar(length).add(a)
 }
 
 // click
@@ -155,7 +400,7 @@ function addWallHandler(click, editor) {
 	editor.addPoint(editor.draw.point(click.clientX, click.clientY))
 	editor.updateDisplay()
 	if (editor.draw.findOne("#points").children().length >= 2) {
-		editor.mapPoints("wall")
+		editor.mapSelected("wall")
 	}
 	editor.finishAction()
 	click.preventDefault()

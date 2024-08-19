@@ -63,6 +63,15 @@ svg {
 	border-color: blue;
 }
 
+aside.terminal {
+	position: absolute;
+	bottom: 5vh;
+	right: 5vw;
+	background-color: slategrey;
+	border: thin ridge darkslategrey;
+	color: white;
+}
+
 aside.message {
 	position: absolute;
 	box-sizing: border-box;
@@ -74,4 +83,8 @@ aside.message {
 	border: thin solid darkgrey;
 	border-radius: 0;
 	padding: .2em;
+}
+
+input.invalid {
+	background-color: lightgrey;
 }

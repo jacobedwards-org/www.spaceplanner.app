@@ -214,6 +214,8 @@ export class FloorplanEditor {
 
 		this.draw.rect().attr({ id: "grid" })
 
+		this.ui = this.draw.group().attr({ id: "ui" })
+
 		let data = this.draw.group().attr({ id: "floorplan" })
 		data.group().attr({ id: "walls" }) // lines
 		data.group().attr({ id: "points" }) // circles
@@ -359,6 +361,7 @@ export class FloorplanEditor {
 		}
 		this.backend.addPoint(point)
 		this.updateDisplay()
+		return this.selectedPoint()
 	}
 
 	pointAt(point) {
@@ -372,13 +375,17 @@ export class FloorplanEditor {
 		return pointInside
 	}
 
-	mapPoints(type) {
-		let pointId = function(id) { return id.split("_")[1] }
+	mapSelected(type) {
 		let points = this.selectedPoints()
+		return this.mapPoints(type, points.a, points.b)
+	}
+
+	mapPoints(type, p1, p2) {
+		let pointId = function(id) { return id.split("_")[1] }
 
 		this.backend.mapPoints(type,
-			pointId(points.a.attr("id")),
-			pointId(points.b.attr("id"))
+			pointId(p1.attr("id")),
+			pointId(p2.attr("id"))
 		)
 		this.updateDisplay()
 	}
@@ -504,8 +511,13 @@ export class FloorplanEditor {
 function remove_mode_handlers(target, mode_handlers) {
 	for (let event in mode_handlers) {
 		for (let handler in mode_handlers[event]) {
-			console.debug("Remove mode handler", event, handler, "from", target)
-			target.off(event, mode_handlers[event][handler])
+			console.debug("Remove mode handler", event, handler, "to", target)
+			let h = mode_handlers[event][handler]
+			if (event === "keydown" || event === "keyup") {
+				document.removeEventListener(event, h)
+			} else {
+				target.off(event, h)
+			}
 		}
 	}
 }
@@ -514,7 +526,12 @@ function add_mode_handlers(target, mode_handlers) {
 	for (let event in mode_handlers) {
 		for (let handler in mode_handlers[event]) {
 			console.debug("Add mode handler", event, handler, "to", target)
-			target.on(event, mode_handlers[event][handler])
+			let h = mode_handlers[event][handler]
+			if (event === "keydown" || event === "keyup") {
+				document.addEventListener(event, h)
+			} else {
+				target.on(event, h)
+			}
 		}
 	}
 }

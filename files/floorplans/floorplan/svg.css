@@ -1,5 +1,10 @@
 /* SVG element CSS */
 
+.preview.wall {
+	stroke: grey;
+	stroke-width: 400;
+}
+
 #walls > line {
 	stroke: black;
 	stroke-width: 400;
