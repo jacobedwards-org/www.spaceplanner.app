@@ -40,27 +40,6 @@ export class FloorplanBackend {
 		}
 
 		/*
-		 * Considered making a diff tree, decided against
-		 * since I don't know how I would display it to the
-		 * user usefully. Can still be done in the future.
-		 *
-		 * Array of diff sets (meant to be one user action).
-		 * Oldest last, same with diffs: inside
-		 *  [
-		 *  	// Array of diffs
-		 *  	{
-		 * 		// In a map for future metadata
-		 *  		// Ordered array of differences, in JSON patch format
-		 *  		diff: [
-		 *  			{ op: XXX, path: YYY, value: ZZZ, time: Date.now() }
-		 * 			// e.g.:
-		 *  			{ op: "add", path: "points/399", value: { x: 302, y: 422 }: time: Date.now() }
-		 *  		]
-		 *  	}
-		 *  ]
-		*/
-
-		/*
 		 * I considered making a diff tree, but decided against it
 		 * because I won't know how much value there would be
 		 * in it, especially considering the difficulty in providing
