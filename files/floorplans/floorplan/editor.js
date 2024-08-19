@@ -98,11 +98,11 @@ class Units {
 	}
 
 	smallest(name) {
-		return traverse(name, "base")
+		return this.walk(name, "base")
 	}
 
 	biggest(name) {
-		return traverse(name, "next")
+		return this.walk(name, "next")
 	}
 
 	walk(name, key) {
