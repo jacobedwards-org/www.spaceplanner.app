@@ -214,11 +214,14 @@ export class FloorplanEditor {
 
 		this.draw.rect().attr({ id: "grid" })
 
-		this.ui = this.draw.group().attr({ id: "ui" })
+		this.ui = {}
+		this.ui.bottom = this.draw.group().attr({ id: "bottom" })
 
 		let data = this.draw.group().attr({ id: "floorplan" })
 		data.group().attr({ id: "walls" }) // lines
 		data.group().attr({ id: "points" }) // circles
+
+		this.ui.top = this.draw.group().attr({ id: "top" })
 
 		// Resize grid when appropriate
 		this.draw.on("zoom", function(event) {

@@ -249,10 +249,10 @@ function preciseAddWallHandler(event, editor, state) {
 			return
 		}
 		state.moving = true
-		state.line = editor.ui.line()
+		state.line = editor.ui.bottom.line()
 			.addClass("wall")
 			.addClass("preview")
-		state.point = editor.ui.circle()
+		state.point = editor.ui.top.circle()
 			.addClass("point")
 			.addClass("preview")
 			.select()
