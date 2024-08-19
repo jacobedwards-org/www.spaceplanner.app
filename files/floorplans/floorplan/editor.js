@@ -116,6 +116,38 @@ class Units {
 		}
 		return name
 	}
+
+	separate(units, system) {
+		let parts = []
+		let unit = this.biggest(this.systems[system])
+
+		do {
+			let n = this.get(unit)
+			if (units >= n) {
+				let amount = Math.floor(units / n)
+				units -= amount * n // not sure about floating mod in js
+				parts.push({ unit: unit, symbol: this.data[unit].symbol, amount: amount })
+			}
+		} while (units > 0 && (unit = this.data[unit].base))
+		if (units > 0) {
+			parts.push({ "amount": units })
+		}
+		return parts
+	}
+
+	combine(parts) {
+		let t = 0
+		for (let i in parts) {
+			if (!parts[i].unit) {
+				if (!parts[i].symbol) {
+					throw new Error("Requires unit or symbol")
+				}
+				parts[i].unit = this.symbols[parts[i].symbol]
+			}
+			t += this.get(parts[i].unit, parts[i].amount)
+		}
+		return t
+	}
 }
 
 export class FloorplanEditor {
