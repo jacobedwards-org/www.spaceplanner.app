@@ -148,6 +148,32 @@ class Units {
 		}
 		return t
 	}
+
+	snapTo(x, unit) {
+		let n = this.get(unit)
+		let f = function(x) {
+			x = Math.round(x)
+			return x - (x % n)
+		}
+
+		if (typeof x === "number") {
+			return f(x)
+		} else if (Array.isArray(x)) {
+			for (let i in x) {
+				x[i] = f(x[i])
+			}
+		} else if (typeof x === "object") {
+			for (let i in x) {
+				if (typeof x[i] === "number") {
+					x[i] = f(x[i])
+				}
+			}
+		} else {
+			throw new Error("Unable to snap that")
+		}
+
+		return x
+	}
 }
 
 export class FloorplanEditor {
