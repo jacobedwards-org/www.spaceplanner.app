@@ -297,8 +297,12 @@ function preciseAddWallHandler(event, editor, state) {
 		p = snap(editor.units.snapTo(p, editor.unit), sp, 8)
 		updatePoint(p)
 	} else if (event.type === "mouseup") {
-		state.moving = false
-		state.lastmoving = Date.now()
+		if (state.from.inside(p.x, p.y)) {
+			cleanup();
+		} else {
+			state.moving = false
+			state.lastmoving = Date.now()
+		}
 	} else if (event.type === "keydown") {
 		if (event.key === "Enter") {
 			addWall()
