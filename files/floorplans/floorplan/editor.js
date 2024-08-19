@@ -133,8 +133,8 @@ export class FloorplanEditor {
 		this.units = new Units()
 		this.units.add("inch", 96, { symbol: '"', system: "imperial" })
 		this.units.add("foot", 12, { base: "inch", symbol: "'" })
-		this.units.add("centimeter", this.units.get("inch") / 2.54, { system: "metric" })
-		this.units.add("meter", 100, { base: "centimeter" })
+		this.units.add("centimeter", this.units.get("inch") / 2.54, { symbol: "cm", system: "metric" })
+		this.units.add("meter", 100, { symbol: "m", base: "centimeter" })
 
 		if (!options.backend) {
 			options.backend = {}
