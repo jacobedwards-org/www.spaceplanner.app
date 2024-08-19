@@ -345,19 +345,22 @@ export class FloorplanBackend {
 			.then(function(data) {
 				let diff = gendiff("", backend.cache, data)
 				console.log("Backend.Pull (diff)", diff)
-				backend.newDiff()
-				let options = { clean: true }
-				for (let i in diff) {
-					let ref = parsePath(diff[i].path)
-					if (diff[i].op === "remove") {
-						backend.removeData(ref.type, ref.id, options)
-					} else {
-						backend.addData(ref.type, diff[i].value, ref.id, options)
-					}
-				}
-				backend.newDiff()
+				backend.applyDiff(diff, { clean: true })
 				backend.cb("pull")
 			})
+	}
+
+	applyDiff(diff, options) {
+		this.newDiff()
+		for (let i in diff) {
+			let ref = parsePath(diff[i].path)
+			if (diff[i].op === "remove") {
+				this.removeData(ref.type, ref.id, options)
+			} else {
+				this.addData(ref.type, diff[i].value, ref.id, options)
+			}
+		}
+		this.newDiff()
 	}
 }
 
