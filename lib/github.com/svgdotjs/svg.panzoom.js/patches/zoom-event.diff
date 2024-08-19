@@ -1,0 +1,25 @@
+diff --git a/src/svg.panzoom.js b/src/svg.panzoom.js
+index cb4d5dc..67daea9 100644
+--- a/src/svg.panzoom.js
++++ b/src/svg.panzoom.js
+@@ -165,16 +165,16 @@ extend(Svg, {
+         lvl = zoomMin
+       }
+ 
+-      if (this.dispatch('zoom', { level: lvl, focus: p }).defaultPrevented) {
+-        return this
+-      }
+-
+       this.zoom(lvl, p)
+ 
+       if (margins) {
+         const box = restrictToMargins(this.viewbox())
+         this.viewbox(box)
+       }
++
++      if (this.dispatch('zoom', { level: lvl, box: this.viewbox(), focus: p }).defaultPrevented) {
++        return this
++      }
+     }
+ 
+     const pinchZoomStart = function (ev) {
