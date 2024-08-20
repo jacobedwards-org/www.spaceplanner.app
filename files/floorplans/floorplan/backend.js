@@ -214,13 +214,9 @@ export class FloorplanBackend {
 	get endpoint() {
 		return "floorplans/" + this.floorplan.user + "/" + this.floorplan.name + "/data"
 	}
+
 	// Apply's diffs in order to get to the state at the beginning of the given diff id
 	// reconstructTo(diff) {}
-
-	// Updates since the given time
-	updatesSince(time) {
-		return this.updatesBetween(time)
-	}
 
 	/*
 	 * Add some type of data within the cache.
