@@ -93,6 +93,30 @@ function init() {
 		.appendChild(document.createElement("ul"))
 	toolbar.classList.add("toolbar")
 
+	let undoRedo = document.createElement("li")
+	// These could be hidden when they wouldn't have any effect
+	undoRedo.append(ui.button("Undo",
+		"Undo last action (you may also press u or control-z)",
+		"arrow-undo-circle", {
+			handlers: {
+				click: function() {
+					editor.undo()
+				}
+			}
+		})
+	)
+	undoRedo.append(ui.button("Redo",
+		"Redo next action (you may also press r)",
+		"arrow-redo-circle", {
+			handlers: {
+				click: function() {
+					editor.redo()
+				}
+			}
+		})
+	)
+	toolbar.append(undoRedo)
+
 	toolbar.append(pushpull)
 	toolbar.append(item(
 		selector(editor, editor.modes, function(mode) { editor.useMode(mode) },
@@ -174,9 +198,29 @@ let modes = {
 			mousedown: preciseAddWallHandler,
 			mousemove: preciseAddWallHandler,
 			mouseup: preciseAddWallHandler,
-			keydown: preciseAddWallHandler
+			keydown: [undoRedoHandler, preciseAddWallHandler]
 		}
 	}
+}
+
+// keydown
+function undoRedoHandler(event, editor) {
+	if (event.ctrlKey) {
+		if (event.key === "z") {
+			editor.undo()
+		} else {
+			return
+		}
+	} else {
+		if (event.key === "u") {
+			editor.undo()
+		} else if (event.key === "r") {
+			editor.redo()
+		} else {
+			return
+		}
+	}
+	event.preventDefault()
 }
 
 // mousedown, mousemove, mouseup, keydown
