@@ -69,10 +69,6 @@ function init() {
 				},
 				push: function() {
 					suffix.data = ""
-				},
-				newdiff: function() {
-					suffix.data = "*"
-					editor.updateDisplay()
 				}
 			}
 		}

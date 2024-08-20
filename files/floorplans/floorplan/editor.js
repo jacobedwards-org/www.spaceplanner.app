@@ -205,7 +205,9 @@ export class FloorplanEditor {
 		options.backend.callbacks.updateId = function(ids) { editor.updateId(ids) }
 
 		this.backend = new backend.FloorplanBackend(floorplan, options.backend)
-		this.updated = null // last time updated from backend
+
+		// The diff which reflects the state of the displayed objects
+		this.diff = null
 
 		this.grids = {}
 		for (let system in this.units.systems) {
@@ -354,7 +356,7 @@ export class FloorplanEditor {
 
 	// Should be called after each user "action"
 	finishAction() {
-		this.backend.newDiff()
+		this.backend.history.newGroup()
 	}
 
 	addPoint(point) {
@@ -409,12 +411,12 @@ export class FloorplanEditor {
 	}
 
 	updateDisplay() {
-		let diffs = this.backend.updatesSince(this.updated ? this.updated + 1 : null)
-		if (diffs.length === 0) {
-			return
+		let diffs = this.backend.history.between(this.diff ?? 0, this.backend.history.diff.id)
+		if (diffs.length > 0) {
+			this.applyDiff(diffs)
+			this.diff = diffs.at(-1).id
+			console.debug("Editor.updateDisplay", "Updated display to diff id", this.diff)
 		}
-		this.updated = diffs.at(-1).time
-		this.applyDiff(diffs)
 	}
 
 	applyDiff(diff, reverse) {

@@ -1,5 +1,175 @@
 import * as api from "/lib/api.js"
 
+class BackendHistory {
+	constructor() {
+			// The current position in history (diffs)
+			this.place = null,
+	
+			// Metadata for diff groups
+			this.groups = [],
+	
+			// Actual changes
+			this.diffs = []
+	}
+
+	get diff() {
+		return this.diffs[this.place]
+	}
+
+	get group() {
+		if (!this.diff) {
+			if (this.groups.length === 1) {
+				return this.groups[0]
+			}
+			return undefined
+		}
+		return this.groups[this.diff.group]
+	}
+
+	newGroup() {
+		console.log(this.groups, this.diff, this.group)
+		if (this.groups.length > 0) {
+			if (this.group.length === 0) {
+				console.warn("Backend.History.newGroup",
+					"Not creating new group: In an empty group")
+				return this.group.id
+			}
+			this.group.last = this.place
+			if (this.group.id < this.groups.length) {
+				// Truncate history to this point since we're altering it
+				this.groups = this.groups.slice(0, this.group.id)
+			}
+		}
+
+		let group = {
+			type: "group",
+			length: 0
+		}
+		group.id = this.groups.push(group) - 1
+		console.debug("Backend.History.newGroup", group.id)
+		// NOTE: New diff callback function
+		return group.id
+	}
+
+	addDiff(op, path, value, oldvalue, options) {
+		if (!op || !path) {
+			throw new Error("Requires op and path")
+		}
+		if (op === "add") {
+			if (!value) {
+				throw new Error("add: Requires value")
+			}
+		} else if (op !== "remove") {
+			throw new Error("Only add and remove operations supported")
+		}
+
+		if (!this.diff) {
+			this.newGroup()
+		}
+
+		let diff = {
+			type: "diff",
+			group: this.group.id,
+			op: op,
+			path: path,
+			value: value,
+			oldValue: oldvalue, // Should probably do some checks on oldvalue
+			time: Date.now()
+		}
+
+		if (!options.clean) {
+			diff.dirty = true
+		}
+
+		diff.id = this.diffs.push(diff) - 1
+		this.group.length += 1
+		this.place = diff.id
+		console.debug("History.Backend.addDiff", diff.id)
+		return diff.id
+	}
+
+	// Get the required operations to go from a, a group or
+	// diff, to b, another group or diff
+	between(a, b) {
+		const getDiff = function(v) {
+			if (typeof(v) === "object") {
+				if (!v.id) {
+					throw new Error("Doesn't have an id")
+				}
+				if (v.type === "diff") {
+					return v.id
+				} else if (v.type === "group") {
+					return this.groups[v.id].first
+				}
+				throw new Error("Not a valid type")
+			}
+			// Diff id
+			return Number(v)
+		}
+
+		a = a ? getDiff(a) : 0
+		b = b ? getDiff(b) : (this.diffs.length - 1)
+		if (a < 0 || a >= this.diffs.length ||
+		    b < 0 || b >= this.diffs.length) {
+			throw new Error("Invalid diff range")
+		}
+
+		if (a == b) {
+			return []
+		}
+
+		let reverse = false
+		if (a < b) {
+			b = this.groups[this.diffs[b].group].last
+			if (!b) {
+				b = this.diffs.length - 1
+			}
+		} else {
+			reverse = true
+			let t = a
+			a = b
+			b = t
+		}
+
+		let diffs = this.diffs.slice(a, b + 1)
+		if (!reverse) {
+			return diffs
+		}
+		for (let i in updates) {
+			diffs[i] = reverseDiff(diffs[i])
+		}
+		return diffs.reverse()
+	}
+
+	reverseDiff(diff) {
+		diff = structuredClone(diff)
+
+		if (diff.op === "add") {
+			if (diff.oldValue) {
+				diff.op = "replace"
+				diff.value = diff.oldValue
+			} else {
+				diff.op = "remove"
+				diff.value = null
+			}
+		} else if (diff.op === "remove") {
+			if (!diff.oldValue) {
+				throw new Error("There should be an old value")
+			}
+			diff.op = "add"
+			diff.value = diff.oldValue
+		} else {
+			throw new Error("Unsupported operation")
+		}
+
+		return diff
+	}
+
+	dirty() {
+		return this.diffs.filter(item => item.dirty)
+	}
+}
+
 export class FloorplanBackend {
 	constructor(floorplan, options) {
 		if (!options) {
@@ -17,7 +187,6 @@ export class FloorplanBackend {
 		} else {
 			this.server = options.server
 		}
-
 
 		if (options.callbacks) {
 			this.callbacks = options.callbacks
@@ -39,119 +208,18 @@ export class FloorplanBackend {
 			// There will be here more later, such as furnature
 		}
 
-		/*
-		 * I considered making a diff tree, but decided against it
-		 * because I won't know how much value there would be
-		 * in it, especially considering the difficulty in providing
-		 * users access to it.
-		 *   Nonetheless it can be added later if I like.
-		 *
-		 * [
-		 * 	// Array of diffs, a set for each user action
-		 * 	{
-		 * 		[dirty: true]
-		 * 		diff: <JSON Patch>
-		 * 	}
-		 * 	[...]
-		 * ]
-		 */
-		this.diffs = []
-
-		// The cache's state in relation to the diffs
-		this.diff = null
+		this.history = new BackendHistory()
 	}
 
 	get endpoint() {
 		return "floorplans/" + this.floorplan.user + "/" + this.floorplan.name + "/data"
 	}
-
-	// Start writing new differences to a new diff set
-	newDiff() {
-		if (this.diffs.length > 0 && this.diffs[this.diff].diff.length === 0) {
-			console.warn("Current diff empty, not creating new one")
-			return this.diff
-		}
-
-		for (let i = this.diffs.length - 1; i > this.diff; --i) {
-			delete this.diffs[i]
-		}
-		this.diff = this.diffs.push({
-			diff: []
-		}) - 1
-		console.debug("newDiff", this.diff)
-		this.cb("newdiff")
-		return this.diff
-	}
-
-	// Add to current diff
-	addToDiff(op, path, value, options) {
-		if (!op || !path) {
-			throw new Error("Requires op and path")
-		}
-		if (op === "add") {
-			if (!value) {
-				throw new Error("Add requires a value")
-			}
-		} else if (op !== "remove") {
-			throw new Error("Only add and remove operations supported")
-		}
-
-		if (!this.diff) {
-			this.newDiff()
-		}
-		let diff = {
-			op: op,
-			path: path,
-			value: value,
-			time: Date.now()
-		}
-		if (!options.clean) {
-			diff.dirty = true
-		}
-		if (options.new) {
-			diff.new = true
-		}
-		this.diffs[this.diff].diff.push(diff)
-		console.debug("Backend.addToDiff", diff)
-	}
-
 	// Apply's diffs in order to get to the state at the beginning of the given diff id
 	// reconstructTo(diff) {}
 
 	// Updates since the given time
 	updatesSince(time) {
 		return this.updatesBetween(time)
-	}
-
-	// Inclusive updates between time1 and time2, returned in the order required
-	// to get from time1 to time2
-	updatesBetween(time1, time2) {
-		let updates = []
-		let reverse = false
-
-		if (this.diffs.length === 0 || this.diffs[0].length === 0) {
-			return []
-		}
-
-		if (time1 && time2 && time1 > time2) {
-			reverse = !reverse
-			let t = time1
-			time1 = time2
-			time2 = t
-		}
-
-		for (let i in this.diffs) {
-			for (let j in this.diffs[i].diff) {
-				let diff = this.diffs[i].diff[j]
-				if (!time1 || diff.time >= time1) {
-					updates.push(diff)
-				} else if (time2 && diff.time > time2) {
-					return reverse ? updates.reverse() : updates
-				}
-			}
-		}
-
-		return reverse ? updates.reverse() : updates
 	}
 
 	/*
@@ -176,16 +244,10 @@ export class FloorplanBackend {
 		}
 
 		console.debug("Backend.addData", type, key, value)
-		if (!this.cache[type][key]) {
-			options.new = true
+		if (!options.nodiff) {
+			this.history.addDiff("add", diffPath(type, key), value, this.cache[type][key], options)
 		}
 		this.cache[type][key] = value
-
-		// May want to use replace op if it's appropriate.
-		// Doing this first so it can set new appropriately.
-		if (!options.nodiff) {
-			this.addToDiff("add", diffPath(type, key), this.cache[type][key], options)
-		}
 
 		return key
 	}
@@ -200,7 +262,7 @@ export class FloorplanBackend {
 			throw new Error("Expected " + key + " to exist")
 		}
 		if (!options.nodiff) {
-			this.addToDiff("remove", diffPath(type, key), null, options)
+			this.addDiff("remove", diffPath(type, key), null, this.cache[type][key], options)
 		}
 		delete this.cache[type][key]
 	}
@@ -254,19 +316,6 @@ export class FloorplanBackend {
 		return this.cache[type][id]
 	}
 
-	dirty() {
-		let a = []
-		for (let i = 0; i <= this.diff; ++i) {
-			for (let diff in this.diffs[i].diff) {
-				if (this.diffs[i].diff[diff].dirty) {
-					a.push(this.diffs[i].diff[diff])
-				}
-			}
-		}
-		console.debug("Backend.dirty", a)
-		return a
-	}
-
 	cb(name, arg) {
 		if (this.callbacks[name]) {
 			this.callbacks[name](arg)
@@ -276,7 +325,7 @@ export class FloorplanBackend {
 	// Push updates to the server
 	push() {
 		// Need a method of making sure we're only sending these once...
-		let dirty = this.dirty()
+		let dirty = this.history.dirty()
 		let patch = []
 
 		for (let i in dirty) {
@@ -284,7 +333,7 @@ export class FloorplanBackend {
 			if (dirty[i].op != "add") {
 				op = dirty[i].op
 			} else {
-				if (dirty[i].new) {
+				if (!dirty[i].oldValue) {
 					op = "new"
 				} else {
 					op = "replace"
@@ -315,7 +364,7 @@ export class FloorplanBackend {
 
 	/*
 	 * Pull updates from the server.
-	 * (Set AddData diff option to false, and call newDiff()
+	 * (Set AddData diff option to false, and call newGroup()
 	 * once at the end.)
 	 */
 	pull() {
@@ -330,7 +379,7 @@ export class FloorplanBackend {
 	}
 
 	applyDiff(diff, options) {
-		this.newDiff()
+		this.history.newGroup()
 		for (let i in diff) {
 			let ref = parsePath(diff[i].path)
 			if (diff[i].op === "remove") {
@@ -339,7 +388,7 @@ export class FloorplanBackend {
 				this.addData(ref.type, diff[i].value, ref.id, options)
 			}
 		}
-		this.newDiff()
+		this.history.newGroup()
 	}
 }
 
