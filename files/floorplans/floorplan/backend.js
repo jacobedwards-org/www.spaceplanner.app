@@ -135,8 +135,8 @@ class BackendHistory {
 		if (!reverse) {
 			return diffs
 		}
-		for (let i in updates) {
-			diffs[i] = reverseDiff(diffs[i])
+		for (let i in diffs) {
+			diffs[i] = this.reverseDiff(diffs[i])
 		}
 		return diffs.reverse()
 	}
