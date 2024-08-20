@@ -3,52 +3,86 @@ import * as api from "/lib/api.js"
 class BackendHistory {
 	constructor() {
 			// The current position in history (diffs)
-			this.place = null,
+			// -1 for before everything
+			this.place = -1,
 	
 			// Metadata for diff groups
 			this.groups = [],
 	
 			// Actual changes
-			this.diffs = []
+			this.diffs = [],
+
+			// Says the time at which the diffs were truncated
+			// It's purpose is to tell the backend it can't just
+			// update the server with the diffs.
+			this.truncated = null
+	}
+
+	set diff(diff) {
+		this.place = diff.id
+		return diff
 	}
 
 	get diff() {
 		return this.diffs[this.place]
 	}
 
+	get last() {
+		return this.diffs.length - 1
+	}
+
 	get group() {
 		if (!this.diff) {
-			if (this.groups.length === 1) {
-				return this.groups[0]
+			if (this.groups.length > 1) {
+				throw new Error("Expected at most one group")
 			}
-			return undefined
+			return this.groups[0]
 		}
 		return this.groups[this.diff.group]
 	}
 
-	newGroup() {
-		console.log(this.groups, this.diff, this.group)
-		if (this.groups.length > 0) {
-			if (this.group.length === 0) {
-				console.warn("Backend.History.newGroup",
-					"Not creating new group: In an empty group")
-				return this.group.id
-			}
-			this.group.last = this.place
-			if (this.group.id < this.groups.length) {
-				// Truncate history to this point since we're altering it
-				this.groups = this.groups.slice(0, this.group.id)
-			}
+	groupLength(group) {
+		if (group == undefined) {
+			return 0
+		}
+		if (typeof group === "number") {
+			group = this.groups[group]
 		}
 
-		let group = {
-			type: "group",
-			length: 0
+		if (group.first == undefined) {
+			return 0;
 		}
-		group.id = this.groups.push(group) - 1
-		console.debug("Backend.History.newGroup", group.id)
-		// NOTE: New diff callback function
-		return group.id
+		if (group.last == undefined) {
+			return this.diffs.length - 1 - group.first
+		}
+		return group.last - group.first
+	}
+
+	newGroup() {
+		const pushGroup = function(history) {
+			let group = {
+				type: "group",
+			}
+			group.id = history.groups.push(group) - 1
+			console.debug("Backend.History.newGroup", group.id)
+			return group
+		}
+
+		if (this.groups.length === 0) {
+			return pushGroup(this)
+		}
+
+		if (this.groupLength(this.group) === 0) {
+			console.warn("Backend.History.newGroup",
+				"Not creating new group: In an empty group")
+			return null
+		}
+
+		if (this.group.last && this.group.last != this.diffs.at(-1).id) {
+			throw new Error("I don't think this should happen")	
+		}
+		this.group.last = this.diffs.at(-1).id
+		return pushGroup(this)
 	}
 
 	addDiff(op, path, value, oldvalue, options) {
@@ -63,13 +97,18 @@ class BackendHistory {
 			throw new Error("Only add and remove operations supported")
 		}
 
-		if (!this.diff) {
-			this.newGroup()
+		this.truncate()
+
+		let group
+		if (this.groups.length === 0) {
+			group = this.newGroup()
+		} else {
+			group = this.groups.at(-1)
 		}
 
 		let diff = {
 			type: "diff",
-			group: this.group.id,
+			group: group.id,
 			op: op,
 			path: path,
 			value: value,
@@ -82,16 +121,41 @@ class BackendHistory {
 		}
 
 		diff.id = this.diffs.push(diff) - 1
-		this.group.length += 1
+		if (group.first  == undefined) {
+			group.first = diff.id
+		}
 		this.place = diff.id
-		console.debug("History.Backend.addDiff", diff.id)
+		console.debug("History.Backend.addDiff", diff.id, diff)
 		return diff.id
+	}
+
+	truncate() {
+		if (!this.diff || this.diff.id === this.diffs.at(-1).id) {
+			return
+		}
+
+		this.truncated = Date.now()
+
+		console.debug("Backend.History.truncate", this.diff.id, "from", this.diffs.length - 1)
+		this.diffs = this.between(-1, this.diff.id)
+		this.groups = this.groups.slice(0, this.group.id + 1)
+		if (this.group.last != undefined) {
+			this.group.last = this.diff.id
+		}
+		this.newGroup()
 	}
 
 	// Get the required operations to go from a, a group or
 	// diff, to b, another group or diff
 	between(a, b) {
+		const backend = this
 		const getDiff = function(v) {
+			if (typeof v === "number") {
+				if (v < -1) {
+					return -1
+				}
+				return v
+			}
 			if (typeof(v) === "object") {
 				if (!v.id) {
 					throw new Error("Doesn't have an id")
@@ -99,42 +163,49 @@ class BackendHistory {
 				if (v.type === "diff") {
 					return v.id
 				} else if (v.type === "group") {
-					return this.groups[v.id].first
+					return backend.groups[v.id].first
 				}
 				throw new Error("Not a valid type")
 			}
-			// Diff id
-			return Number(v)
+			throw new Error(v + ": Invalid diff")
+		}
+		const getParams = function(from, to, max) {
+			from = getDiff(from)
+			to = getDiff(to)
+
+			if (from > max || to > max) {
+				throw new Error(from + ":" + to + ": Maximum range of " + max)
+			}
+			from += 1
+			to += 1
+			if (from === to) {
+				return null
+			}
+			if (from > to) {
+				return { reverse: true, from: to, to: from }
+			}
+			return { from: from, to: to }	
 		}
 
-		a = a ? getDiff(a) : 0
-		b = b ? getDiff(b) : (this.diffs.length - 1)
-		if (a < 0 || a >= this.diffs.length ||
-		    b < 0 || b >= this.diffs.length) {
-			throw new Error("Invalid diff range")
-		}
-
-		if (a == b) {
+		/*
+		 * So 'a' is already applied, and we want the state to look
+		 * like what it did when 'b' was added, so if we're going
+		 * forward, skip 'a', but if going backward include it.
+		 */
+		let params = getParams(a, b, this.diffs.length)
+		if (!params) {
 			return []
 		}
-
-		let reverse = false
-		if (a < b) {
-			b = this.groups[this.diffs[b].group].last
-			if (!b) {
-				b = this.diffs.length - 1
-			}
-		} else {
-			reverse = true
-			let t = a
-			a = b
-			b = t
+		let diffs = this.diffs.slice(params.from, params.to)
+		if (params.reverse) {
+			diffs = this.reverseDiffs(diffs)
 		}
+		console.debug("Backend.History.between",
+			params.reverse ? "reversed" : "forward", params.from, params.to, diffs)
+		return diffs
+	}
 
-		let diffs = this.diffs.slice(a, b + 1)
-		if (!reverse) {
-			return diffs
-		}
+	reverseDiffs(diffs) {
 		for (let i in diffs) {
 			diffs[i] = this.reverseDiff(diffs[i])
 		}
@@ -167,6 +238,52 @@ class BackendHistory {
 
 	dirty() {
 		return this.diffs.filter(item => item.dirty)
+	}
+
+	// Step to the end of the next group
+	forward(diff) {
+		console.debug("Backend.History.forward", diff)
+		if (diff < 0) {
+			if (this.groups[0].last == undefined) {
+				return this.diffs.at(-1).id
+			}
+			return this.groups[0].last
+		}
+
+		diff = this.diffs[diff]
+		if (!diff) {
+			throw new Error("Diff does not exist")
+		}
+
+		if (diff.group === this.groups.at(-1).id) {
+			return this.diffs.at(-1).id
+		}
+		let group = this.groups[diff.group + 1]
+		if (group.last == undefined) {
+			throw new Error("Last should be defined. Bug!")
+		}
+		return group.last
+	}
+
+	// Step to the beginning of the previous group
+	backward(diff) {
+		if (diff < 0) {
+			throw new Error("Cannot go backward")
+		}
+
+		diff = this.diffs[diff]
+		if (!diff) {
+			throw new Error("Cannot go backward from nowhere! Bug!")
+		}
+
+		if (diff.group === 0) {
+			return -1;
+		}
+		let group = this.groups[diff.group - 1]
+		if (!group || group.last == undefined) {
+			throw new Error("This should not happen")
+		}
+		return group.last
 	}
 }
 
@@ -209,6 +326,12 @@ export class FloorplanBackend {
 		}
 
 		this.history = new BackendHistory()
+
+		// Server's position in history
+		this.serverPosition = -1
+
+		// Time of last server update
+		this.serverUpdated = null
 	}
 
 	get endpoint() {
@@ -216,7 +339,21 @@ export class FloorplanBackend {
 	}
 
 	// Apply's diffs in order to get to the state at the beginning of the given diff id
-	// reconstructTo(diff) {}
+	reconstructTo(diff) {
+		let diffs = this.history.between(this.history.place, diff)
+		this.applyDiff(diffs, { nodiff: true })
+		this.history.place = diff
+		console.debug("Backend.reconstructTo", "Reconstructed state to", diff)
+		return diff
+	}
+
+	undo() {
+		this.reconstructTo(this.history.backward(this.history.place))
+	}
+
+	redo() {
+		this.reconstructTo(this.history.forward(this.history.place))
+	}
 
 	/*
 	 * Add some type of data within the cache.
@@ -318,10 +455,23 @@ export class FloorplanBackend {
 		}
 	}
 
-	// Push updates to the server
 	push() {
-		// Need a method of making sure we're only sending these once...
-		let dirty = this.history.dirty()
+		// WARNING: This needs a lock
+		let put = (this.history.truncated &&
+		    (!this.lastUpdated || this.lastUpdated < this.history.truncated))
+
+		this.lastUpdated = Date.now()
+
+		if (put) {
+			return this.putServer()
+		}
+
+		let dirty = this.history.between(this.serverPosition, this.history.last)
+		if (dirty.length === 0) {
+			console.log("Not updating server: already up to date")
+			return Promise.resolve()
+		}
+
 		let patch = []
 
 		for (let i in dirty) {
@@ -349,6 +499,7 @@ export class FloorplanBackend {
 		let backend = this
 		return api.fetch("PATCH", this.endpoint, patch)
 			.then(function(data) {
+				backend.serverPosition = dirty.at(-1).id
 				updateIds(backend, data)
 				for (let i in dirty) {
 					delete dirty[i].dirty
@@ -358,24 +509,38 @@ export class FloorplanBackend {
 			})
 	}
 
+	putServer() {
+		// WARNING: This needs a lock
+		let backend = this
+
+		return api.fetch("PUT", this.endpoint, this.cache)
+			.then(function() {
+				backend.serverPositoin = backend.history.place
+			})
+	}
+
 	/*
 	 * Pull updates from the server.
 	 * (Set AddData diff option to false, and call newGroup()
 	 * once at the end.)
 	 */
 	pull() {
+		// WARNING: This probably needs a lock
 		let backend = this
 		return api.fetch("GET", this.endpoint)
 			.then(function(data) {
 				let diff = gendiff("", backend.cache, data)
-				console.log("Backend.Pull (diff)", diff)
+				console.debug("Backend.Pull (diff)", diff)
 				backend.applyDiff(diff, { clean: true })
 				backend.cb("pull")
 			})
 	}
 
 	applyDiff(diff, options) {
-		this.history.newGroup()
+		options = options ?? {}
+		if (!options.nodiff) {
+			this.history.newGroup()
+		}
 		for (let i in diff) {
 			let ref = parsePath(diff[i].path)
 			if (diff[i].op === "remove") {
@@ -384,7 +549,9 @@ export class FloorplanBackend {
 				this.addData(ref.type, diff[i].value, ref.id, options)
 			}
 		}
-		this.history.newGroup()
+		if (!options.nodiff) {
+			this.history.newGroup()
+		}
 	}
 }
 

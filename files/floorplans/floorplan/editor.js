@@ -207,7 +207,7 @@ export class FloorplanEditor {
 		this.backend = new backend.FloorplanBackend(floorplan, options.backend)
 
 		// The diff which reflects the state of the displayed objects
-		this.diff = null
+		this.diff = -1
 
 		this.grids = {}
 		for (let system in this.units.systems) {
@@ -359,6 +359,16 @@ export class FloorplanEditor {
 		this.backend.history.newGroup()
 	}
 
+	undo() {
+		this.backend.undo()
+		this.updateDisplay()
+	}
+
+	redo() {
+		this.backend.redo()
+		this.updateDisplay()
+	}
+
 	addPoint(point) {
 		let already = this.pointAt(point)
 		if (already) {
@@ -411,23 +421,20 @@ export class FloorplanEditor {
 	}
 
 	updateDisplay() {
-		let diffs = this.backend.history.between(this.diff ?? 0, this.backend.history.diff.id)
+		let diffs = this.backend.history.between(this.diff, this.backend.history.place)
 		if (diffs.length > 0) {
-			this.applyDiff(diffs)
+			this.applyDiffs(diffs)
 			this.diff = diffs.at(-1).id
+			if (this.diff > this.backend.history.place) {
+				this.diff -= 1
+			}
 			console.debug("Editor.updateDisplay", "Updated display to diff id", this.diff)
 		}
 	}
 
-	applyDiff(diff, reverse) {
-		if (!reverse) {
-			for (let op in diff) {
-				this.applyOp(diff[op], reverse)
-			}
-		} else {
-			for (let op = diff.length - 1; i >= 0; --i) {
-				this.applyOp(diff[op], reverse)
-			}
+	applyDiffs(diffs) {
+		for (let op in diffs) {
+			this.applyOp(diffs[op])
 		}
 	}
 
@@ -435,10 +442,6 @@ export class FloorplanEditor {
 		console.debug("Editor.applyOp", diff)
 		let editor = this
 
-		const reverseOps = {
-			add: "remove",
-			remove: "add"
-		}
 		const ops = {
 			add: {
 				points: function(name, value) {
@@ -494,12 +497,10 @@ export class FloorplanEditor {
 		}
 
 		let ref = backend.parsePath(diff.path)
-		let op = reverse ? reverseOps[diff.op] : diff.op
-
-		if (!ops[op][ref.type]) {
+		if (!ops[diff.op][ref.type]) {
 			throw new Error("Unhandled patch")
 		}
-		ops[op][ref.type](refId(ref), diff.value)
+		ops[diff.op][ref.type](refId(ref), diff.value)
 	}
 
 	updateId(ids) {
