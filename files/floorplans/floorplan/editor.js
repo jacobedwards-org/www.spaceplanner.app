@@ -497,7 +497,7 @@ export class FloorplanEditor {
 		}
 
 		if (!ops[diff.op]) {
-			throw new Error("Unexpected patch operation")
+			throw new Error(diff.op + ": Unexpected patch operation")
 		}
 
 		let ref = backend.parsePath(diff.path)

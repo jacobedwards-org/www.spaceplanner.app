@@ -392,7 +392,7 @@ export class FloorplanBackend {
 
 		console.debug("Backend.removeData", type, key)
 		if (!this.cache[type][key]) {
-			throw new Error("Expected " + key + " to exist")
+			throw new Error("Expected " + type + "/" + key + " to exist")
 		}
 		if (!options.nodiff) {
 			this.addDiff("remove", diffPath(type, key), null, this.cache[type][key], options)
