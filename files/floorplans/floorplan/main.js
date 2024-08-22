@@ -435,7 +435,6 @@ function setLength(a, b, length) {
 	 */
 	if (length <= 0) {
 		throw new Error("Zero length line wouldn't be able to be lengthened again")
-		length = 0
 	}
 	/*
 	 * Basically make it's origin zero, normalize it to be from
