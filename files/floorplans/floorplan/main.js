@@ -198,9 +198,21 @@ let modes = {
 			mousedown: preciseAddWallHandler,
 			mousemove: preciseAddWallHandler,
 			mouseup: preciseAddWallHandler,
-			keydown: [undoRedoHandler, preciseAddWallHandler]
+			keydown: [zoomKeysHandler, undoRedoHandler, preciseAddWallHandler,
+			click: pointMapTypeHandler
 		}
 	}
+}
+
+function zoomKeysHandler(event, editor) {
+	if (event.key === "+") {
+		editor.draw.zoom(editor.draw.zoom() * 1.25)
+	} else if (event.key === "-" || event.key === "_") {
+		editor.draw.zoom(editor.draw.zoom() / 1.25)
+	} else {
+		return
+	}
+	event.preventDefault()
 }
 
 // keydown
