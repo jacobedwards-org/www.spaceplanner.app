@@ -4,29 +4,7 @@ import * as ui from "/lib/ui.js"
 import * as etc from "/lib/etc.js"
 import { FloorplanEditor as Editor } from "./editor.js"
 import { Vector2 } from "/lib/github.com/ros2jsguy/threejs-math/math/Vector2.js"
-
-SVG.extend(SVG.Point, {
-	vec: function() {
-		return new Vector2(this.x, this.y)
-	}
-})
-
-SVG.extend(SVG.Line, {
-	vecs: function() {
-		let a = this.array()
-		let vecs = []
-		for (let i in a) {
-			vecs.push(new Vector2(a[i][0], a[i][1]))
-		}
-		return vecs
-	}
-})
-
-SVG.extend(SVG.Shape, {
-	vec: function() {
-		return new Vector2(this.x(), this.y())
-	}
-})
+import "./geometry.js"
 
 const messageTimeout = 4000
 const movingAddTimeout = 250
