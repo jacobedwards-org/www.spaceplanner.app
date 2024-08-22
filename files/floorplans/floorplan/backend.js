@@ -526,6 +526,12 @@ export class FloorplanBackend {
 	 */
 	pull() {
 		// WARNING: This probably needs a lock
+
+		// Since we set serverPosition below
+		if (this.history.place != this.serverPosition) {
+			throw new Error("Push updates first")
+		}
+
 		let backend = this
 		return api.fetch("GET", this.endpoint)
 			.then(function(data) {
@@ -533,6 +539,7 @@ export class FloorplanBackend {
 				console.debug("Backend.Pull (diff)", diff)
 				backend.applyDiff(diff, { clean: true })
 				backend.cb("pull")
+				backend.serverPosition = backend.history.place
 			})
 	}
 
