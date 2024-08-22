@@ -434,19 +434,32 @@ export class FloorplanBackend {
 
 	// Returns map id
 	mapPoints(type, a, b, options) {
-		if (type != "wall") {
-			throw new Error("Only walls allowed in pointmap so far")
+		if (type != "wall" && type != "door") {
+			throw new Error("Only walls and doors allowed in pointmap so far")
 		}
 		if (!this.cache.points[a] || !this.cache.points[b]) {
 			throw new Error("Pointmap must reference existing points")
 		}
 
+		// So it can be replaced instead of a duplicate being made.
+		// This may be an area to improve the efficiency of in the
+		// future with a points to pointmaps map.
+		let id
+		for (let key in this.cache.pointmaps) {
+			if (this.cache.pointmaps[key].a === a &&
+			    this.cache.pointmaps[key].b === b) {
+				id = key
+			}
+		}
+
 		// NOTE: For now, a and b are numbers. May not always be the case
-		return this.addData("pointmaps", {
+		id = this.addData("pointmaps", {
 			type: type,
 			a: a,
 			b: b
-		}, options)
+		}, id, options)
+
+		return id
 	}
 
 	unmapPoints(id, options) {

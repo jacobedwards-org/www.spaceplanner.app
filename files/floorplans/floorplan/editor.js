@@ -220,7 +220,7 @@ export class FloorplanEditor {
 		this.ui.bottom = this.draw.group().attr({ id: "bottom" })
 
 		let data = this.draw.group().attr({ id: "floorplan" })
-		data.group().attr({ id: "walls" }) // lines
+		data.group().attr({ id: "pointmaps" }) // lines
 		data.group().attr({ id: "points" }) // circles
 
 		this.ui.top = this.draw.group().attr({ id: "top" })
@@ -454,7 +454,7 @@ export class FloorplanEditor {
 		console.debug("Editor.applyOp", diff)
 		let editor = this
 
-		const ops = {
+		let ops = {
 			add: {
 				points: function(name, value) {
 					let cur = editor.draw.findOneMax(byId(name))
@@ -479,17 +479,24 @@ export class FloorplanEditor {
 					}
 				},
 				pointmaps: function(name, value) {
-					if (value.type !== "wall") {
-						throw new Error("Only walls currently supported")
+					if (value.type !== "wall" && value.type !== "door") {
+						throw new Error("Only walls and doors currently supported")
 					}
 					let a = editor.backend.reqId("points", value.a)
 					let b = editor.backend.reqId("points", value.b)
-					let wall = editor.draw.findOneMax(name)
+					let wall = editor.draw.findOneMax(byId(name))
 					if (wall) {
 						wall.plot(a.x, a.y, b.x, b.y)
+							.removeClass(wall.data("type"))
+							.addClass(value.type)
+							.data("type", value.type)
 					} else {
-						wall = editor.draw.findExactlyOne("#walls")
-							.line(a.x, a.y, b.x, b.y).stroke("black").attr({ id: name })
+						editor.draw.findExactlyOne("#pointmaps")
+							.line(a.x, a.y, b.x, b.y)
+							.stroke({ color: "black", width: 400 })
+							.attr({ id: name })
+							.addClass(value.type)
+							.data("type", value.type)
 					}
 				}
 			},
@@ -503,6 +510,10 @@ export class FloorplanEditor {
 				}
 			}
 		}
+		if (ops.replace) {
+			throw new Error("You messed up")
+		}
+		ops.replace = ops.add
 
 		if (!ops[diff.op]) {
 			throw new Error(diff.op + ": Unexpected patch operation")
