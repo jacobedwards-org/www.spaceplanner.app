@@ -384,14 +384,21 @@ export class FloorplanEditor {
 	}
 
 	pointAt(point) {
-		let pointInside = null
-		this.draw.findOne("#points")
-			.children().each(function(child) {
-				if (child.inside(point.x, point.y)) {
-					pointInside = child
-				}
-			})
-		return pointInside
+		return this.thingAt(point, "#points")
+	}
+
+
+	thingAt(point, selector) {
+		let children = this.draw.find(selector ?? "*")
+			.children()
+			.toArray()
+
+		for (let i in children) {
+			if (children[i].inside(point.x, point.y)) {
+				return children[i]
+			}
+		}
+		return null
 	}
 
 	mapSelected(type) {
@@ -402,10 +409,11 @@ export class FloorplanEditor {
 	mapPoints(type, p1, p2) {
 		let pointId = function(id) { return id.split("_")[1] }
 
-		this.backend.mapPoints(type,
-			pointId(p1.attr("id")),
-			pointId(p2.attr("id"))
-		)
+		this.mapPointsById(type, pointId(p1.attr("id")), pointId(p2.attr("id")))
+	}
+
+	mapPointsById(type, p1, p2) {
+		this.backend.mapPoints(type, p1, p2)
 		this.updateDisplay()
 	}
 
