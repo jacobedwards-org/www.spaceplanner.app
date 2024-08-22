@@ -2,7 +2,7 @@ import { default as SVG } from "/lib/github.com/svgdotjs/svg.js/svg.js"
 import "/lib/github.com/svgdotjs/svg.panzoom.js/svg.panzoom.js"
 import * as ui from "/lib/ui.js"
 import * as etc from "/lib/etc.js"
-import { FloorplanEditor as Editor } from "./editor.js"
+import { FloorplanEditor as Editor, idRef } from "./editor.js"
 import { Vector2 } from "/lib/github.com/ros2jsguy/threejs-math/math/Vector2.js"
 import "./geometry.js"
 
@@ -176,7 +176,7 @@ let modes = {
 			mousedown: preciseAddWallHandler,
 			mousemove: preciseAddWallHandler,
 			mouseup: preciseAddWallHandler,
-			keydown: [zoomKeysHandler, undoRedoHandler, preciseAddWallHandler,
+			keydown: [zoomKeysHandler, undoRedoHandler, preciseAddWallHandler, pointMapTypeHandler],
 			click: pointMapTypeHandler
 		}
 	}
@@ -191,6 +191,135 @@ function zoomKeysHandler(event, editor) {
 		return
 	}
 	event.preventDefault()
+}
+
+// click, keydown
+function pointMapTypeHandler(event, editor, state) {
+	const cleanup = function() {
+		state.menu.remove()
+		for (let i in state) {
+			delete state[i]
+		}
+	}
+	const commit = function() {
+		editor.finishAction()
+		cleanup()
+	}
+	const cancel = function() {
+		// NOTE: I would use editor.undo(), but I'm not sure
+		// if I'll allow asynchronous menus,etc. in the future
+		editor.mapPointsById(state.orig, state.map.a, state.map.b)
+		cleanup()
+	}
+	const change = function(newvalue) {
+		editor.mapPointsById(newvalue, state.map.a, state.map.b)
+		editor.updateDisplay()
+	}
+
+	if (event.type === "keydown") {
+		if (!state.menu) {
+			return
+		}
+		if (event.key === "Enter") {
+			commit(event)
+		} else if (event.key === "Escape") {
+			cancel(event)
+		} else {
+			return
+		}
+		event.preventDefault()
+		return
+	}
+
+	if (event.type != "click") {
+		return
+	}
+
+	// No matter where the user clicks, the old
+	// menu should canceled
+	if (state.menu) {
+		cancel()
+	}
+
+	let map = editor.thingAt(editor.draw.point(event.clientX, event.clientY), "#pointmaps")
+	if (!map) {
+		return
+	}
+
+	map.select()
+	let ref = idRef(map.attr("id"))
+	state.map = editor.backend.cache.pointmaps[ref.id]
+	state.orig = state.map.type
+	if (state.menu) {
+		throw new Error("Menu should have already been removed")
+	}
+	state.menu = document.body.appendChild(
+		radioMenu(editor, "map_type", ["wall", "door"], state.orig, { callbacks: {
+			commit: commit,
+			change: change
+		}})
+	)
+
+	event.preventDefault()
+}
+
+function radioMenu(editor, key, values, initial, options) {
+	options = options ?? {}
+	options.callbacks = options.callbacks ?? {}
+
+	let menu = document.createElement("aside")
+	menu.classList.add("terminal")
+	menu.classList.add("menu")
+
+	let form = menu.appendChild(document.createElement("form"))
+	let container = form
+
+	if (options.legend) {
+		container.appendChild(document.createElement("legend"))
+			.appendChild(document.createTextNode(options.legend))
+	}
+
+	let radios = radioInputs(key, values, initial)
+	for (let i in radios) {
+		if (options.callbacks.change) {
+			radios[i].addEventListener("change", function(event) {
+				options.callbacks.change(event.target.value)
+				event.preventDefault()
+			})
+		}
+		container.append(radios[i])
+	}
+
+	let submit = container.appendChild(document.createElement("input"))
+	submit.setAttribute("type", "submit")
+	submit.setAttribute("value", "Change")
+
+	form.addEventListener("submit", function(event) {
+		if (options.callbacks.commit) {
+			options.callbacks.commit(event)
+		}
+		event.preventDefault()
+	})
+
+	return menu
+}
+
+function radioInputs(key, values, initial) {
+	let radios = []
+	for (let i in values) {
+		let label = document.createElement("label")
+		let radio = label.appendChild(document.createElement("input"))
+		radio.setAttribute("type", "radio")
+		radio.setAttribute("name", key)
+		radio.setAttribute("value", values[i])
+		if (values[i] === initial) {
+			radio.setAttribute("checked", true)
+		}
+		label.append(radio)
+		label.append(document.createTextNode(values[i]))
+		radios.push(label)
+	}
+	return radios
 }
 
 // keydown

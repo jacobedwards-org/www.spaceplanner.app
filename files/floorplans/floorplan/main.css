@@ -72,6 +72,14 @@ aside.terminal {
 	color: white;
 }
 
+aside.menu {
+	padding: 1em;
+}
+
+aside.menu > form > input[type=radio] {
+	width: 100%;
+}
+
 aside.message {
 	position: absolute;
 	box-sizing: border-box;

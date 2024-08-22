@@ -594,3 +594,8 @@ function byId(id) {
 function refId(ref) {
 	return ref.type + "_" + ref.id
 }
+
+export function idRef(id) {
+	let a = id.split("_")
+	return backend.newRef(a[0], a[1])
+}

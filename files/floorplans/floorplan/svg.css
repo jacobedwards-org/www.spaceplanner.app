@@ -1,20 +1,28 @@
 /* SVG element CSS */
 
-.preview.wall {
-	stroke: grey;
+circle.selected {
+	fill: blue;
+}
+
+line {
+	stroke: black;
 	stroke-width: 400;
 }
 
-#walls > line {
-	stroke: black;
-	stroke-width: 400;
+line.selected {
+	stroke: blue;
+}
+
+line.door {
+	stroke-width: 100;
+	stroke-dasharray: 400 100;
+}
+
+.preview.wall {
+	stroke: grey;
 }
 
 .point {
 	r: 250;
 	fill: lightgrey;
-}
-
-.point.selected {
-	fill: blue;
 }
