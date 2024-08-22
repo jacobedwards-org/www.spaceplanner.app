@@ -269,9 +269,17 @@ export class FloorplanEditor {
 			}
 		}
 
+		const getHandler = function(editor, handler) {
+			editor.mode_states[handler] = {}
+			return function(event) {
+				return handler(event, state, editor.mode_states[handler])
+			}
+		}
+
 		// to pass use in another function
 		let state = this
 		this.modes[name].handlers = {}
+		this.mode_states[name] = {}
 		for (let type in mode.handlers) {
 			this.modes[name]["handlers"][type] = []
 
@@ -285,12 +293,8 @@ export class FloorplanEditor {
 
 			for (let i in a) {
 				console.debug("Create mode handler", name, type, a[i])
-				let f = function(event) {
-					// NOTE: Maybe handler states should be local to each mode too?
-					return a[i](event, state, state["mode_states"][f])
-				}
-				this["mode_states"][f] = {}
-				this["modes"][name]["handlers"][type].push(f)
+				this["modes"][name]["handlers"][type]
+					.push(getHandler(this, a[i]))
 			}
 		}
 
