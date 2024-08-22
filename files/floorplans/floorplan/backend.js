@@ -503,7 +503,6 @@ export class FloorplanBackend {
 				updateIds(backend, data)
 				for (let i in dirty) {
 					delete dirty[i].dirty
-					delete dirty[i].new
 				}
 				backend.cb("push")
 			})
