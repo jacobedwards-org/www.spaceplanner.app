@@ -25,7 +25,7 @@ test "$tag" &&
 
 # Reset would work, but this seems safer
 # (In case the git directory is somehow deleted, etc.)
-git restore *
+git restore .
 
 if test -d ../patches; then
 	for p in ../patches/*
