@@ -344,6 +344,16 @@ export class FloorplanBackend {
 			// There will be here more later, such as furnature
 		}
 
+		// Reverse lookup table for pointmaps
+		this.mappedPoints = {
+			/*
+			 * pointA: {
+			 * 	pointB: pointmap
+			 * }
+			 * (and pointB: { pointA: pointmap })
+			 */
+		}
+
 		this.history = new BackendHistory()
 
 		// Server's position in history
@@ -395,6 +405,10 @@ export class FloorplanBackend {
 			key = uniqueKey(this.cache[type])
 		}
 
+		if (type === "pointmaps") {
+			this.updateMappedPoints(value.a, value.b, key)
+		}
+
 		console.debug("Backend.addData", type, key, value)
 		if (!options.nodiff) {
 			this.history.addDiff("add", diffPath(type, key), value, this.cache[type][key], options)
@@ -413,6 +427,11 @@ export class FloorplanBackend {
 		if (!this.cache[type][key]) {
 			throw new Error("Expected " + type + "/" + key + " to exist")
 		}
+
+		if (type === "pointmaps") {
+			this.updateMappedPoints(this.cache[type][key].a, this.cache[type][key].b, null)
+		}
+
 		if (!options.nodiff) {
 			this.addDiff("remove", diffPath(type, key), null, this.cache[type][key], options)
 		}
@@ -432,6 +451,7 @@ export class FloorplanBackend {
 		return this.removeData("points", id, options)
 	}
 
+
 	// Returns map id
 	mapPoints(type, a, b, options) {
 		if (type != "wall" && type != "door") {
@@ -441,25 +461,12 @@ export class FloorplanBackend {
 			throw new Error("Pointmap must reference existing points")
 		}
 
-		// So it can be replaced instead of a duplicate being made.
-		// This may be an area to improve the efficiency of in the
-		// future with a points to pointmaps map.
-		let id
-		for (let key in this.cache.pointmaps) {
-			if (this.cache.pointmaps[key].a === a &&
-			    this.cache.pointmaps[key].b === b) {
-				id = key
-			}
-		}
-
 		// NOTE: For now, a and b are numbers. May not always be the case
-		id = this.addData("pointmaps", {
+		return this.addData("pointmaps", {
 			type: type,
 			a: a,
 			b: b
-		}, id, options)
-
-		return id
+		}, this.whichPointMap(a, b), options)
 	}
 
 	unmapPoints(id, options) {
@@ -591,6 +598,37 @@ export class FloorplanBackend {
 			this.history.newGroup()
 		}
 	}
+
+	updateMappedPoints(a, b, pointmap) {
+		const update = function(backend, a, b, pointmap) {
+			if (!backend.mappedPoints[a]) {
+				backend.mappedPoints[a] = {}
+			}
+			if (pointmap == null) {
+				delete backend.mappedPoints[a][b]
+				let id
+				for (id in backend.mappedPoints[a]) {
+					break
+				}
+				if (id == null) {
+					delete backend.mappedPoints[a]
+				}
+			} else {
+				backend.mappedPoints[a][b] = pointmap
+			}
+		}
+		update(this, a, b, pointmap)
+		update(this, b, a, pointmap)
+		console.debug("Backend.updateMappedPoints", `Set ${a}+${b} to ${pointmap}`)
+		console.debug("Backend.updateMappedPoints", this.mappedPoints)
+	}
+
+	whichPointMap(a, b) {
+		if (!this.mappedPoints[a]) {
+			return undefined
+		}
+		return this.mappedPoints[a][b]
+	}
 }
 
 function gendiff(path, a, b) {
@@ -619,29 +657,48 @@ function updateIds(backend, newdata) {
 	for (let type in newdata) {
 		for (let id in newdata[type]) {
 			let x = newdata[type][id]
-			if (x.old_id) {
-				backend.history.updateId(type, x.old_id, id)
+			if (x.old_id == undefined) {
+				continue
+			}
 
-				console.debug("Backend.updateIds", `ID ${x.old_id} > ${id}`)
-				if (backend.cache[type][id]) {
-					throw new Error("ERROR: Pull id conflict")
-				}
-				backend.cache[type][id] = backend.cache[type][x.old_id]
-				// Both old and new exist at the moment, hense;
-				backend.cb("updateId", { type: type, old: x.old_id, new: id })
-				delete backend.cache[type][x.old_id]
+			backend.history.updateId(type, x.old_id, id)
+			console.debug("Backend.updateIds", `ID ${x.old_id} > ${id}`)
+			if (backend.cache[type][id]) {
+				// NOTE: I don't think this can actually happen
+				throw new Error("ERROR: Pull id conflict")
+			}
 
-				if (type === "points") {
-					for (let i in backend.cache.pointmaps) {
-						if (backend.cache.pointmaps[i].a === x.old_id) {
+			backend.cache[type][id] = backend.cache[type][x.old_id]
+			// Both old and new exist at the moment, hense;
+			backend.cb("updateId", { type: type, old: x.old_id, new: id })
+			delete backend.cache[type][x.old_id]
+
+			if (type === "points") {
+				for (let i in backend.cache.pointmaps) {
+					if (backend.cache.pointmaps[i].a === x.old_id) {
+					console.debug(`Updated pointmap ${i} from ${x.old_id} to ${id}`)
+					backend.cache.pointmaps[i].a = id
+					} else if (backend.cache.pointmaps[i].b === x.old_id) {
+						backend.cache.pointmaps[i].b = id
 						console.debug(`Updated pointmap ${i} from ${x.old_id} to ${id}`)
-						backend.cache.pointmaps[i].a = id
-						} else if (backend.cache.pointmaps[i].b === x.old_id) {
-							backend.cache.pointmaps[i].b = id
-							console.debug(`Updated pointmap ${i} from ${x.old_id} to ${id}`)
+					}
+				}
+				if (backend.mappedPoints[x.old_id]) {
+					backend.mappedPoints[id] = backend.mappedPoints[x.old_id]
+					delete backend.mappedPoints[x.old_id]
+					for (let a in backend.mappedPoints) {
+						if (backend.mappedPoints[a][x.old_id]) {
+							backend.updateMappedPoints(a, id, backend.mappedPoints[a][x.old_id])
+							backend.updateMappedPoints(a, x.old_id, null)
 						}
 					}
 				}
+			} else if (type === "pointmaps") {
+				// WARNING: This requires that pointmap a and b do not get
+				// modified, which I believe will hold true throughout the life
+				// cycle of the program. I'll probably forget and mess up but
+				// hopefully this provides some assistance.
+				backend.updateMappedPoints(x.a, x.b, id)
 			}
 		}
 	}
