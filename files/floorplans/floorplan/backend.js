@@ -285,6 +285,25 @@ class BackendHistory {
 		}
 		return group.last
 	}
+
+	updateId(type, oldId, newId) {
+		for (let i in this.diffs) {
+			let diff = this.diffs[i]
+			let r = parsePath(diff.path)
+			console.debug(r, type, oldId)
+			if (r.type === "pointmaps" && type === "points") {
+				if (diff.value.a === oldId) {
+					diff.value.a = newId
+				} else if (diff.value.b === oldId) {
+					diff.value.b = newId
+				}
+			} else if (r.type === type && r.id == oldId) {
+				// NOTE: Above r.id is string, oldId is number
+				console.debug("Backend.History.updateId", type, oldId, newId)
+				diff.path = diffPath(r.type, newId)
+			}
+		}
+	}
 }
 
 export class FloorplanBackend {
@@ -588,6 +607,8 @@ function updateIds(backend, newdata) {
 		for (let id in newdata[type]) {
 			let x = newdata[type][id]
 			if (x.old_id) {
+				backend.history.updateId(type, x.old_id, id)
+
 				console.debug("Backend.updateIds", `ID ${x.old_id} > ${id}`)
 				if (backend.cache[type][id]) {
 					throw new Error("ERROR: Pull id conflict")
@@ -596,6 +617,18 @@ function updateIds(backend, newdata) {
 				// Both old and new exist at the moment, hense;
 				backend.cb("updateId", { type: type, old: x.old_id, new: id })
 				delete backend.cache[type][x.old_id]
+
+				if (type === "points") {
+					for (let i in backend.cache.pointmaps) {
+						if (backend.cache.pointmaps[i].a === x.old_id) {
+						console.debug(`Updated pointmap ${i} from ${x.old_id} to ${id}`)
+						backend.cache.pointmaps[i].a = id
+						} else if (backend.cache.pointmaps[i].b === x.old_id) {
+							backend.cache.pointmaps[i].b = id
+							console.debug(`Updated pointmap ${i} from ${x.old_id} to ${id}`)
+						}
+					}
+				}
 			}
 		}
 	}
