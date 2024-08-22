@@ -515,7 +515,7 @@ export class FloorplanBackend {
 
 		return api.fetch("PUT", this.endpoint, this.cache)
 			.then(function() {
-				backend.serverPositoin = backend.history.place
+				backend.serverPosition = backend.history.place
 			})
 	}
 
