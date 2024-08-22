@@ -5,10 +5,10 @@ class BackendHistory {
 			// The current position in history (diffs)
 			// -1 for before everything
 			this.place = -1,
-	
+
 			// Metadata for diff groups
 			this.groups = [],
-	
+
 			// Actual changes
 			this.diffs = [],
 
@@ -79,7 +79,7 @@ class BackendHistory {
 		}
 
 		if (this.group.last && this.group.last != this.diffs.at(-1).id) {
-			throw new Error("I don't think this should happen")	
+			throw new Error("I don't think this should happen")
 		}
 		this.group.last = this.diffs.at(-1).id
 		return pushGroup(this)
@@ -184,7 +184,7 @@ class BackendHistory {
 			if (from > to) {
 				return { reverse: true, from: to, to: from }
 			}
-			return { from: from, to: to }	
+			return { from: from, to: to }
 		}
 
 		/*
