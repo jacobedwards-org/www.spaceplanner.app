@@ -451,7 +451,6 @@ export class FloorplanBackend {
 		return this.removeData("points", id, options)
 	}
 
-
 	// Returns map id
 	mapPoints(type, a, b, options) {
 		if (type != "wall" && type != "door") {
