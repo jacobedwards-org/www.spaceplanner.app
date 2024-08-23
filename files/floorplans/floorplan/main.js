@@ -241,8 +241,8 @@ function pointMapTypeHandler(event, editor, state) {
 		cancel()
 	}
 
-	let map = editor.thingAt(editor.draw.point(event.clientX, event.clientY), "#pointmaps")
-	if (!map) {
+	let map = editor.thingAt(editor.draw.point(event.clientX, event.clientY), "#floorplan > *")
+	if (!map || map.type != "line") {
 		return
 	}
 
