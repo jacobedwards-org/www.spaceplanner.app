@@ -597,5 +597,8 @@ function refId(ref) {
 
 export function idRef(id) {
 	let a = id.split("_")
+	if (a.length != 2) {
+		throw new Error("Invalid id")
+	}
 	return backend.newRef(a[0], a[1])
 }
