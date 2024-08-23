@@ -383,6 +383,11 @@ export class FloorplanEditor {
 		return this.selectedPoint()
 	}
 
+	removePoint(point) {
+		this.backend.removePoint(getId(point), { recurse: true })
+		this.updateDisplay()
+	}
+
 	pointAt(point) {
 		return this.thingAt(point, "#points")
 	}
@@ -585,6 +590,20 @@ function gridSystem(editor, system) {
 		last = gridPattern(editor, unit, last)
 	} while ((unit = editor.units.data[unit].next));
 	return last
+}
+
+function getId(thing) {
+	console.debug("getId", thing)
+	if (typeof thing === "object") {
+		return idRef(thing.attr("id")).id
+	}
+	if (typeof thing === "string") {
+		return idRef(thing).id
+	}
+	if (typeof thing === "number") {
+		return thing
+	}
+	throw new Error("Invalid ID")
 }
 
 function byId(id) {
