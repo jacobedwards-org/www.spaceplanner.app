@@ -433,7 +433,7 @@ export class FloorplanBackend {
 		}
 
 		if (!options.nodiff) {
-			this.addDiff("remove", diffPath(type, key), null, this.cache[type][key], options)
+			this.history.addDiff("remove", diffPath(type, key), null, this.cache[type][key], options)
 		}
 		delete this.cache[type][key]
 	}
