@@ -460,6 +460,9 @@ export class FloorplanBackend {
 			throw new Error("Pointmap must reference existing points")
 		}
 
+		a = Number(a)
+		b = Number(b)
+
 		// NOTE: For now, a and b are numbers. May not always be the case
 		return this.addData("pointmaps", {
 			type: type,
@@ -523,13 +526,8 @@ export class FloorplanBackend {
 					op = "replace"
 				}
 			}
-			patch.push( { op: op, path: dirty[i].path, value: dirty[i].value })
 
-			let ref = parsePath(dirty[i].path)
-			if (ref.type === "pointmaps") {
-				dirty[i].value.a = Number(dirty[i].value.a)
-				dirty[i].value.b = Number(dirty[i].value.b)
-			}
+			patch.push( { op: op, path: dirty[i].path, value: dirty[i].value })
 		}
 
 		console.debug("Backend.push (patch)", patch)
