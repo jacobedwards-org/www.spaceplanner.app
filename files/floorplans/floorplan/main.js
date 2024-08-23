@@ -175,7 +175,7 @@ let modes = {
 			mousedown: precisePointHandler,
 			mousemove: precisePointHandler,
 			mouseup: precisePointHandler,
-			keydown: [zoomKeysHandler, undoRedoHandler, precisePointHandler, pointMapTypeHandler],
+			keydown: [zoomKeysHandler, undoRedoHandler, pointMapTypeHandler, precisePointHandler],
 			click: [precisePointHandler, pointMapTypeHandler],
 			dblclick: precisePointHandler,
 		}
@@ -241,8 +241,14 @@ function pointMapTypeHandler(event, editor, state) {
 		cancel()
 	}
 
-	let map = editor.thingAt(editor.draw.point(event.clientX, event.clientY), "#floorplan > *")
-	if (!map || map.type != "line") {
+	let cursor = editor.draw.point(event.clientX, event.clientY)
+	let point = editor.thingAt(cursor, "#points")
+	if (point) {
+		return
+	}
+
+	let map = editor.thingAt(cursor, "#pointmaps")
+	if (!map) {
 		return
 	}
 
@@ -554,6 +560,9 @@ function preciseEditPointHandler(event, editor, state) {
 	}
 
 	if (event.type === "dblclick") {
+		if (state.menu) {
+			cleanup()
+		}
 		state.done = false
 		state.point = point
 		state.menu = document.createElement("li")
