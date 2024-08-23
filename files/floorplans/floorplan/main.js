@@ -7,7 +7,6 @@ import { Vector2 } from "/lib/github.com/ros2jsguy/threejs-math/math/Vector2.js"
 import "./geometry.js"
 
 const messageTimeout = 4000
-const movingAddTimeout = 250
 
 const buttons = {
 	left: 0,
