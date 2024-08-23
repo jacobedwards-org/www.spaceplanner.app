@@ -173,11 +173,12 @@ let modes = {
 		points: true,
 		handlers: {
 			contextmenu: preventDefaultHandler,
-			mousedown: preciseAddWallHandler,
-			mousemove: preciseAddWallHandler,
-			mouseup: preciseAddWallHandler,
-			keydown: [zoomKeysHandler, undoRedoHandler, preciseAddWallHandler, pointMapTypeHandler],
-			click: pointMapTypeHandler
+			mousedown: precisePointHandler,
+			mousemove: precisePointHandler,
+			mouseup: precisePointHandler,
+			keydown: [zoomKeysHandler, undoRedoHandler, precisePointHandler, pointMapTypeHandler],
+			click: [precisePointHandler, pointMapTypeHandler],
+			dblclick: precisePointHandler,
 		}
 	}
 }
@@ -342,8 +343,48 @@ function undoRedoHandler(event, editor) {
 	event.preventDefault()
 }
 
-// mousedown, mousemove, mouseup, keydown
-function preciseAddWallHandler(event, editor, state) {
+function precisePointHandler(event, editor, state) {
+	const subs = {
+		add: preciseAddPointHandler,
+		edit: preciseEditPointHandler
+	}
+	const callSubWithEvent = function(name, event) {
+		state[name] = state[name] ?? {}
+		let done = subs[name](event, editor, state[name])
+		if (event.type === "cleanup") {
+			return
+		}
+		if (done) {
+			delete state.handler
+		} else if (event.defaultPrevented && name !== "add") {
+			state.handler = name
+		}
+		return done
+	}
+	const callSub = function(name) {
+		callSubWithEvent(name, event)
+	}
+	const cleanupSub = function(name) {
+		callSubWithEvent(name, { type: "cleanup" })
+	}
+
+	if (state.handler) {
+		if (callSub(state.handler)) {
+			callSub("add")
+		}
+	}	
+
+	callSub("add")
+	if (event.type === "dblclick" && !event.defaultPrevented) {
+		callSub("edit")
+		if (event.defaultPrevented) {
+			callSubWithEvent("add", { type: "cleanup" })
+		}
+	}
+}
+
+// mousedown, mousemove, mouseup, keydown, dblclick
+function preciseAddPointHandler(event, editor, state) {
 	const cleanup = function() {
 		state.line.remove()
 		state.point.remove()
@@ -379,23 +420,28 @@ function preciseAddWallHandler(event, editor, state) {
 		editor.finishAction()
 	}
 
+	if (event.type === "cleanup") {
+		if (state.point) {
+			cleanup()
+		}
+		return
+	}
+
 	if (!event.key && event.button !== buttons.left) {
 		return
 	}
 
 	let p = editor.draw.point(event.clientX, event.clientY).vec()
+	if (event.type === "dblclick") {
+		if (state.point && state.from.vec().distanceTo(p) > 0) {
+			addWall()
+			event.preventDefault()
+		}
+		return
+	}
+
 	if (event.type === "mousedown") {
 		if (state.point) {
-			if (!state.moving &&
-			    (Date.now() - state.lastmoving <= movingAddTimeout)) {
-				if (state.from.vec().distanceTo(p) > 0) {
-					addWall()
-				} else {
-					cleanup();
-				}
-				event.preventDefault()
-				return
-			}
 			if (state.point.inside(p.x, p.y)) {
 				state.moving = true
 			}
@@ -474,6 +520,59 @@ function preciseAddWallHandler(event, editor, state) {
 		return
 	}		
 	event.preventDefault()
+}
+
+// mousedown, dblclick
+function preciseEditPointHandler(event, editor, state) {
+	const cleanup = function() {
+		console.warn("Done with edit")
+		state.menu.remove()
+		for (let i in state) {
+			delete state[i]
+		}
+		state.done = true
+	}
+
+	if ((event.type !== "dblclick" && event.type !== "mousedown") ||
+	    event.button != buttons.left) {
+		return state.done
+	}
+
+	let point = editor.pointAt(editor.draw.point(event.clientX, event.clientY))
+	if (!point) {
+		if (state.point) {
+			cleanup()
+			event.preventDefault()
+			return true
+		}
+		return
+	}
+
+	if (state.point && state.point != point) {
+		cleanup()
+		event.preventDefault()
+		return true
+	}
+
+	if (event.type === "dblclick") {
+		state.done = false
+		state.point = point
+		state.menu = document.createElement("li")
+		state.menu.appendChild(document.createTextNode("Point: "))
+		state.menu.appendChild(
+			ui.input("Delete", "Delete point", {
+				attributes: { type: "button" },
+				handlers: { click: function() {
+					editor.removePoint(state.point)
+					cleanup()
+				}},
+			})
+		)
+		state.point.select()
+		document.querySelector(".toolbar")
+			.appendChild(state.menu)
+		event.preventDefault()
+	}
 }
 
 function parseUserLength(editor, length) {
