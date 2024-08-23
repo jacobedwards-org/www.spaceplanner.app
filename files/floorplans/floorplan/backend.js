@@ -448,7 +448,25 @@ export class FloorplanBackend {
 	}
 
 	removePoint(id, options) {
-		return this.removeData("points", id, options)
+		options = options ?? {}
+
+		if (!this.mappedPoints[id]) {
+			return this.removeData("points", id, options)
+		}
+
+		if (!options.unmap && !options.recurse) {
+			throw new Error("Point is mapped")
+		}
+
+		for (let other in this.mappedPoints[id]) {
+			this.unmapPoints(this.mappedPoints[id][other])
+		}
+
+		this.removeData("points", id, options)
+
+		if (options.recurse) {
+			this.removeOrphans()
+		}
 	}
 
 	// Returns map id
@@ -472,7 +490,11 @@ export class FloorplanBackend {
 	}
 
 	unmapPoints(id, options) {
-		return removeData("pointmaps", id, options)
+		options = options ?? {}
+		this.removeData("pointmaps", id, options)
+		if (options.recurse) {
+			this.removeOrphans()
+		}
 	}
 
 	reqId(type, id) {
@@ -625,6 +647,49 @@ export class FloorplanBackend {
 			return undefined
 		}
 		return this.mappedPoints[a][b]
+	}
+
+	removeOrphans() {
+		let origin = this.originPoint()
+		if (origin == undefined) {
+			return
+		}
+
+		let connected = this.connected(origin)
+		let again = false
+		for (let id in this.cache.points) {
+			if (!connected[id]) {
+				this.removePoint(id, { unmap: true })
+				again = true
+			}
+		}
+		if (again) {
+			this.removeOrphans()
+		}
+	}
+
+	originPoint() {
+		for (let i in this.history.diffs) {
+			let ref = parsePath(this.history.diffs[i].path)
+			if (ref.type === "points" && this.cache.points[ref.id] != undefined) {
+				return ref.id
+			}
+		}
+
+		return undefined
+	}
+
+	connected(p, map) {
+		if (!map) {
+			map = {}
+		}
+		map[p] = true
+		for (let other in this.mappedPoints[p]) {
+			if (!map[other]) {
+				this.connected(other, map)
+			}
+		}
+		return map
 	}
 }
 
