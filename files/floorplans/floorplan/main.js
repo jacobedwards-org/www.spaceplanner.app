@@ -530,7 +530,6 @@ function preciseAddPointHandler(event, editor, state) {
 // mousedown, dblclick
 function preciseEditPointHandler(event, editor, state) {
 	const cleanup = function() {
-		console.warn("Done with edit")
 		state.menu.remove()
 		for (let i in state) {
 			delete state[i]
