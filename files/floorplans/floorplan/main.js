@@ -31,7 +31,7 @@ function init() {
 		.panZoom({
 			panButton: buttons.right,
 			// These need to be set using device size
-			zoomMin: .025,
+			zoomMin: .001,
 			zoomMax: .5,
 			zoomFactor: .5
 		})
