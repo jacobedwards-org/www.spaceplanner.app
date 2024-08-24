@@ -259,12 +259,13 @@ function pointMapTypeHandler(event, editor, state) {
 	if (state.menu) {
 		throw new Error("Menu should have already been removed")
 	}
-	state.menu = document.body.appendChild(
-		radioMenu(editor, "map_type", ["wall", "door"], state.orig, { callbacks: {
-			commit: commit,
-			change: change
-		}})
-	)
+	state.menu = document.body.querySelector(".toolbar")
+		.appendChild(
+			item(radioMenu(editor, "Type", ["wall", "door"], state.orig, { callbacks: {
+				commit: commit,
+				change: change
+			}}))
+		)
 
 	event.preventDefault()
 }
@@ -273,9 +274,10 @@ function radioMenu(editor, key, values, initial, options) {
 	options = options ?? {}
 	options.callbacks = options.callbacks ?? {}
 
-	let menu = document.createElement("aside")
-	menu.classList.add("terminal")
+	let menu = document.createElement("div")
 	menu.classList.add("menu")
+
+	menu.appendChild(document.createTextNode(key + ": "))
 
 	let form = menu.appendChild(document.createElement("form"))
 	let container = form
@@ -296,6 +298,7 @@ function radioMenu(editor, key, values, initial, options) {
 		container.append(radios[i])
 	}
 
+	container.appendChild(document.createTextNode(" "))
 	let submit = container.appendChild(document.createElement("input"))
 	submit.setAttribute("type", "submit")
 	submit.setAttribute("value", "Change")
@@ -393,7 +396,7 @@ function preciseAddPointHandler(event, editor, state) {
 	const cleanup = function() {
 		state.line.remove()
 		state.point.remove()
-		state.terminal.remove()
+		state.menu.remove()
 		for (let i in state) {
 			delete state[i]
 		}
@@ -466,10 +469,11 @@ function preciseAddPointHandler(event, editor, state) {
 			.addClass("point")
 			.addClass("preview")
 			.select()
-		state.terminal = document.body
-			.appendChild(document.createElement("aside"))
-		state.terminal.classList.add("terminal")
-		state.len = state.terminal
+		state.menu = document.body.querySelector(".toolbar")
+			.appendChild(document.createElement("li"))
+		state.menu.classList.add("menu")
+		state.menu.appendChild(document.createTextNode("Length: "))
+		state.len = state.menu
 			.appendChild(document.createElement("input"))
 		state.len.value = 0
 		state.len.addEventListener("input", function(event) {
