@@ -492,6 +492,10 @@ export class FloorplanEditor {
 		this.updateDisplay()
 	}
 
+	movePoint(point, coordinate) {
+		return this.backend.replacePoint(getId(point, "points"), coordinate)
+	}
+
 	removePoints(...points) {
 		for (let i in points) {
 			points[i] = backend.newRef("points", getId(points[i]))
