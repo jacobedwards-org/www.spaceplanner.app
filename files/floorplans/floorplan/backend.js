@@ -404,6 +404,11 @@ export class FloorplanBackend {
 			 */
 			key = uniqueKey(this.cache[type])
 		}
+		let inputKey = key
+		key = Number(key)
+		if (isNaN(key)) {
+			throw new Error(`${inputKey}: Invalid key, only numeric keys are accepted`)
+		}
 
 		if (type === "pointmaps") {
 			this.updateMappedPoints(value.a, value.b, key)
@@ -475,7 +480,7 @@ export class FloorplanBackend {
 			throw new Error("Only walls and doors allowed in pointmap so far")
 		}
 		if (!this.cache.points[a] || !this.cache.points[b]) {
-			throw new Error("Pointmap must reference existing points")
+			throw new Error(`${a}, ${b}: Pointmap must reference existing points`)
 		}
 
 		a = Number(a)
@@ -775,11 +780,11 @@ export function parsePath(path) {
 	if (a.length != 3) {
 		throw new Error("Invalid path")
 	}
-	return newRef(a[1], a[2])
+	return newRef(a[1], Number(a[2]))
 }
 
 export function newRef(type, id) {
-	return { type: type, id: id }
+	return { type: String(type), id: Number(id) }
 }
 
 function uniqueKey(obj) {
