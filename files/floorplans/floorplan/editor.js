@@ -500,7 +500,7 @@ export class FloorplanEditor {
 		for (let i in points) {
 			points[i] = backend.newRef("points", getId(points[i]))
 		}
-		return remove(points)
+		return this.remove(points)
 	}
 
 	pointAt(point) {
