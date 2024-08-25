@@ -444,12 +444,19 @@ export class FloorplanBackend {
 	}
 
 	addPoint(point, options) {
+		options = options ?? {}
+
 		if (typeof point.x !== "number" || typeof point.y !== "number") {
-			console.error("Backend.addPoint", point)
-			throw new Error("Point must have x and y be numbers")
+			throw new Error(`Point's x (${point.x}) and y (${point.y}) are not numbers`)
 		}
-		// I suppose point could have other keys, that's okay though
-		return this.addData("points", { x: Math.round(point.x), y: Math.round(point.y) }, options)
+		return this.addData("points", { x: Math.round(point.x), y: Math.round(point.y) },
+			options.replace, options)
+	}
+
+	replacePoint(id, newpoint, options) {
+		options = options ?? {}
+		options.replace = id
+		return this.addPoint(newpoint, options)
 	}
 
 	removePoint(id, options) {
