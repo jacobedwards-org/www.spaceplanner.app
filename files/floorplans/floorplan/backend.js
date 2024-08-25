@@ -420,7 +420,7 @@ export class FloorplanBackend {
 		}
 		this.cache[type][key] = value
 
-		return key
+		return newRef(type, key)
 	}
 
 	removeData(type, key, options) {
