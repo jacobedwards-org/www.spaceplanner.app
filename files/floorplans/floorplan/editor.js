@@ -380,9 +380,7 @@ export class FloorplanEditor {
 				return already
 			}
 		}
-		this.backend.addPoint(point)
-		this.updateDisplay()
-		return this.selectedPoint()
+		return this.backend.addPoint(point)
 	}
 
 	removePoint(point) {
