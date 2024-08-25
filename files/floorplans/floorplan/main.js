@@ -2,9 +2,10 @@ import { default as SVG } from "/lib/github.com/svgdotjs/svg.js/svg.js"
 import "/lib/github.com/svgdotjs/svg.panzoom.js/svg.panzoom.js"
 import * as ui from "/lib/ui.js"
 import * as etc from "/lib/etc.js"
-import { FloorplanEditor as Editor, idRef } from "./editor.js"
+import * as lib from "./editor.js"	// Confusing, but I don't want to fix variable conflict
 import { Vector2 } from "/lib/github.com/ros2jsguy/threejs-math/math/Vector2.js"
 import "./geometry.js"
+import * as backend from "./backend.js"
 
 const messageTimeout = 4000
 
@@ -36,7 +37,7 @@ function init() {
 			zoomFactor: .5
 		})
 
-	let editor = new Editor(draw,
+	let editor = new lib.FloorplanEditor(draw,
 		{ user: localStorage.getItem("username"), name: floorplan },
 		{ backend: {
 			callbacks: {
@@ -106,12 +107,71 @@ function init() {
 		)
 	))
 
+	editor.draw.on("select", function(event) { selectHandler(event, editor) })
+
 	editor.backend.pull()
 		.then(function() {
 			if (editor.draw.findExactlyOne("#points").children().length === 0) {
 				editor.addPoint({ x: 0, y: 0 })
 			}
 		})
+}
+
+function selectHandler(event, editor) {
+	let old = document.getElementById("selOps")
+	if (!event.detail.selected) {
+		if (old) {
+			old.remove()
+		}
+		return
+	}
+	let a = event.detail.selected.array()
+	let c = document.createElement("li")
+	c.setAttribute("id", "selOps")
+
+	c.appendChild(document.createTextNode("Selection: "))
+	c.append(ui.input("Delete", "Delete selected objects", {
+			attributes: { type: "button" },
+			handlers: { click: function() {
+				editor.remove(...a)
+			}},
+		})
+	)
+
+	let refs = []
+	for (let i in a) {
+		refs[i] = lib.getRef(a[i])
+	}
+
+	let maps = []
+	for (let i in refs) {
+		if (refs[i].type === "pointmaps") {
+			maps.push(editor.backend.cache.pointmaps[refs[i].id])
+		}
+	}
+
+	if (maps.length > 0) {
+		c.appendChild(
+			radioMenu(editor, "Type", ["wall", "door"], null, {
+				nosubmit: true,
+				callbacks: {
+					change: function(newvalue) {
+						for (let i in maps) {
+							editor.mapPoints(newvalue, maps[i].a, maps[i].b)
+							editor.updateDisplay()
+						}
+					}
+				}
+			})
+		)
+	}
+
+	if (old) {
+		old.replaceWith(c)
+	} else {
+		document.querySelector(".toolbar")
+			.appendChild(c)
+	}
 }
 
 function selector(editor, things, select, options) {
@@ -165,21 +225,44 @@ let modes = {
 			 * though.
 			 */
 			contextmenu: preventDefaultHandler,
-			click: addWallHandler
+			mousedown: selectionHandler
 		}
 	},
 	Precise: {
 		points: true,
 		handlers: {
 			contextmenu: preventDefaultHandler,
-			mousedown: precisePointHandler,
+			mousedown: [selectionHandler, precisePointHandler],
 			mousemove: precisePointHandler,
 			mouseup: precisePointHandler,
-			keydown: [zoomKeysHandler, undoRedoHandler, pointMapTypeHandler, precisePointHandler],
-			click: [precisePointHandler, pointMapTypeHandler],
+			keydown: [zoomKeysHandler, undoRedoHandler, precisePointHandler],
+			click: precisePointHandler,
 			dblclick: precisePointHandler,
 		}
 	}
+}
+
+// mousedown
+function selectionHandler(event, editor) {
+	if (event.button != buttons.left) {
+		return
+	}
+
+	let p = editor.draw.point(event.clientX, event.clientY)
+
+	let x = editor.thingAt(p, "#points")
+	if (x) {
+		x.select()
+		return
+	}
+
+	x = editor.thingAt(p, "#pointmaps")
+	if (x) {
+		x.select()
+		return
+	}
+
+	editor.draw.select()
 }
 
 function zoomKeysHandler(event, editor) {
@@ -190,83 +273,6 @@ function zoomKeysHandler(event, editor) {
 	} else {
 		return
 	}
-	event.preventDefault()
-}
-
-// click, keydown
-function pointMapTypeHandler(event, editor, state) {
-	const cleanup = function() {
-		state.menu.remove()
-		for (let i in state) {
-			delete state[i]
-		}
-	}
-	const commit = function() {
-		editor.finishAction()
-		cleanup()
-	}
-	const cancel = function() {
-		// NOTE: I would use editor.undo(), but I'm not sure
-		// if I'll allow asynchronous menus,etc. in the future
-		editor.mapPointsById(state.orig, state.map.a, state.map.b)
-		cleanup()
-	}
-	const change = function(newvalue) {
-		editor.mapPointsById(newvalue, state.map.a, state.map.b)
-		editor.updateDisplay()
-	}
-
-	if (event.type === "keydown") {
-		if (!state.menu) {
-			return
-		}
-		if (event.key === "Enter") {
-			commit(event)
-		} else if (event.key === "Escape") {
-			cancel(event)
-		} else {
-			return
-		}
-		event.preventDefault()
-		return
-	}
-
-	if (event.type != "click") {
-		return
-	}
-
-	// No matter where the user clicks, the old
-	// menu should canceled
-	if (state.menu) {
-		cancel()
-	}
-
-	let cursor = editor.draw.point(event.clientX, event.clientY)
-	let point = editor.thingAt(cursor, "#points")
-	if (point) {
-		return
-	}
-
-	let map = editor.thingAt(cursor, "#pointmaps")
-	if (!map) {
-		return
-	}
-
-	map.select()
-	let ref = idRef(map.attr("id"))
-	state.map = editor.backend.cache.pointmaps[ref.id]
-	state.orig = state.map.type
-	if (state.menu) {
-		throw new Error("Menu should have already been removed")
-	}
-	state.menu = document.body.querySelector(".toolbar")
-		.appendChild(
-			item(radioMenu(editor, "Type", ["wall", "door"], state.orig, { callbacks: {
-				commit: commit,
-				change: change
-			}}))
-		)
-
 	event.preventDefault()
 }
 
@@ -296,6 +302,10 @@ function radioMenu(editor, key, values, initial, options) {
 			})
 		}
 		container.append(radios[i])
+	}
+
+	if (options.nosubmit) {
+		return menu
 	}
 
 	container.appendChild(document.createTextNode(" "))
@@ -351,124 +361,9 @@ function undoRedoHandler(event, editor) {
 	event.preventDefault()
 }
 
+// mousedown, mousemove, mouseup
 function precisePointHandler(event, editor, state) {
-	const subs = {
-		add: preciseAddPointHandler,
-		edit: preciseEditPointHandler
-	}
-	const callSubWithEvent = function(name, event) {
-		state[name] = state[name] ?? {}
-		let done = subs[name](event, editor, state[name])
-		if (event.type === "cleanup") {
-			return
-		}
-		if (done) {
-			delete state.handler
-		} else if (event.defaultPrevented && name !== "add") {
-			state.handler = name
-		}
-		return done
-	}
-	const callSub = function(name) {
-		callSubWithEvent(name, event)
-	}
-	const cleanupSub = function(name) {
-		callSubWithEvent(name, { type: "cleanup" })
-	}
-
-	if (state.handler) {
-		if (callSub(state.handler)) {
-			callSub("add")
-		}
-	}	
-
-	callSub("add")
-	if (event.type === "dblclick" && !event.defaultPrevented) {
-		callSub("edit")
-		if (event.defaultPrevented) {
-			callSubWithEvent("add", { type: "cleanup" })
-		}
-	}
-}
-
-// mousedown, mousemove, mouseup, keydown, dblclick
-function preciseAddPointHandler(event, editor, state) {
-	const cleanup = function() {
-		state.line.remove()
-		state.point.remove()
-		state.menu.remove()
-		for (let i in state) {
-			delete state[i]
-		}
-	}
-	const updatePoint = function(p, options) {
-		options = options ?? {}
-		let origin = state.from.vec()
-		state.point.move(p.x, p.y)
-		let instead = editor.pointAt(p)
-		if (instead && instead != state.from) {
-			state.point.hide()
-			p = instead.select().pos()
-			state.gotsnapped = true
-		} else if (state.gotsnapped) {
-			state.gotsnapped = false
-			state.point.show().select()
-		}
-		state.line.plot(origin.x, origin.y, p.x, p.y)
-		if (!options.leave_input) {
-			state.len.value = userLength(editor,
-			    editor.units.snapTo(origin.distanceTo(p), editor.unit))
-		}
-	}
-	const addWall = function() {
-		state.point.remove()
-		let p = editor.addPoint(state.point.pos())
-		editor.mapPoints("wall", state.from, p)
-		cleanup()
-		editor.finishAction()
-	}
-
-	if (event.type === "cleanup") {
-		if (state.point) {
-			cleanup()
-		}
-		return
-	}
-
-	if (!event.key && event.button !== buttons.left) {
-		return
-	}
-
-	let p = editor.draw.point(event.clientX, event.clientY).vec()
-	if (event.type === "dblclick") {
-		if (state.point && state.from.vec().distanceTo(p) > 0) {
-			addWall()
-			event.preventDefault()
-		}
-		return
-	}
-
-	if (event.type === "mousedown") {
-		if (state.point) {
-			if (state.point.inside(p.x, p.y)) {
-				state.moving = true
-			}
-			event.preventDefault()
-			return
-		}
-
-		state.from = editor.pointAt(p)
-		if (!state.from) {
-			return
-		}
-		state.moving = true
-		state.line = editor.ui.bottom.line()
-			.addClass("wall")
-			.addClass("preview")
-		state.point = editor.ui.top.circle()
-			.addClass("point")
-			.addClass("preview")
-			.select()
+	const init = function() {
 		state.menu = document.body.querySelector(".toolbar")
 			.appendChild(document.createElement("li"))
 		state.menu.classList.add("menu")
@@ -495,95 +390,174 @@ function preciseAddPointHandler(event, editor, state) {
 				updatePoint(vecs[1], { leave_input: true })
 			}
 		})
+	}
+	const cleanup = function() {
+		if (state.moveTimeout != null) {
+			clearTimeout(state.moveTimeout)
+		}
+		if (state.menu != undefined) {
+			state.menu.remove()
+		}
+		for (let i in state) {
+			if (i !== "lastUp") {
+				delete state[i]
+			}
+		}
+	}
+	const updatePoint = function(p, options) {
+		options = options ?? {}
+
+		if (state.snapmap == null) {
+			editor.movePoint(state.to, p)
+			editor.updateDisplay()
+		}
+
+		let points = editor.thingsAt(p, "#points")
+		let fid = lib.getId(state.from)
+		let tid
+		if (state.snapmap == null) {
+			tid = lib.getId(state.to)
+		}
+		let instead
+		for (let i in points) {
+			let id = lib.getId(points[i])
+			if (id !== tid && id !== fid) {
+				instead = id
+			}
+		}
+
+		if (instead != undefined) {
+			if (instead !== state.to) {
+				if (state.snapmap == null) {
+					editor.remove(state.to)
+				} else {
+					editor.remove(state.snapmap)
+				}
+				state.to = editor.findRef(backend.newRef("points", instead))
+				state.snapmap = editor.mapPoints("wall", state.from, state.to)
+			}
+		} else if (state.snapmap != null) {
+			editor.remove(state.snapmap)
+			state.snapmap = null
+			state.to = editor.addPoint(p, true)
+			editor.mapPoints("wall", state.from, state.to)
+			editor.updateDisplay()
+			state.to = editor.findRef(state.to)
+		}
+
+		if (!options.leave_input) {
+			state.len.value = userLength(editor,
+			    editor.units.snapTo(state.origin.distanceTo(p), editor.unit))
+		}
+	}
+	const doMove = function() {
+		// This is racy
+		state.moveTimeout = null
+		updatePoint(snap(editor.units.snapTo(state.move, editor.unit), state.origin, 8))
+	}
+	const revert = function() {
+		/*
+		 * NOTE: WARNING: If allowing asyncronous edits this would be bad
+		 * I should introduce a revert function which takes diffs and reverts
+		 * them specifically, and I suppose pass a diff id with every single action.
+		 * I think asyncronous actions would add very little in terms of value,
+		 * and take time to implement. Better to disallow for now.
+		 */
+		editor.finishAction()
+		editor.undo()
+		cleanup()
+	}
+	const commit = function() {
+		editor.finishAction()
+		cleanup()
+	}
+
+	if (event.button !== buttons.left) {
+		return
+	}
+
+	let cursor = editor.draw.point(event.clientX, event.clientY).vec()
+	if (event.type === "mouseup") {
+		state.lastUp = Date.now()
+	}
+
+	if (state.to == undefined) {
+		if (event.type === "mousedown") {
+			if (state.from != undefined) {
+				return
+			}
+
+			state.from = editor.selectedPoint()
+			if (!state.from) {
+				return
+			}
+
+			if  (state.lastUp != null && elapsed(state.lastUp) <= 500) {
+				state.to = state.from
+				state.from = null
+	
+				// I want the first pointmap defined, but this for now
+				let m = editor.backend.mappedPoints[lib.getId(state.to)]
+				for (let point in m) {
+					state.from = editor.findRef(backend.newRef("points", point))
+					break
+				}
+				if (!state.from) {
+					// I mean, there really shouldn't be an orphaned point,
+					// and I see no reason to move the only point in the plan
+					cleanup()
+					throw new Error("Can't move unmapped points")
+				}
+				init()
+			}
+	
+			state.origin = state.from.vec()
+		} else if (event.type === "mouseup") {
+			cleanup()
+			return // Or should I preventDefault()?
+		} else if (event.type === "mousemove" && state.origin != undefined &&
+		    state.origin.distanceTo(cursor) > 200) {
+			state.to = editor.addPoint(cursor, true)
+			editor.mapPoints("wall", state.from, state.to)
+			editor.updateDisplay()
+			state.to = editor.findRef(state.to)
+			init()
+		}
 		event.preventDefault()
 		return
 	}
 
-	if (!state.line) {
+	if (state.to == undefined) {
 		return
+	}
+	if (!state.from) {
+		throw new Error("Hmm")
 	}
 
 	if (event.type === "mousemove") {
-		if (!state.moving) {
-			return
+		// This is still far too expensive, it runs up my fans in seconds.
+		state.move = cursor
+		if (state.moveTimeout == null) {
+			state.moveTimeout = setTimeout(doMove, 35)
 		}
-		let sp = state.from.vec()
-		p = snap(editor.units.snapTo(p, editor.unit), sp, 8)
-		updatePoint(p)
 	} else if (event.type === "mouseup") {
-		if (state.from.inside(p.x, p.y)) {
-			cleanup();
+		if (state.from && state.from.inside(cursor.x, cursor.y)) {
+			revert()
 		} else {
-			state.moving = false
-			state.lastmoving = Date.now()
+			// Not that it makes much difference, but should probably use
+			// state.to's position
+			if (state.to && state.origin.distanceTo(cursor) > 0) {
+				commit()
+			} else {
+				cleanup()
+			}
 		}
-	} else if (event.type === "keydown") {
-		if (event.key === "Enter") {
-			addWall()
-			return
-		} else if (event.key !== "Escape") {
-			return
-		}
-		cleanup();
 	}  else {
+		console.warn("Bit of a state mismatch, not that big of a deal though")
+		commit()
 		return
 	}		
 	event.preventDefault()
-}
-
-// mousedown, dblclick
-function preciseEditPointHandler(event, editor, state) {
-	const cleanup = function() {
-		state.menu.remove()
-		for (let i in state) {
-			delete state[i]
-		}
-		state.done = true
-	}
-
-	if ((event.type !== "dblclick" && event.type !== "mousedown") ||
-	    event.button != buttons.left) {
-		return state.done
-	}
-
-	let point = editor.pointAt(editor.draw.point(event.clientX, event.clientY))
-	if (!point) {
-		if (state.point) {
-			cleanup()
-			event.preventDefault()
-			return true
-		}
-		return
-	}
-
-	if (state.point && state.point != point) {
-		cleanup()
-		event.preventDefault()
-		return true
-	}
-
-	if (event.type === "dblclick") {
-		if (state.menu) {
-			cleanup()
-		}
-		state.done = false
-		state.point = point
-		state.menu = document.createElement("li")
-		state.menu.appendChild(document.createTextNode("Point: "))
-		state.menu.appendChild(
-			ui.input("Delete", "Delete point", {
-				attributes: { type: "button" },
-				handlers: { click: function() {
-					editor.removePoint(state.point)
-					cleanup()
-				}},
-			})
-		)
-		state.point.select()
-		document.querySelector(".toolbar")
-			.appendChild(state.menu)
-		event.preventDefault()
-	}
 }
 
 function parseUserLength(editor, length) {
@@ -707,6 +681,10 @@ function item(node) {
 	let i = document.createElement("li")
 	i.append(node)
 	return i
+}
+
+function elapsed(since) {
+	return Date.now() - since
 }
 
 window.onload = init

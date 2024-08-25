@@ -1,15 +1,80 @@
 import { default as SVG } from "/lib/github.com/svgdotjs/svg.js/svg.js"
 import * as backend from "./backend.js"
 
-SVG.extend(SVG.Element, {
-	select: function() {
-		console.debug("User selected", this.node)
-		this.root().find(".last_selected")
+const selectEvent = new Event("select")
+const unselectEvent = new Event("unselect")
+
+SVG.extend(SVG.Svg, {
+	unselect: function(list) {
+		console.debug("Svg.unselect", list)
+
+		let selected
+		if (list) {
+			selected = list
+		} else {
+			selected = this.find(".selected")
+		}
+
+		// Should also test for selected class
+		if (!selected) {
+			console.debug("Nothing to unselect")
+			return
+		}
+
+		this.find(".last_selected")
 			.removeClass("last_selected")
-		this.root().find(".selected")
+
+		let unselected = selected
 			.removeClass("selected")
 			.addClass("last_selected")
-		return this.addClass("selected")
+
+		// NOTE: Could fire an event, but then I'd have to handle
+		// deletions, so I'll leave it until it's needed.
+		return unselected
+	},
+
+	select: function(list) {
+		console.debug("Svg.select", list)
+
+		this.unselect()
+
+		if (list) {
+			list.addClass("selected")
+		}
+		this.fire("select", { selected: list })
+		return list
+	},
+
+	reselect: function() {
+		this.fire("select", { selected: this.find(".selected") })
+	}
+})
+
+SVG.extend(SVG.List, {
+	selectList: function() {
+		let root
+		this.each(function(item) {
+			if (!root) {
+				root = item.root()
+			} else if (root != item.root())
+				throw new Error("Cannot select from different documents")
+			})
+
+		return root.select(this)
+	},
+
+	array: function() {
+		let a = []
+		this.each(function(item) {
+			a.push(item)
+		})
+		return a
+	}
+})
+
+SVG.extend(SVG.Element, {
+	select: function() {
+		return new SVG.List([this]).selectList()[0]
 	},
 
 	findOneMax: function(selector) {
@@ -240,6 +305,26 @@ export class FloorplanEditor {
 			editor.updateGrid()
 		})
 		resize.observe(editor.draw.node)
+
+		let selectionRemoval = new MutationObserver(function(mutations) {
+			for (const m of mutations) {
+				if (m.type === "childList" && m.removedNodes) {
+					m.removedNodes.forEach(function(node) {
+						if (node.classList.contains("selected")) {
+							console.debug("selectionRemoval",
+								"Detected selected node being removed")
+							editor.draw.reselect()
+							return
+						}
+					})
+				}
+			}
+		})
+		selectionRemoval.observe(this.draw.node, { childList: true, subtree: true })
+
+		this.draw.on("select", function(event) {
+			editor.selection = event.detail.selection
+		})
 	}
 
 	useUnits(system) {
@@ -383,27 +468,59 @@ export class FloorplanEditor {
 		return this.backend.addPoint(point)
 	}
 
-	removePoint(point) {
-		this.backend.removePoint(getId(point), { recurse: true })
+	remove(...elements) {
+		let later = []
+
+		for (let i in elements) {
+			let ref = getRef(elements[i])
+			if (ref.type === "pointmaps") {
+				this.backend.unmapPoints(ref.id)
+			} else {
+				later.push(ref)
+			}
+		}
+
+		for (let i in later) {
+			if (later[i].type === "points") {
+				this.backend.removePoint(later[i].id, { unmap: true })
+			} else {
+				throw new Error("Unsupported type")
+			}
+		}
+
+		this.backend.removeOrphans()
 		this.updateDisplay()
+	}
+
+	removePoints(...points) {
+		for (let i in points) {
+			points[i] = backend.newRef("points", getId(points[i]))
+		}
+		return remove(points)
 	}
 
 	pointAt(point) {
 		return this.thingAt(point, "#points")
 	}
 
-
 	thingAt(point, selector) {
+		return this.thingsAt(point, selector, 1)[0]
+	}
+
+	thingsAt(point, selector, max) {
 		let children = this.draw.find(selector ?? "*")
 			.children()
 			.toArray()
 
+		let inside = []
 		for (let i in children) {
 			if (children[i].inside(point.x, point.y)) {
-				return children[i]
+				if (inside.push(children[i]) >= max) {
+					return inside
+				}
 			}
 		}
-		return null
+		return inside
 	}
 
 	mapSelected(type) {
@@ -412,14 +529,9 @@ export class FloorplanEditor {
 	}
 
 	mapPoints(type, p1, p2) {
-		let pointId = function(id) { return id.split("_")[1] }
-
-		this.mapPointsById(type, pointId(p1.attr("id")), pointId(p2.attr("id")))
-	}
-
-	mapPointsById(type, p1, p2) {
-		this.backend.mapPoints(type, p1, p2)
+		let ref = this.backend.mapPoints(type, getId(p1, "points"), getId(p2, "points"))
 		this.updateDisplay()
+		return ref
 	}
 
 	selectedPoints() {
@@ -461,7 +573,7 @@ export class FloorplanEditor {
 
 		let ops = {
 			add: {
-				points: function(name, value) {
+				points: function(name, value, ref) {
 					let cur = editor.draw.findOneMax(byId(name))
 					// Update pointmaps
 					if (cur) {
@@ -474,13 +586,17 @@ export class FloorplanEditor {
 							.attr({ id: name })
 							.addClass("point")
 							.select()
-							.on("click", function(event) {
-								if (event.shiftKey) {
-									this.select()
-									event.preventDefault()
-								}
-							})
 
+					}
+					for (let oth in editor.backend.mappedPoints[ref.id]) {
+						let map = editor.backend.mappedPoints[ref.id][oth]
+						oth = editor.backend.reqId("points", oth)
+						map = editor.draw.findOneMax(byId(refId((backend.newRef("pointmaps", map)))))
+						if (map) {
+							// It's probably being added later, that said, this isn't a good solution
+							// because it doesn't allow for checking for errors.
+							map.plot(oth.x, oth.y, value.x, value.y)
+						}
 					}
 				},
 				pointmaps: function(name, value) {
@@ -528,7 +644,7 @@ export class FloorplanEditor {
 		if (!ops[diff.op][ref.type]) {
 			throw new Error("Unhandled patch")
 		}
-		ops[diff.op][ref.type](refId(ref), diff.value)
+		ops[diff.op][ref.type](refId(ref), diff.value, ref)
 	}
 
 	updateId(ids) {
@@ -538,7 +654,7 @@ export class FloorplanEditor {
 	}
 
 	findRef(ref) {
-		return this.draw.findExactlyOne(byId(refId(ref)))
+		return this.draw.findExactlyOne(byId(refId(getRef(ref))))
 	}
 }
 
@@ -592,18 +708,45 @@ function gridSystem(editor, system) {
 	return last
 }
 
-function getId(thing) {
-	console.debug("getId", thing)
+export function getRef(thing, type) {
+	console.debug("getRef", thing, type)
+	let ref
 	if (typeof thing === "object") {
-		return idRef(thing.attr("id")).id
+		if (typeof thing.attr === "function") {
+			ref = idRef(thing.attr("id"))
+		} else if (typeof thing.type === "string" && typeof thing.id === "number") {
+			ref = thing
+		}
+	} else if (typeof thing === "string") {
+		ref = idRef(thing)
 	}
-	if (typeof thing === "string") {
-		return idRef(thing).id
+
+	if (!ref) {
+		console.error("Couldn't get ref from", thing)
+		throw new Error("Invalid ref")
 	}
-	if (typeof thing === "number") {
-		return thing
+	if (type && ref.type != type) {
+		throw new Error(`${ref.type}: Invalid ref type (wanted ${type})`)
 	}
-	throw new Error("Invalid ID")
+	return ref
+}
+
+export function getId(thing, type) {
+	console.debug("getId", thing)
+
+	let n = Number(thing)
+	if (isNaN(n)) {
+		return getRef(thing, type).id
+	}
+	return n
+}
+
+export function idRef(id) {
+	let a = id.split("_")
+	if (a.length != 2) {
+		throw new Error(`${id}: Invalid id`)
+	}
+	return backend.newRef(a[0], a[1])
 }
 
 function byId(id) {
@@ -612,12 +755,4 @@ function byId(id) {
 
 function refId(ref) {
 	return ref.type + "_" + ref.id
-}
-
-export function idRef(id) {
-	let a = id.split("_")
-	if (a.length != 2) {
-		throw new Error("Invalid id")
-	}
-	return backend.newRef(a[0], a[1])
 }
