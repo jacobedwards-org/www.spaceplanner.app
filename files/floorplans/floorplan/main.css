@@ -96,3 +96,7 @@ aside.message {
 input.invalid {
 	background-color: lightgrey;
 }
+
+#selOps > form {
+	display: inline-block;
+}
