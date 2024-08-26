@@ -151,18 +151,14 @@ function selectHandler(event, editor) {
 	}
 
 	if (maps.length > 0) {
+		const changeTypes = function(newvalue) {
+			for (let i in maps) {
+				editor.mapPoints(newvalue, maps[i].a, maps[i].b)
+				editor.updateDisplay()
+			}
+		}
 		c.appendChild(
-			radioMenu(editor, "Type", ["wall", "door"], null, {
-				nosubmit: true,
-				callbacks: {
-					change: function(newvalue) {
-						for (let i in maps) {
-							editor.mapPoints(newvalue, maps[i].a, maps[i].b)
-							editor.updateDisplay()
-						}
-					}
-				}
-			})
+			selector(editor, { wall: true, door: true }, changeTypes, { text: "Type:" })
 		)
 	}
 
