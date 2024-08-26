@@ -229,11 +229,10 @@ let modes = {
 		handlers: {
 			contextmenu: preventDefaultHandler,
 			mousedown: [selectionHandler, precisePointHandler],
-			mousemove: precisePointHandler,
+			mousemove: [precisePointHandler, precisePointMapHandler],
 			mouseup: precisePointHandler,
-			keydown: [zoomKeysHandler, undoRedoHandler, precisePointHandler],
-			click: precisePointHandler,
-			dblclick: precisePointHandler,
+			keydown: [zoomKeysHandler, undoRedoHandler],
+			dblclick: precisePointMapHandler
 		}
 	}
 }
@@ -554,6 +553,42 @@ function precisePointHandler(event, editor, state) {
 		return
 	}		
 	event.preventDefault()
+}
+
+// mousedown, mousemove, mouseup
+function precisePointMapHandler(event, editor) {
+	// Explicitly check button in case UA isn't complient
+	if (event.type === "dblclick" && event.button == buttons.left) {
+		let cursor = editor.draw.point(event.clientX, event.clientY).vec()
+		if (editor.thingAt(cursor, "#points")) {
+			return
+		}
+
+		let map = editor.thingAt(cursor, "#pointmaps")
+		if (map == null) {
+			return
+		}
+
+		// Shouldn't really use backend as it's only correct when updateDisplay is called
+		let data = editor.backend.reqId("pointmaps", lib.getId(map))
+		if (data.type != "wall") {
+			throw new Error("Changing direction of doors not yet supported")
+		}
+
+		event.preventDefault()
+
+		let sub = map.whereIsPoint(cursor.x, cursor.y)
+		if (sub == null) {
+			throw new Error("Expected point on line")
+		}
+
+		sub = editor.addPoint(sub)
+		console.log(data, sub)
+		editor.mapPoints("wall", data.a, sub)
+		editor.mapPoints("wall", sub, data.b)
+		editor.remove(map)
+		editor.updateDisplay()
+	}
 }
 
 function parseUserLength(editor, length) {
