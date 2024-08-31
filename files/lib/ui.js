@@ -6,7 +6,6 @@ export function input(name, memo, options) {
 	let e = document.createElement("input")
 	e.name = name
 	e.placeholder = name
-	e.setAttribute("value", name) // can be over-ridden by attributes
 	e.setAttribute("title", memo)
 
 	if (!options) {

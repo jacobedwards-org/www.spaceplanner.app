@@ -131,7 +131,7 @@ function selectHandler(event, editor) {
 
 	c.appendChild(document.createTextNode("Selection: "))
 	c.append(ui.input("Delete", "Delete selected objects", {
-			attributes: { type: "button" },
+			attributes: { type: "button", value: "Delete" },
 			handlers: { click: function() {
 				editor.remove(...a)
 			}},
