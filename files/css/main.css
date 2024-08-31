@@ -1,9 +1,15 @@
 :root {
 	--main-color: #8ACFFF;
+	--reverse-color: white;
+	--off-white-color: #EFEFEF;
+	--off-white-border-color: #CCC;
+	--border-color: var(--off-white-border-color);
 }
 
 body {
 	margin-top: 2.5em !important;
+	margin: 2em;
+	font-size: large;
 }
 
 #bar {
@@ -48,15 +54,21 @@ body {
 
 aside {
 	float: right;
+	margin: .2em;
+}
+
+.credentials > aside {
+	float: none;
+	font-size: smaller;
+	margin-bottom: 2em;
 }
 
 .icon {
-	image-rendering: crisp-edges;
 	border: thin solid rgba(0, 0, 0, .2);
+	width: 1.5em;
 }
 
 input[type="image"].icon {
-	width: 2em;
 	margin: .15rem;
 	padding: .15rem;
 	border-radius: .4em;
@@ -99,4 +111,49 @@ span.warning > p {
 .error > input[class="icon"] {
 	width: 1rem;
 	vertical-align: middle;
+}
+
+input:not([type]), input[type="password"], input[type="email"] {
+	background-color: #F9F9F9;
+	border: thin solid #CCC;
+	border-radius: .2em;
+	padding: .2em;
+}
+
+button, input[type="submit"] {
+        font-size: large;
+	background-color: #DDD;
+	border: .15em outset var(--off-white-border-color);
+	border-radius: .2em;
+}
+
+button.big, input[type="submit"].big {
+	padding: .25em;
+}
+
+button:active, input[type="submit"]:active {
+	border-style: inset;
+}
+
+form.credentials {
+	width: fit-content;
+	max-width: 60ch;
+	padding: 4em;
+	border-radius: .2em;
+}
+
+form.credentials > label, form.credentials > input {
+        display: block;
+}
+
+form.credentials > input {
+	margin-bottom: 2em;
+}
+
+label.break {
+	display: block;
+}
+
+.small {
+	font-size: smaller;
 }
