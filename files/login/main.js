@@ -1,41 +1,28 @@
 import * as api from "/lib/api.js"
 import * as etc from "/lib/etc.js"
+import * as ui from "/lib/ui.js"
 
 let default_page = "/floorplans"
-
-function handle_token(resp) {
-	api.update_token(resp.token)
-	window.location.href = default_page
-}
-
-function login(username, password, err_callback) {
-	api.fetch("POST", "tokens", { "username": username, "password": password })
-		.then(handle_token)
-		.catch(err_callback)
-	return false;
-}
 
 function init() {
 	if (api.authorized_duration() > 0) {
 		window.location.href = default_page
 	}
 
-	let username_input = document.getElementById("username")
-	let password_input = document.getElementById("password")
-	if (!username_input || !password_input) {
-		throw new Error("unable to select username or password")
+	let login = document.getElementById("login")
+	let username = document.getElementById("username")
+	let password = document.getElementById("password")
+	if (!login || !username || !password) {
+		throw new Error("Expected login form, username, password fields")
 	}
 
-	let login_form = document.getElementById("login")
-	if (!login_form) {
-		throw new Error("unable to get login form")
-	}
-	login_form.onsubmit = function () {
-		return login(
-			username_input.value, password_input.value,
-			function (error) { return etc.error(error, login_form) }
-		);
-	};
+	login.addEventListener("submit", function(event) {
+		event.preventDefault()
+		api.login(username.value, password.value)
+			.then(function() {
+				window.location.href = default_page
+			})
+	})
 }
 
 window.onload = etc.handle_wrap(init)
