@@ -72,3 +72,28 @@ function toggle_setup_button(a, b) {
 		}
 	}, false)
 }
+
+export function warning(content) {
+	let warning = document.createElement("span")
+	warning.classList.add("warning")
+
+	let icon = warning.appendChild(
+		document.createElement("img")
+	)
+	icon.classList.add("icon")
+	icon.setAttribute("src", "/icons/warning-outline.svg")
+
+	if (typeof content === "string") {
+		let s = content
+		content = document.createElement("p")
+		content.appendChild(
+			document.createTextNode(s)
+		)
+	}
+
+	// appendChild can make sure it's correct
+	warning.appendChild(content)
+	content.classList.add("content")
+
+	return warning
+}
