@@ -72,6 +72,26 @@ function toggle_setup_button(a, b) {
 	}, false)
 }
 
+export function prettyName(name, options) {
+	options = options ?? {}
+	options.separator = options.separator ?? /[-_]/
+	options.title = options.title ?? true
+
+	let words = name.split(options.separator)
+	for (let i in words) {
+		words[i] = capitalize(words[i])
+		if (!options.title) {
+			break
+		}
+	}
+
+	return words.join(" ")
+}
+
+export function capitalize(word) {
+	return word.charAt(0).toUpperCase() + word.substr(1)
+}
+
 export function warning(content) {
 	let warning = document.createElement("span")
 	warning.classList.add("warning")
