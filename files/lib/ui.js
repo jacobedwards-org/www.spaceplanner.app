@@ -1,3 +1,6 @@
+import * as api from "/lib/api.js"
+import * as etc from "/lib/etc.js"
+
 export function input(name, memo, options) {
 	if (!name) {
 		throw new Error("No name provided")
@@ -70,6 +73,45 @@ function toggle_setup_button(a, b) {
 			swap()
 		}
 	}, false)
+}
+
+export function login(callback) {
+	let form = document.createElement("form")
+	form.classList.add("credentials")
+
+	let label = form.appendChild(document.createElement("label"))
+	label.appendChild(document.createTextNode("Username:"))
+	label.setAttribute("for", "username")
+	let username = form.appendChild(document.createElement("input"))
+	username.id = "username"
+	username.setAttribute("autocomplete", "username")
+	username.setAttribute("name", "username")
+
+	label = form.appendChild(document.createElement("label"))
+	label.appendChild(document.createTextNode("Password:"))
+	label.setAttribute("for", "password")
+	let password = form.appendChild(document.createElement("input"))
+	password.setAttribute("autocomplete", "current-password")
+	password.setAttribute("type", "password")
+	password.setAttribute("name", "password")
+
+	let button = form.appendChild(document.createElement("input"))
+	button.setAttribute("type", "submit")
+	button.setAttribute("value", "Login")
+
+	form.addEventListener("submit", function(event) {
+		event.preventDefault()
+		api.login(username.value, password.value)
+			.then(function() {
+				form.remove()
+				callback()
+			})
+			.catch(function(err) {
+				etc.error(err + ": Unable to login", form)
+			})
+	})
+
+	return form
 }
 
 export function prettyName(name, options) {
