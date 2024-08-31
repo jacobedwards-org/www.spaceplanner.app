@@ -50,6 +50,32 @@ function api_fetch(method, endpoint, body) {
 
 export { api_fetch as fetch }
 
+export function register(username, password, email, options) {
+	options = options ?? {}
+
+	let req = {
+		email: email,
+		credentials: { username: username, password: password, email: email }
+	}
+	if (options.email_policy != null) {
+		req.email_policy = options.email_policy
+	}
+
+	return api_fetch("POST", "users", req)
+		.then(function(response) {
+			console.log("api.register", req)
+		})
+}
+
+export function login(username, password) {
+	let req = { "username": username, "password": password }
+        return api_fetch("POST", "tokens", req)
+		.then(function(resp) {
+			console.log("api.login", req)
+			update_token(resp.token)
+		})
+}
+
 export function refresh_token() {
 	api_fetch("GET", "tokens")
 		.then(function(resp) {
