@@ -585,7 +585,7 @@ export class FloorplanEditor {
 							.select()
 					} else {
 						editor.draw.findOne("#points")
-							.circle(4)
+							.circle(500)
 							.cx(value.x).cy(value.y)
 							.attr({ id: name })
 							.addClass("point")
