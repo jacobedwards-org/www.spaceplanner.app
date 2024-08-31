@@ -1,0 +1,27 @@
+#services {
+	max-width: 50vw;
+	min-width: min(40em, 70vw);
+	min-height: 60%;
+	border: thin ridge grey;
+	border-radius: .25em;
+	padding: 2em;
+}
+
+#services > legend {
+	text-align: center;
+}
+
+.service {
+	border: thin ridge grey;
+	border-radius: .25em;
+	padding: 2em;
+	margin: 1em 0;
+}
+
+.service > .name {
+	font-size: xx-large;
+}
+
+.service > .price {
+	font-size: x-large;
+}
