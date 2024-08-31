@@ -26,7 +26,7 @@ function init() {
 			.then(function() {
 				api.login(username_input.value, password_input.value)
 					.then(function() {
-						window.location.href = "/floorplans"
+						window.location.href = "/settings/verify-email"
 					})
 					.catch(function(err) {
 						console.error("Created user but was unable to login")
