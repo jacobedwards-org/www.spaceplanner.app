@@ -66,6 +66,21 @@ input[type="image"].icon:hover {
 	border-color: rgba(0, 0, 0, .4);
 }
 
+span.warning {
+	display: flex;
+	width: fit-content;
+}
+
+span.warning > .icon {
+	border: none;
+	margin-right: .5em;
+}
+
+span.warning > p {
+	text-decoration: solid orange underline;
+	text-decoration-thickness: .15em;
+}
+
 .error {
 	background-color: red;
 	border: thin solid darkred;
