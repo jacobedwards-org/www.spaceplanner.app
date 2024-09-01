@@ -42,7 +42,7 @@ function api_fetch(method, endpoint, body) {
 		params["body"] = JSON.stringify(body)
 	}
 	
-	return fetch(proto + "://" + host + "/" + version + "/" + endpoint, params)
+	return fetch(proto + "://" + host + "/" + version + "/" + requestPath(endpoint), params)
 		.then(verify_response)
 		.then(parse_response)
 		.then(status)
@@ -125,4 +125,19 @@ export function authorized_duration(t) {
 
 export function logged_in() {
 	return authorized_duration() > 0
+}
+
+function requestPath(s) {
+	let a = s.split("/")
+	let subs = {
+		":user": localStorage.getItem("username")
+	}
+
+	for (let i in a) {
+		if (subs[a[i]] != undefined) {
+			a[i] = subs[a[i]]
+		}
+	}
+
+	return a.join("/")
 }
