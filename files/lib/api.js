@@ -87,10 +87,13 @@ export function update_token(t) {
 	console.log("update_token", t)
 	if (!t) {
 		localStorage.removeItem("token")
+		localStorage.removeItem("token_expires")
 		localStorage.removeItem("username")
 	} else {
 		localStorage.setItem("token", t)
-		localStorage.setItem("username", token_payload(t)["id"])
+		let p = token_payload(t)
+		localStorage.setItem("token_expires", p.exp)
+		localStorage.setItem("username", p.id)
 	}
 }
 
@@ -99,12 +102,6 @@ export function token() {
 }
 
 export function token_payload(t) {
-	if (!t) {
-		t = token()
-		if (!t) {
-			return t
-		}
-	}
 	let a = t.split('.')
 	if (a.length != 3) {
 		throw new Error("Invalid token")
@@ -115,12 +112,11 @@ export function token_payload(t) {
 // Returns seconds until authorization expires, or negative the
 // number of seconds it has been expired.
 export function authorized_duration(t) {
-	let payload = token_payload(t)
-	if (!payload) {
+	let exp = localStorage.getItem("token_expires")
+	if (exp == null) {
 		return -1
 	}
-
-	return payload["exp"] - (Date.now() / 1000)
+	return Number(exp) - Math.trunc(Date.now() / 1000)
 }
 
 export function logged_in() {
