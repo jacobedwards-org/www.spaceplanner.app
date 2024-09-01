@@ -2,7 +2,7 @@ import * as api from "/lib/api.js"
 import * as etc from "/lib/etc.js"
 
 function init() {
-	if (api.authorized_duration() > 0) {
+	if (api.authorized()) {
 		// Maybe don't do this?
 		window.location.href = "/floorplans"
 	}

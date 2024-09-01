@@ -36,7 +36,7 @@ export function bar(on) {
 	let right = nav.appendChild(document.createElement("ul"))
 	right.classList.add("right")
 
-	if (!api.logged_in()) {
+	if (!api.authorized()) {
 		additem(right, link("Login", "/login", "log-in"))
 	} else {
 		additem(left, link("Floorplans", "/floorplans"))
@@ -49,7 +49,7 @@ export function bar(on) {
 }
 
 export function authorize() {
-        if (api.authorized_duration() <= 0) {
+        if (!api.authorized()) {
                 // Maybe add a parameter which has /login redirect
                 // back to the page that was trying to be accessed
                 window.location.href = "/login"

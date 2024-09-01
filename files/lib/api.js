@@ -119,7 +119,7 @@ export function authorized_duration(t) {
 	return Number(exp) - Math.trunc(Date.now() / 1000)
 }
 
-export function logged_in() {
+export function authorized() {
 	return authorized_duration() > 0
 }
 

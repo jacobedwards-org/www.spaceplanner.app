@@ -5,7 +5,7 @@ import * as ui from "/lib/ui.js"
 let default_page = "/floorplans"
 
 function init() {
-	if (api.authorized_duration() > 0) {
+	if (api.authorized()) {
 		window.location.href = default_page
 	}
 

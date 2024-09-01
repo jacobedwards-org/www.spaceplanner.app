@@ -2,7 +2,7 @@ import * as etc from "/lib/etc.js"
 import * as api from "/lib/api.js"
 
 function main() {
-        if (!api.logged_in()) {
+        if (!api.authorized()) {
                 window.location.href = "/login"
         }
 

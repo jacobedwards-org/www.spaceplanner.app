@@ -14,7 +14,7 @@ function main() {
 function chooseService(service) {
         console.log("Choose service", service.id)
 
-        if (!api.logged_in()) {
+        if (!api.authorized()) {
                 window.location.href = "/register"
         }
 
