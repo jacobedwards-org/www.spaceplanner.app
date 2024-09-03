@@ -7,6 +7,12 @@ SVG.extend(SVG.Point, {
 	}
 })
 
+SVG.extend(SVG.Circle, {
+	vec: function() {
+		return new Vector2(this.cx(), this.cy())
+	}
+})
+
 SVG.extend(SVG.Shape, {
 	vec: function() {
 		return new Vector2(this.x(), this.y())
@@ -49,6 +55,16 @@ SVG.extend(SVG.Line, {
 		return this.interpolatedPoint(
 			Math.min(1, Math.max(0, this.closestLinearInterpolation(p)))
 		)
+	},
+
+	intersection: function(line2) {
+		let d = this.a * line2.b - line2.a * this.b;
+
+		return {
+			parallel: (d === 0),
+			x: (line2.b * this.c - this.b * line2.c) / d,
+			y: (this.a * line2.c - line2.a * this.c) / d
+		}
 	},
 
 	whereIsPoint: function(x, y) {
