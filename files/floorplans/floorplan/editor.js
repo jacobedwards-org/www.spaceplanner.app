@@ -461,11 +461,13 @@ export class FloorplanEditor {
 	addPoint(point, force) {
 		if (!force) {
 			let already = this.pointAt(point)
-			if (already) {
+			if (already != null) {
 				return already
 			}
 		}
-		return this.backend.addPoint(point)
+		let p = this.backend.addPoint(point)
+		this.updateDisplay()
+		return p
 	}
 
 	remove(...elements) {
