@@ -291,13 +291,18 @@ class BackendHistory {
 			let diff = this.diffs[i]
 			let r = parsePath(diff.path)
 			console.debug(r, type, oldId)
-			if (r.type === "pointmaps" && type === "points") {
+			if (r.type === "furniture_maps" && type === "furniture") {
+				if (r.furniture_id === oldId) {
+					r.furniture_id = newId
+				}
+			} else if (r.type === "pointmaps" && type === "points") {
 				if (diff.value.a === oldId) {
 					diff.value.a = newId
 				} else if (diff.value.b === oldId) {
 					diff.value.b = newId
 				}
-			} else if (r.type === type && r.id == oldId) {
+			}
+			if (r.type === type && r.id == oldId) {
 				// NOTE: Above r.id is string, oldId is number
 				console.debug("Backend.History.updateId", type, oldId, newId)
 				diff.path = diffPath(r.type, newId)
@@ -339,9 +344,23 @@ export class FloorplanBackend {
 			 * [*] The only map types I think are needed are wall and door
 			 * 	at the moment.
 			 */
-			pointmaps: {}
+			pointmaps: {},
 
 			// There will be here more later, such as furnature
+
+			/*
+			 * Furniture definitions:
+			 * { id: { type: furnitureType, name: name, width: width, depth: depth } }
+			 */
+			furniture: {},
+
+			/*
+			 * Furniture map definitions:
+			 * { id: { furniture_id*: id, layout: layout, x: x, y: y, angle: angle } }
+			 *
+			 * [*] references if from furniture/defs
+			 */
+			furniture_maps: {}
 		}
 
 		// Reverse lookup table for pointmaps
@@ -507,6 +526,79 @@ export class FloorplanBackend {
 		if (options.recurse) {
 			this.removeOrphans()
 		}
+	}
+
+	addFurniture(type, options) {
+		options = options ?? {}
+		if (options.width == null || options.depth == null) {
+			throw new Error("These 'options' are not yet optional")
+		}
+
+		if (typeof type !== "string") {
+			throw new Error(type + ": Expected string type")
+		}
+
+		let f = {
+			type: type,
+		}
+		if (options.width != undefined) {
+			f.width = Math.round(options.width)
+			if (f.width <= 0) {
+				throw new Error(options.width + ": rounded width must be greater than zero")
+			}
+		}
+		if (options.depth != undefined) {
+			f.depth = Math.round(options.depth)
+			if (f.depth <= 0) {
+				throw new Error(options.depth + ": rounded depth must be greater than zero")
+			}
+			f.depth = options.depth
+		}
+		return this.addData("furniture", f)
+	}
+
+	removeFurniture(id, options) {
+		for (let map in this.cache.furniture_maps) {
+			this.unmapFurniture(map)
+		}
+		this.removeData(id, options)
+	}
+
+	mapFurniture(def, x, y, options) {
+		options = options ?? {}
+
+		let fm = {
+			furniture_id: def,
+			x: Math.round(x),
+			y: Math.round(y)
+		}
+		if (options.angle != undefined) {
+			if (typeof options.angle !== "number" || options.angle < 0 ||
+				options.angle >= 360) {
+				throw new Error(options.angle + ": Invalid angle")
+			}
+			fm.angle = options.angle
+		}
+		if (options.layout != undefined) {
+			if (typeof options.layout !== "string") {
+				throw new Error(options.layout + ": Invalid layout")
+			}
+			fm.layout = options.layout
+		} else {
+			// for now, this should be handled by the server later
+			fm.layout = "1"
+		}
+		return this.addData("furniture_maps", fm)
+	}
+
+	unmapFurniture(id, options) {
+		this.removeData("furniture_maps", id, options)
+	}
+
+	addMappedFurniture(type, x, y, options) {
+		let ref = this.addFurniture(type, options)
+		this.mapFurniture(ref.id, x, y, options)
+		return ref
 	}
 
 	reqId(type, id) {
@@ -773,6 +865,13 @@ function updateIds(backend, newdata) {
 				// cycle of the program. I'll probably forget and mess up but
 				// hopefully this provides some assistance.
 				backend.updateMappedPoints(x.a, x.b, id)
+			} else if (type === "furniture") {
+				let maps = backend.cache["furniture_maps"]
+				for (let mapid in maps) {
+					if (maps[mapid].furniture_id === x.old_id) {
+						maps[mapid].furniture_id = id
+					}
+				}
 			}
 		}
 	}

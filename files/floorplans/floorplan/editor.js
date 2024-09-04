@@ -287,6 +287,8 @@ export class FloorplanEditor {
 		let data = this.draw.group().attr({ id: "floorplan" })
 		data.group().attr({ id: "pointmaps" }) // lines
 		data.group().attr({ id: "points" }) // circles
+		this.layouts = data.group().attr({ id: "furniture_layouts" })  // g of furniture
+		this.layout = "1"
 
 		this.ui.top = this.draw.group().attr({ id: "top" })
 
@@ -477,6 +479,8 @@ export class FloorplanEditor {
 			let ref = getRef(elements[i])
 			if (ref.type === "pointmaps") {
 				this.backend.unmapPoints(ref.id)
+			} else if (ref.type === "furniture_maps") {
+				this.backend.unmapFurniture(ref.id)
 			} else {
 				later.push(ref)
 			}
@@ -485,8 +489,10 @@ export class FloorplanEditor {
 		for (let i in later) {
 			if (later[i].type === "points") {
 				this.backend.removePoint(later[i].id, { unmap: true })
+			} else if (later[i].type === "furniture_maps") {
+				this.backend.removeFurniture(later[i].id)
 			} else {
-				throw new Error("Unsupported type")
+				throw new Error(later[i].type + ": Unsupported type")
 			}
 		}
 
@@ -538,6 +544,20 @@ export class FloorplanEditor {
 		let ref = this.backend.mapPoints(type, getId(p1, "points"), getId(p2, "points"))
 		this.updateDisplay()
 		return ref
+	}
+
+	addFurniture(type, options) {
+		this.backend.addFurniture(type, options)
+	}
+
+	mapFurniture(def, x, y, options) {
+		this.backend.mapFurniture(def, x, y, options)
+		this.updateDisplay()
+	}
+
+	addMappedFurniture(type, x, y, options) {
+		this.backend.addMappedFurniture(type, x, y, options)
+		this.updateDisplay()
 	}
 
 	selectedPoints() {
@@ -625,6 +645,21 @@ export class FloorplanEditor {
 							.addClass(value.type)
 							.data("type", value.type)
 					}
+				},
+				furniture: function() {},
+				furniture_maps: function(name, value) {
+					let fm = editor.draw.findOneMax(byId(name))
+					if (!fm) {
+						fm = editor.layoutG().rect(1600, 1600)
+							.cx(value.x).cy(value.y)
+							.fill("black")
+							.attr({ id: name })
+					}
+					let f = editor.backend.cache.furniture[value.furniture_id]
+					fm.element("title").words(f.name ?? f.type)
+					fm.transform({
+						rotate: value.angle
+					})
 				}
 			},
 			remove: {
@@ -633,6 +668,10 @@ export class FloorplanEditor {
 					editor.draw.findExactlyOne(byId(name)).remove()
 				},
 				pointmaps: function(name) {
+					editor.draw.findExactlyOne(byId(name)).remove()
+				},
+				furniture: function(name) {},
+				furniture_maps: function(name) {
 					editor.draw.findExactlyOne(byId(name)).remove()
 				}
 			}
@@ -653,7 +692,31 @@ export class FloorplanEditor {
 		ops[diff.op][ref.type](refId(ref), diff.value, ref)
 	}
 
+	switchLayout(name) {
+		if (this.layout != null) {
+			this.layouts.findExactlyOne(byId(layoutID(this.layout))).hide()
+		}
+		this.layouts.findExactlyOne(byId(layoutID(name))).show()
+		this.layout = name
+	}
+
+	layoutG(name) {
+		if (name == null) {
+			name = this.layout
+		}
+		let id = layoutID(name)
+		let layout = this.layouts.findOneMax(byId(id))
+		if (layout) {
+			return layout
+		}
+		layout = this.layouts.group().attr({id: id})
+		return layout
+	}
+
 	updateId(ids) {
+		if (ids.type == "furniture") {
+			return
+		}
 		let e = this.findRef(backend.newRef(ids.type, ids.old))
 		e.attr({ id: refId(backend.newRef(ids.type, ids.new)) })
 		console.log("Editor.updateId", `${ids.old} -> ${ids.new}`)
@@ -662,6 +725,10 @@ export class FloorplanEditor {
 	findRef(ref) {
 		return this.draw.findExactlyOne(byId(refId(getRef(ref))))
 	}
+}
+
+function layoutID(name) {
+	return "layout_" + name
 }
 
 function remove_mode_handlers(target, mode_handlers) {
@@ -749,10 +816,11 @@ export function getId(thing, type) {
 
 export function idRef(id) {
 	let a = id.split("_")
-	if (a.length != 2) {
+	if (a.length < 2) {
 		throw new Error(`${id}: Invalid id`)
 	}
-	return backend.newRef(a[0], a[1])
+	id = a.pop()
+	return backend.newRef(a.join("_"), id)
 }
 
 function byId(id) {

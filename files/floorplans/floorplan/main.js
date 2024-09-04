@@ -6,6 +6,7 @@ import * as lib from "./editor.js"	// Confusing, but I don't want to fix variabl
 import { Vector2 } from "/lib/github.com/ros2jsguy/threejs-math/math/Vector2.js"
 import "./geometry.js"
 import * as backend from "./backend.js"
+import * as api from "/lib/api.js"
 
 const messageTimeout = 4000
 
@@ -53,6 +54,15 @@ function init() {
 	})
 	editor.useUnits("imperial")
 	editor.draw.viewbox(0, 0, editor.units.get("foot", 40), editor.units.get("foot", 40))
+	editor.draw.hide()
+	api.fetch("GET", "furniture")
+		.then(function(furniture) {
+			editor.furniture_types = furniture
+			editor.draw.show()
+		})
+		.catch(function(err) {
+			etc.error("That's unexpected. Unable to get furniture definitions")
+		})
 
 	let push = ui.button("Push", "Push updates", "arrow-up",
 		{ handlers: { click: function() { editor.backend.push(); notify("Pushed floorplan", "pushpull") } } })
@@ -228,7 +238,7 @@ let modes = {
 		points: true,
 		handlers: {
 			contextmenu: preventDefaultHandler,
-			mousedown: [selectionHandler, precisePointHandler],
+			mousedown: [selectionHandler, precisePointHandler, furnitureHandler],
 			mousemove: [precisePointHandler, precisePointMapHandler],
 			mouseup: precisePointHandler,
 			keydown: [zoomKeysHandler, undoRedoHandler],
@@ -245,7 +255,13 @@ function selectionHandler(event, editor) {
 
 	let p = editor.draw.point(event.clientX, event.clientY)
 
-	let x = editor.thingAt(p, "#points")
+	let x = editor.thingAt(p, "#" + editor.layoutG())
+	if (x) {
+		x.select()
+		return
+	}
+
+	x = editor.thingAt(p, "#points")
 	if (x) {
 		x.select()
 		return
@@ -589,6 +605,20 @@ function precisePointMapHandler(event, editor) {
 		editor.remove(map)
 		editor.updateDisplay()
 	}
+}
+
+function furnitureHandler(ev, editor) {
+	if (ev.type != "mousedown" || ev.button !== buttons.left) {
+		return
+	}
+	if (editor.draw.findOne(".selected") != null) {
+		return
+	}
+
+	let p = editor.draw.point(ev.clientX, ev.clientY)
+	console.log("Add furniture", editor.addMappedFurniture("table", p.x, p.y, { width: 500, depth: 500 }))
+	editor.finishAction()
+	ev.preventDefault()
 }
 
 function parseUserLength(editor, length) {
