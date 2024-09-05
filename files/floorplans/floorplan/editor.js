@@ -589,6 +589,7 @@ export class FloorplanEditor {
 
 	applyDiffs(diffs) {
 		for (let op in diffs) {
+			// TODO: Catch errors and update this.diff accordingly
 			this.applyOp(diffs[op])
 		}
 	}
