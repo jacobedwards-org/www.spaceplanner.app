@@ -1,0 +1,33 @@
+# Options filtered by text
+
+1. Figure out how to position the options so that they (A) don't
+   alter the document-flow, (B) stay right below the filtering text
+   input, and (C), disappear when input is not focused.
+
+   The selection is fairly easy, here's what I had written before
+   realizing that positioning the list would proove difficult:
+
+	enumSelection(enums, input) {
+		let enums = document.createElement("ul")
+		enums.classList.add("enums")
+		input.after(enums)
+
+		function showEnums(values) {
+			let items = []
+			for (let i in values) {
+				let item = document.createElement("li")
+				item.appendChild(document.createTextNode(values[i]))
+				items.push(item)
+			}
+			enums.replaceChildren(...items)
+		}
+
+		showEnums(values)
+		input.addEventListener("input", function(ev) {
+			showEnums(values.filter(function(item) {
+				return item.includes(input.value)
+			}))
+		})
+
+		return input
+	}
