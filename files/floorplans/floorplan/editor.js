@@ -647,11 +647,26 @@ export class FloorplanEditor {
 							.data("type", value.type)
 					}
 				},
-				furniture: function() {},
+				furniture: function(name, value) {
+					let ref = idRef(name)
+					let maps = editor.backend.cache.furniture_maps
+					for (let id in maps) {
+						if (maps[id].furniture_id == ref.id) {
+							let ref = backend.newRef("furniture_maps", id)
+							// May be added next
+							let m = editor.draw.findOneMax(byId(refId(ref)))
+							if (m != null) {
+								m.size(value.width, value.depth)
+							}
+						}
+					}
+				},
 				furniture_maps: function(name, value) {
 					let fm = editor.draw.findOneMax(byId(name))
 					if (!fm) {
-						fm = editor.layoutG().rect(1600, 1600)
+						let f = editor.backend.cache.furniture[value.furniture_id]
+						console.log(f, editor.layoutG())
+						fm = editor.layoutG().rect(f.width, f.depth)
 							.cx(value.x).cy(value.y)
 							.fill("black")
 							.attr({ id: name })
