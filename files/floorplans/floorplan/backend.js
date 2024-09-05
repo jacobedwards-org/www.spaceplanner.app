@@ -552,7 +552,12 @@ export class FloorplanBackend {
 			if (f.depth <= 0) {
 				throw new Error(options.depth + ": rounded depth must be greater than zero")
 			}
-			f.depth = options.depth
+		}
+		if (options.name != undefined) {
+			if (typeof options.name !== "string") {
+				throw new Error(options.name + ": Expected string name")
+			}
+			f.name = options.name
 		}
 		return this.addData("furniture", f)
 	}
