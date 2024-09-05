@@ -614,11 +614,178 @@ function furnitureHandler(ev, editor) {
 	if (editor.draw.findOne(".selected") != null) {
 		return
 	}
-
-	let p = editor.draw.point(ev.clientX, ev.clientY)
-	console.log("Add furniture", editor.addMappedFurniture("table", p.x, p.y, { width: 500, depth: 500 }))
-	editor.finishAction()
 	ev.preventDefault()
+	let menu = document.getElementById("furniture_menu")
+	if (menu != null) {
+		menu.remove()
+	}
+	menu = furnitureMenu(editor, editor.draw.point(ev.clientX, ev.clientY))
+	menu.id = "furniture_menu"
+	document.body.append(menu)
+}
+
+function enumSelection(input, values) {
+	let a = typeof(values.keys) === "function"
+	for (let i in values) {
+		console.log("EnumSel", i, values[i])
+		let opt = input.appendChild(document.createElement("option"))
+		opt.appendChild(document.createTextNode(a ? values[i] : i))
+	}
+}
+
+function furnitureMenu(editor, p) {
+	if (p == null) {
+		p = { x: 0, y: 0 }
+	}
+
+	let defaultType
+	for (let t in editor.furniture_types) {
+		defaultType = t
+		break
+	}
+
+	let items = [
+		menuItem("name", "Name"),
+		menuItem("type", "Type", { break: false, enum: editor.furniture_types, attributes: { required: true } }),
+		menuItem("variety", "Variety", { enum: editor.furniture_types[defaultType].varieties }),
+		menuItem("width", "Width", { attributes: { required: true } }),
+		menuItem("depth", "Depth", { attributes: { required: true } }),
+		menuItem("add", null, { attributes: { value: "Add", type: "Submit" } })
+	]
+	let keys = {}
+	for (let i in items) {
+		keys[items[i].attributes.name] = i
+	}
+
+	const fromVariety = function(type, variety) {
+		let v
+		if (variety == null) {
+			v = { width: null, depth: null }
+		} else {
+			v = editor.furniture_types[type].varieties[variety]
+		}
+		items[keys.width].input.value = v.width
+		items[keys.depth].input.value = v.depth
+	}
+	const newVariety = function() {
+		let vars = editor.furniture_types[items[keys.type].input.value].varieties
+		if (vars == undefined) {
+			items[keys.variety].container.classList.add("hidden")
+			fromVariety()
+			return
+		}
+		let v = menuItem("variety", "Variety", { enum: vars })
+		let c = makeItem(v)
+		c.addEventListener("change", function(ev) {
+			fromVariety(items[keys.type].input.value, ev.target.value)
+		})
+		items[keys.variety].container.replaceWith(c)
+		items[keys.variety] = v
+		fromVariety(items[keys.type].input.value, items[keys.variety].input.value)
+	}
+
+	let menu = makeMenu(items)
+	newVariety()
+	items[keys.type].input.addEventListener("change", function(ev) {
+		newVariety()
+	})
+	menu.addEventListener("submit", function(ev) {
+		ev.preventDefault()
+		try {
+			let name = items[keys.name].input.value
+			if (name.length === 0) {
+				name = null
+			}
+			editor.addMappedFurniture(items[keys.type].input.value, p.x, p.y, {
+				width: items[keys.width].input.value,
+				depth: items[keys.depth].input.value,
+				name
+			})
+			editor.finishAction()
+		}
+		catch(err) {
+			etc.error(err, menu)
+		}
+		menu.remove()
+	})
+
+	return menu
+}
+
+function makeMenu(items) {
+	let c = document.createElement("form")
+	c.classList.add("furniture_menu")
+
+	// In case I make c != form later
+	let form = c
+
+	for (let i in items) {
+		form.append(makeItem(items[i]))
+		if (items[i].break) {
+			form.appendChild(document.createElement("br"))
+		}
+	}
+
+	return c
+}
+
+function makeItem(item) {
+	if (item.label != null) {
+		item.container = document.createElement("label")
+		let label = item.container
+		label.appendChild(document.createTextNode(item.label + ": "))
+	}
+
+	item.input = document.createElement(item.enum ? "select" : "input")
+	if (!item.container) {
+		item.container = item.input
+	} else {
+		item.container.appendChild(item.input)
+	}
+
+	if (item.enum != null) {
+		enumSelection(item.input, item.enum)
+	}
+	for (let a in item.attributes ?? {}) {
+		item.input.setAttribute(a, item.attributes[a])
+	}
+	for (let c in item.classes ?? {}) {
+		item.container.classList.add(item.classes[c])
+	}
+	/*
+	if (item.break) {
+		// NOTE: Want this to be done in CSS instead of with <br>s
+		item.container.classList.add("break")
+	}
+	*/
+	return item.container
+}
+
+function menuItem(name, label, options) {
+	options = options ?? {}
+	let attributes = options.attributes ?? {}
+
+	if (options.enum != null && typeof options.enum != "object") {
+		throw new Error("Expected object for menuItem enum")
+	}
+	if (name == undefined) {
+		throw new Error("Must have name")
+	}
+
+	attributes.name = name
+	if (options.value != undefined) {
+		attributes.value = options.value
+	}
+	if (attributes.title == undefined) {
+		attributes.title = label
+	}
+
+	return {
+		label,
+		attributes,
+		enum: options.enum,
+		break: options.break == null ? true : options.break
+	}
 }
 
 function parseUserLength(editor, length) {

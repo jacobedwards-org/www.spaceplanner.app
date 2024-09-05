@@ -147,8 +147,12 @@ form.credentials > input {
 	margin-bottom: 2em;
 }
 
-label.break {
-	display: block;
+.break {
+	display: block !important;
+}
+
+.hidden {
+	display: none !important;
 }
 
 .small {
