@@ -1,5 +1,23 @@
 import * as api from "/lib/api.js"
 
+
+// Sequence numbers for uniqueKey
+let sequences = {}
+
+const objectPaths = {
+	pnt: "points",
+	pntmap:  "pointmaps",
+	fur: "furniture",
+	furmap: "furniture_maps"
+}
+
+const objectTypes = {
+	points: "pnt",
+	pointmaps: "pntmap",
+	furniture: "fur",
+	furniture_maps: "furmap"
+}
+
 class BackendHistory {
 	constructor() {
 			// The current position in history (diffs)
@@ -285,30 +303,6 @@ class BackendHistory {
 		}
 		return group.last
 	}
-
-	updateId(type, oldId, newId) {
-		for (let i in this.diffs) {
-			let diff = this.diffs[i]
-			let r = parsePath(diff.path)
-			console.debug(r, type, oldId)
-			if (r.type === "furniture_maps" && type === "furniture") {
-				if (r.furniture_id === oldId) {
-					r.furniture_id = newId
-				}
-			} else if (r.type === "pointmaps" && type === "points") {
-				if (diff.value.a === oldId) {
-					diff.value.a = newId
-				} else if (diff.value.b === oldId) {
-					diff.value.b = newId
-				}
-			}
-			if (r.type === type && r.id == oldId) {
-				// NOTE: Above r.id is string, oldId is number
-				console.debug("Backend.History.updateId", type, oldId, newId)
-				diff.path = diffPath(r.type, newId)
-			}
-		}
-	}
 }
 
 export class FloorplanBackend {
@@ -380,6 +374,12 @@ export class FloorplanBackend {
 
 		// Time of last server update
 		this.serverUpdated = null
+
+		// A map of server idPaths pointing to localIDs
+		this.localIDs = {}
+
+		// A map of local ids pointing to server ids
+		this.serverIDs = {}
 	}
 
 	get endpoint() {
@@ -409,57 +409,48 @@ export class FloorplanBackend {
 	 * If clean is not given, it is marked dirty
 	 * (thus data from the server, with a known key, can be marked clean)
 	 */
-	addData(type, value, key, options) {
-		if (!options) {
-			options = {}
+	addData(idOrType, value, options) {
+		options = options ?? {}
+
+		let id
+		try {
+			id = idString(parseID(idOrType))
+		}
+		catch {
+			id = this.newID(objectTypes[idOrType])
 		}
 
-		if (!key) {
-			/*
-			 * We'll have to generate a temporary id for it here
-			 * since we can't wait for the server to respond with
-			 * the ID it decides. It will need to be updated once
-			 * we do get the server response.
-			 */
-			key = uniqueKey(this.cache[type])
-		}
-		let inputKey = key
-		key = Number(key)
-		if (isNaN(key)) {
-			throw new Error(`${inputKey}: Invalid key, only numeric keys are accepted`)
+		if (idType(id) === "pntmap") {
+			this.updateMappedPoints(value.a, value.b, id)
 		}
 
-		if (type === "pointmaps") {
-			this.updateMappedPoints(value.a, value.b, key)
-		}
-
-		console.debug("Backend.addData", type, key, value)
+		console.debug("Backend.addData", id, value)
+		let t = idTable(id)
 		if (!options.nodiff) {
-			this.history.addDiff("add", diffPath(type, key), value, this.cache[type][key], options)
+			this.history.addDiff("add", idPath(id), value, this.cache[t][id], options)
 		}
-		this.cache[type][key] = value
+		this.cache[t][id] = value
 
-		return newRef(type, key)
+		return id
 	}
 
-	removeData(type, key, options) {
-		if (!options) {
-			options = {}
+	removeData(id, options) {
+		options = options ?? {}
+
+		console.debug("Backend.removeData", id)
+		let t = idTable(id)
+		if (!this.cache[t][id]) {
+			throw new Error("Expected " + id + " to exist")
 		}
 
-		console.debug("Backend.removeData", type, key)
-		if (!this.cache[type][key]) {
-			throw new Error("Expected " + type + "/" + key + " to exist")
-		}
-
-		if (type === "pointmaps") {
-			this.updateMappedPoints(this.cache[type][key].a, this.cache[type][key].b, null)
+		if (idType(id) === "pntmap") {
+			this.updateMappedPoints(this.cache[t][id].a, this.cache[t][id].b, null)
 		}
 
 		if (!options.nodiff) {
-			this.history.addDiff("remove", diffPath(type, key), null, this.cache[type][key], options)
+			this.history.addDiff("remove", idPath(id), null, this.cache[t][id], options)
 		}
-		delete this.cache[type][key]
+		delete this.cache[t][id]
 	}
 
 	addPoint(point, options) {
@@ -468,8 +459,8 @@ export class FloorplanBackend {
 		if (typeof point.x !== "number" || typeof point.y !== "number") {
 			throw new Error(`Point's x (${point.x}) and y (${point.y}) are not numbers`)
 		}
-		return this.addData("points", { x: Math.round(point.x), y: Math.round(point.y) },
-			options.replace, options)
+		return this.addData(options.replace ?? "points",
+			{ x: Math.round(point.x), y: Math.round(point.y) }, options)
 	}
 
 	replacePoint(id, newpoint, options) {
@@ -482,7 +473,7 @@ export class FloorplanBackend {
 		options = options ?? {}
 
 		if (!this.mappedPoints[id]) {
-			return this.removeData("points", id, options)
+			return this.removeData(id, options)
 		}
 
 		if (!options.unmap && !options.recurse) {
@@ -493,7 +484,7 @@ export class FloorplanBackend {
 			this.unmapPoints(this.mappedPoints[id][other])
 		}
 
-		this.removeData("points", id, options)
+		this.removeData(id, options)
 
 		if (options.recurse) {
 			this.removeOrphans()
@@ -509,20 +500,16 @@ export class FloorplanBackend {
 			throw new Error(`${a}, ${b}: Pointmap must reference existing points`)
 		}
 
-		a = Number(a)
-		b = Number(b)
-
-		// NOTE: For now, a and b are numbers. May not always be the case
-		return this.addData("pointmaps", {
+		return this.addData(this.whichPointMap(a, b) ?? "pointmaps", {
 			type: type,
 			a: a,
 			b: b
-		}, this.whichPointMap(a, b), options)
+		}, options)
 	}
 
 	unmapPoints(id, options) {
 		options = options ?? {}
-		this.removeData("pointmaps", id, options)
+		this.removeData(id, options)
 		if (options.recurse) {
 			this.removeOrphans()
 		}
@@ -597,28 +584,24 @@ export class FloorplanBackend {
 	}
 
 	unmapFurniture(id, options) {
-		this.removeData("furniture_maps", id, options)
+		this.removeData(id, options)
 	}
 
 	addMappedFurniture(type, x, y, options) {
-		let ref = this.addFurniture(type, options)
-		this.mapFurniture(ref.id, x, y, options)
-		return ref
+		let id = this.addFurniture(type, options)
+		return this.mapFurniture(id, x, y, options)
 	}
 
-	reqId(type, id) {
-		let obj = this.byId(type, id)
+	reqObj(id) {
+		let obj = this.data(id)
 		if (!obj) {
-			throw new Error(id + " for " + type + " doesn't exist")
+			throw new Error(id + " doesn't exist")
 		}
 		return obj
 	}
 
-	byId(type, id) {
-		if (!this.cache[type]) {
-			throw new Error(type + ": Invalid type")
-		}
-		return this.cache[type][id]
+	obj(id) {
+		return this.cache[idTable(id)][id]
 	}
 
 	cb(name, arg) {
@@ -658,7 +641,13 @@ export class FloorplanBackend {
 				}
 			}
 
-			patch.push( { op: op, path: dirty[i].path, value: dirty[i].value })
+			let id = parsePath(dirty[i].path)
+			if (this.serverIDs[id]) {
+				patch.push({ op: op, path: idPath(this.serverIDs[id]),
+				    value: this.remapIDsValue(dirty[i].value, this.serverIDs) })
+			} else {
+				patch.push({ op: "new", path: dirty[i].path, value: dirty[i].value })
+			}
 		}
 
 		console.debug("Backend.push (patch)", patch)
@@ -679,7 +668,7 @@ export class FloorplanBackend {
 		// WARNING: This needs a lock
 		let backend = this
 
-		return api.fetch("PUT", this.endpoint, this.cache)
+		return api.fetch("PUT", this.endpoint, this.toServerIDs(this.cache))
 			.then(function() {
 				backend.serverPosition = backend.history.place
 			})
@@ -701,6 +690,7 @@ export class FloorplanBackend {
 		let backend = this
 		return api.fetch("GET", this.endpoint)
 			.then(function(data) {
+				data = backend.toLocalIDs(data)
 				let diff = gendiff("", backend.cache, data)
 				console.debug("Backend.Pull (diff)", diff)
 				backend.applyDiff(diff, { clean: true })
@@ -715,11 +705,12 @@ export class FloorplanBackend {
 			this.history.newGroup()
 		}
 		for (let i in diff) {
-			let ref = parsePath(diff[i].path)
+			let id = parsePath(diff[i].path)
+			console.log(id, diff[i])
 			if (diff[i].op === "remove") {
-				this.removeData(ref.type, ref.id, options)
+				this.removeData(id, options)
 			} else {
-				this.addData(ref.type, diff[i].value, ref.id, options)
+				this.addData(id, diff[i].value, options)
 			}
 		}
 		if (!options.nodiff) {
@@ -751,6 +742,52 @@ export class FloorplanBackend {
 		console.debug("Backend.updateMappedPoints", this.mappedPoints)
 	}
 
+	toLocalIDs(data) {
+		return this.remapIDs(data, this.localIDs, { createLocal: true })
+	}
+
+	toServerIDs(data) {
+		return this.remapIDs(data, this.serverIDs)
+	}
+
+	remapIDs(data, idMap) {
+		let newdata = {}
+		for (let t in data) {
+			newdata[t] = {}
+			for (let id in data[t]) {
+				let nid = idMap[id]
+				if (nid == null) {
+					if (idMap != this.localIDs) {
+						continue
+					}
+					nid = this.newID(objectTypes[t], id)
+				}
+				newdata[t][nid] = this.remapIDsValue(data[t][id], idMap)
+			}
+		}
+		return newdata
+	}
+
+	remapIDsValue(value, newids) {
+		value = structuredClone(value)
+		let keys = ['a', 'b', 'furniture_id']
+	
+		for (let i in keys) {
+			let id = value[keys[i]]
+			if (id == null) {
+				continue
+			}
+			if (newids[id] == null) {
+				if (newids != this.localIDs) {
+					continue
+				}
+				let map = this.newID(idType(value[keys[i]]), value[keys[i]])
+			}
+			value[keys[i]] = newids[value[keys[i]]]
+		}
+		return value
+	}
+
 	whichPointMap(a, b) {
 		if (!this.mappedPoints[a]) {
 			return undefined
@@ -779,9 +816,9 @@ export class FloorplanBackend {
 
 	originPoint() {
 		for (let i in this.history.diffs) {
-			let ref = parsePath(this.history.diffs[i].path)
-			if (ref.type === "points" && this.cache.points[ref.id] != undefined) {
-				return ref.id
+			let id = parsePath(this.history.diffs[i].path)
+			if (idType(id) === "pnt" && this.cache.points[id] != undefined) {
+				return id
 			}
 		}
 
@@ -799,6 +836,21 @@ export class FloorplanBackend {
 			}
 		}
 		return map
+	}
+
+	newID(type, serverID) {
+		let local = uniqueKey(type + "_", this.serverIDs)
+		if (serverID != null) {
+			this.mapID(local, serverID)
+		}
+		return local
+	}
+
+	mapID(localID, serverID) {
+		if (serverID != null && this.localIDs[serverID] !== undefined) {
+			throw new Error("That server ID is already mapped to " + this.localIDs[serverID])
+		}
+		this.localIDs[serverID] = localID
 	}
 }
 
@@ -825,87 +877,83 @@ function gendiff(path, a, b) {
 }
 
 function updateIds(backend, newdata) {
-	for (let type in newdata) {
-		for (let id in newdata[type]) {
-			let x = newdata[type][id]
-			if (x.old_id == undefined) {
-				continue
-			}
-
-			backend.history.updateId(type, x.old_id, id)
-			console.debug("Backend.updateIds", `ID ${x.old_id} > ${id}`)
-			if (backend.cache[type][id]) {
-				// NOTE: I don't think this can actually happen
-				throw new Error("ERROR: Pull id conflict")
-			}
-
-			backend.cache[type][id] = backend.cache[type][x.old_id]
-			// Both old and new exist at the moment, hense;
-			backend.cb("updateId", { type: type, old: x.old_id, new: id })
-			delete backend.cache[type][x.old_id]
-
-			if (type === "points") {
-				for (let i in backend.cache.pointmaps) {
-					if (backend.cache.pointmaps[i].a === x.old_id) {
-					console.debug(`Updated pointmap ${i} from ${x.old_id} to ${id}`)
-					backend.cache.pointmaps[i].a = id
-					} else if (backend.cache.pointmaps[i].b === x.old_id) {
-						backend.cache.pointmaps[i].b = id
-						console.debug(`Updated pointmap ${i} from ${x.old_id} to ${id}`)
-					}
-				}
-				if (backend.mappedPoints[x.old_id]) {
-					backend.mappedPoints[id] = backend.mappedPoints[x.old_id]
-					delete backend.mappedPoints[x.old_id]
-					for (let a in backend.mappedPoints) {
-						if (backend.mappedPoints[a][x.old_id]) {
-							backend.updateMappedPoints(a, id, backend.mappedPoints[a][x.old_id])
-							backend.updateMappedPoints(a, x.old_id, null)
-						}
-					}
-				}
-			} else if (type === "pointmaps") {
-				// WARNING: This requires that pointmap a and b do not get
-				// modified, which I believe will hold true throughout the life
-				// cycle of the program. I'll probably forget and mess up but
-				// hopefully this provides some assistance.
-				backend.updateMappedPoints(x.a, x.b, id)
-			} else if (type === "furniture") {
-				let maps = backend.cache["furniture_maps"]
-				for (let mapid in maps) {
-					if (maps[mapid].furniture_id === x.old_id) {
-						maps[mapid].furniture_id = id
-					}
-				}
-			}
+	for (let srvID in newdata[type]) {
+		let x = newdata[id]
+		if (x.old_id != null) {
+			backend.localIDs[srvID] = x.old_id
+			backend.serverIDs[x.old_id] = srvID
+		} else {
+			backend.localIDs[srvID] = srvID
+			backend.serverIDs[srvID] = srvID
 		}
 	}
 }
 
-function diffPath(type, id) {
-	return "/" + type + "/" + id
-}
-
-export function parsePath(path) {
-	let a = path.split("/")
-	if (a.length != 3) {
-		throw new Error("Invalid path")
+function uniqueKey(prefix, obj) {
+	if (sequences[prefix] == undefined) {
+		sequences[prefix] = 0
 	}
-	return newRef(a[1], Number(a[2]))
-}
 
-export function newRef(type, id) {
-	return { type: String(type), id: Number(id) }
-}
-
-function uniqueKey(obj) {
 	let key
 	do {
-		key = Number(Math.random().toString().split(".").join(""))
-	} while (obj[key])
+		key = prefix + sequences[prefix]++
+	} while (obj[key] !== undefined)
 
 	// Wonder if there's an atomic way of testing whether a key is undefined and doing this?
 	// Doesn't matter much for my purposes probably.
 	obj[key] = null
 	return key
+}
+
+export function parseID(s) {
+	let a = s.split("_")
+	if (a.length != 2) {
+		throw new Error(s + ": Invalid ID")
+	}
+	return makeID(a[0], a[1])
+}
+
+function makeID(type, seq) {
+	if (!type || !seq || objectPaths[type] == null || isNaN(seq = Number(seq))) {
+		throw new Error(s + ": Invalid ID")
+	}
+	return { type, seq }
+}
+
+export function idString(id) {
+	if (id.type == null || id.seq == null) {
+		throw new Error("Invalid ID")
+	}
+	return id.type + "_" + id.seq
+}
+
+export function idType(id) {
+	return parseID(id).type
+}
+
+export function idTable(id) {
+	return objectPaths[idType(id)]
+}
+
+export function idPath(id) {
+	let table = idTable(id)
+	if (table == null) {
+		throw new Error("Invalid ID type")
+	}
+	return `/${table}/${id}`
+}
+
+export function parsePath(path) {
+	let a = path.split("/")
+	if (a.length != 3) {
+		throw new Error(path + ": Invalid path")
+	}
+	if (objectTypes[a[1]] == null) {
+		throw new Error(path + ": Invalid path")
+	}
+	let id = parseID(a[2])
+	if (id.type != objectTypes[a[1]]) {
+		throw new Error(path + ": Invalid path for type")
+	}
+	return idString(id)
 }

@@ -267,7 +267,6 @@ export class FloorplanEditor {
 		}
 
 		let editor = this
-		options.backend.callbacks.updateId = function(ids) { editor.updateId(ids) }
 
 		this.backend = new backend.FloorplanBackend(floorplan, options.backend)
 
@@ -476,23 +475,23 @@ export class FloorplanEditor {
 		let later = []
 
 		for (let i in elements) {
-			let ref = getRef(elements[i])
-			if (ref.type === "pointmaps") {
-				this.backend.unmapPoints(ref.id)
-			} else if (ref.type === "furniture_maps") {
-				this.backend.unmapFurniture(ref.id)
+			let id = getID(elements[i])
+			if (backend.idType(id) === "pntmap") {
+				this.backend.unmapPoints(id)
+			} else if (backend.idType(id) === "furmap") {
+				this.backend.unmapFurniture(id)
 			} else {
-				later.push(ref)
+				later.push(id)
 			}
 		}
 
 		for (let i in later) {
-			if (later[i].type === "points") {
-				this.backend.removePoint(later[i].id, { unmap: true })
-			} else if (later[i].type === "furniture_maps") {
-				this.backend.removeFurniture(later[i].id)
+			if (backend.idType(later[i])=== "pnt") {
+				this.backend.removePoint(later[i], { unmap: true })
+			} else if (backend.idType(later[i]) === "furmap") {
+				this.backend.removeFurniture(later[i])
 			} else {
-				throw new Error(later[i].type + ": Unsupported type")
+				throw new Error(backend.idType(later[i]) + ": Unsupported type")
 			}
 		}
 
@@ -501,14 +500,7 @@ export class FloorplanEditor {
 	}
 
 	movePoint(point, coordinate) {
-		return this.backend.replacePoint(getId(point, "points"), coordinate)
-	}
-
-	removePoints(...points) {
-		for (let i in points) {
-			points[i] = backend.newRef("points", getId(points[i]))
-		}
-		return this.remove(points)
+		return this.backend.replacePoint(getID(point, "points"), coordinate)
 	}
 
 	pointAt(point) {
@@ -541,9 +533,9 @@ export class FloorplanEditor {
 	}
 
 	mapPoints(type, p1, p2) {
-		let ref = this.backend.mapPoints(type, getId(p1, "points"), getId(p2, "points"))
+		let id = this.backend.mapPoints(type, getID(p1, "points"), getID(p2, "points"))
 		this.updateDisplay()
-		return ref
+		return id
 	}
 
 	addFurniture(type, options) {
@@ -600,8 +592,8 @@ export class FloorplanEditor {
 
 		let ops = {
 			add: {
-				points: function(name, value, ref) {
-					let cur = editor.draw.findOneMax(byId(name))
+				points: function(id, value) {
+					let cur = editor.draw.findOneMax(byId(id))
 					// Update pointmaps
 					if (cur) {
 						cur.cx(value.x).cy(value.y)
@@ -610,15 +602,15 @@ export class FloorplanEditor {
 						editor.draw.findOne("#points")
 							.circle(500)
 							.cx(value.x).cy(value.y)
-							.attr({ id: name })
+							.attr({ id })
 							.addClass("point")
 							.select()
 
 					}
-					for (let oth in editor.backend.mappedPoints[ref.id]) {
-						let map = editor.backend.mappedPoints[ref.id][oth]
-						oth = editor.backend.reqId("points", oth)
-						map = editor.draw.findOneMax(byId(refId((backend.newRef("pointmaps", map)))))
+					for (let oth in editor.backend.mappedPoints[id]) {
+						let map = editor.backend.mappedPoints[id][oth]
+						oth = editor.backend.obj(oth)
+						map = editor.draw.findOneMax(byId(map))
 						if (map) {
 							// It's probably being added later, that said, this isn't a good solution
 							// because it doesn't allow for checking for errors.
@@ -626,13 +618,13 @@ export class FloorplanEditor {
 						}
 					}
 				},
-				pointmaps: function(name, value) {
+				pointmaps: function(id, value) {
 					if (value.type !== "wall" && value.type !== "door") {
 						throw new Error("Only walls and doors currently supported")
 					}
-					let a = editor.backend.reqId("points", value.a)
-					let b = editor.backend.reqId("points", value.b)
-					let wall = editor.draw.findOneMax(byId(name))
+					let a = editor.backend.obj(value.a)
+					let b = editor.backend.obj(value.b)
+					let wall = editor.draw.findOneMax(byId(id))
 					if (wall) {
 						wall.plot(a.x, a.y, b.x, b.y)
 							.removeClass(wall.data("type"))
@@ -642,36 +634,32 @@ export class FloorplanEditor {
 						editor.draw.findExactlyOne("#pointmaps")
 							.line(a.x, a.y, b.x, b.y)
 							.stroke({ color: "black", width: 400 })
-							.attr({ id: name })
+							.attr({ id })
 							.addClass(value.type)
 							.data("type", value.type)
 					}
 				},
-				furniture: function(name, value) {
-					let ref = idRef(name)
-					let maps = editor.backend.cache.furniture_maps
+				furniture: function(id, value) {
+					let maps = editor.backend.cache
 					for (let id in maps) {
-						if (maps[id].furniture_id == ref.id) {
-							let ref = backend.newRef("furniture_maps", id)
-							// May be added next
-							let m = editor.draw.findOneMax(byId(refId(ref)))
+						if (maps[id].furniture_id == id) {
+							let m = editor.draw.findOneMax(byId(id))
 							if (m != null) {
 								m.size(value.width, value.depth)
 							}
 						}
 					}
 				},
-				furniture_maps: function(name, value) {
-					let fm = editor.draw.findOneMax(byId(name))
+				furniture_maps: function(id, value) {
+					let fm = editor.draw.findOneMax(byId(id))
+					let f = editor.backend.cache.furniture[value.furniture_id]
 					if (!fm) {
-						let f = editor.backend.cache.furniture[value.furniture_id]
 						console.log(f, editor.layoutG())
 						fm = editor.layoutG().rect(f.width, f.depth)
 							.cx(value.x).cy(value.y)
 							.fill("black")
-							.attr({ id: name })
+							.attr({ id })
 					}
-					let f = editor.backend.cache.furniture[value.furniture_id]
 					fm.element("title").words(f.name ?? f.type)
 					fm.transform({
 						rotate: value.angle
@@ -679,16 +667,16 @@ export class FloorplanEditor {
 				}
 			},
 			remove: {
-				points: function(name) {
+				points: function(id) {
 					// Remove pointmaps
-					editor.draw.findExactlyOne(byId(name)).remove()
+					editor.draw.findExactlyOne(byId(id)).remove()
 				},
-				pointmaps: function(name) {
-					editor.draw.findExactlyOne(byId(name)).remove()
+				pointmaps: function(id) {
+					editor.draw.findExactlyOne(byId(id)).remove()
 				},
 				furniture: function(name) {},
-				furniture_maps: function(name) {
-					editor.draw.findExactlyOne(byId(name)).remove()
+				furniture_maps: function(id) {
+					editor.draw.findExactlyOne(byId(id)).remove()
 				}
 			}
 		}
@@ -701,11 +689,12 @@ export class FloorplanEditor {
 			throw new Error(diff.op + ": Unexpected patch operation")
 		}
 
-		let ref = backend.parsePath(diff.path)
-		if (!ops[diff.op][ref.type]) {
+		let id = backend.parsePath(diff.path)
+		let t = backend.idTable(id)
+		if (!ops[diff.op][t]) {
 			throw new Error("Unhandled patch")
 		}
-		ops[diff.op][ref.type](refId(ref), diff.value, ref)
+		ops[diff.op][t](id, diff.value)
 	}
 
 	switchLayout(name) {
@@ -729,17 +718,8 @@ export class FloorplanEditor {
 		return layout
 	}
 
-	updateId(ids) {
-		if (ids.type == "furniture") {
-			return
-		}
-		let e = this.findRef(backend.newRef(ids.type, ids.old))
-		e.attr({ id: refId(backend.newRef(ids.type, ids.new)) })
-		console.log("Editor.updateId", `${ids.old} -> ${ids.new}`)
-	}
-
-	findRef(ref) {
-		return this.draw.findExactlyOne(byId(refId(getRef(ref))))
+	findObj(id) {
+		return this.draw.findExactlyOne(byId(getID(id)))
 	}
 }
 
@@ -797,52 +777,29 @@ function gridSystem(editor, system) {
 	return last
 }
 
-export function getRef(thing, type) {
-	console.debug("getRef", thing, type)
-	let ref
+export function getID(thing, type) {
+	console.debug("getID", thing, type)
+	let id
 	if (typeof thing === "object") {
 		if (typeof thing.attr === "function") {
-			ref = idRef(thing.attr("id"))
-		} else if (typeof thing.type === "string" && typeof thing.id === "number") {
-			ref = thing
+			id = thing.attr("id")
+		} else if (typeof thing.type === "string" && typeof thing.id === "string") {
+			id = thing.id
 		}
 	} else if (typeof thing === "string") {
-		ref = idRef(thing)
+		id = thing
 	}
 
-	if (!ref) {
-		console.error("Couldn't get ref from", thing)
-		throw new Error("Invalid ref")
+	if (id == undefined) {
+		console.error("Couldn't get id from", thing)
+		throw new Error("Invalid id")
 	}
-	if (type && ref.type != type) {
-		throw new Error(`${ref.type}: Invalid ref type (wanted ${type})`)
+	if (type && backend.idTable(id) != type) {
+		throw new Error(`${backend.idTable(id)}: Invalid table (wanted ${type})`)
 	}
-	return ref
-}
-
-export function getId(thing, type) {
-	console.debug("getId", thing)
-
-	let n = Number(thing)
-	if (isNaN(n)) {
-		return getRef(thing, type).id
-	}
-	return n
-}
-
-export function idRef(id) {
-	let a = id.split("_")
-	if (a.length < 2) {
-		throw new Error(`${id}: Invalid id`)
-	}
-	id = a.pop()
-	return backend.newRef(a.join("_"), id)
+	return id
 }
 
 function byId(id) {
 	return "#" + id
-}
-
-function refId(ref) {
-	return ref.type + "_" + ref.id
 }

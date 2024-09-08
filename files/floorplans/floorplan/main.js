@@ -148,15 +148,15 @@ function selectHandler(event, editor) {
 		})
 	)
 
-	let refs = []
+	let ids = []
 	for (let i in a) {
-		refs[i] = lib.getRef(a[i])
+		ids[i] = lib.getID(a[i])
 	}
 
 	let maps = []
-	for (let i in refs) {
-		if (refs[i].type === "pointmaps") {
-			maps.push(editor.backend.cache.pointmaps[refs[i].id])
+	for (let i in ids) {
+		if (backend.idType(ids[i]) === "pntmap") {
+			maps.push(editor.backend.cache.pointmaps[ids[i]])
 		}
 	}
 
@@ -424,14 +424,14 @@ function precisePointHandler(event, editor, state) {
 		}
 
 		let points = editor.thingsAt(p, "#points")
-		let fid = lib.getId(state.from)
+		let fid = lib.getID(state.from)
 		let tid
 		if (state.snapmap == null) {
-			tid = lib.getId(state.to)
+			tid = lib.getID(state.to)
 		}
 		let instead
 		for (let i in points) {
-			let id = lib.getId(points[i])
+			let id = lib.getID(points[i])
 			if (id !== tid && id !== fid) {
 				instead = id
 			}
@@ -444,7 +444,7 @@ function precisePointHandler(event, editor, state) {
 				} else {
 					editor.remove(state.snapmap)
 				}
-				state.to = editor.findRef(backend.newRef("points", instead))
+				state.to = editor.findObj(instead)
 				state.snapmap = editor.mapPoints("wall", state.from, state.to)
 			}
 		} else if (state.snapmap != null) {
@@ -453,7 +453,7 @@ function precisePointHandler(event, editor, state) {
 			state.to = editor.addPoint(p, true)
 			editor.mapPoints("wall", state.from, state.to)
 			editor.updateDisplay()
-			state.to = editor.findRef(state.to)
+			state.to = editor.findObj(state.to)
 		}
 
 		if (!options.leave_input) {
@@ -508,9 +508,9 @@ function precisePointHandler(event, editor, state) {
 				state.from = null
 	
 				// I want the first pointmap defined, but this for now
-				let m = editor.backend.mappedPoints[lib.getId(state.to)]
+				let m = editor.backend.mappedPoints[lib.getID(state.to)]
 				for (let point in m) {
-					state.from = editor.findRef(backend.newRef("points", point))
+					state.from = editor.findObj(point)
 					break
 				}
 				if (!state.from) {
@@ -521,7 +521,7 @@ function precisePointHandler(event, editor, state) {
 				}
 				init()
 			}
-	
+
 			state.origin = state.from.vec()
 		} else if (event.type === "mouseup") {
 			cleanup()
@@ -531,7 +531,7 @@ function precisePointHandler(event, editor, state) {
 			state.to = editor.addPoint(cursor, true)
 			editor.mapPoints("wall", state.from, state.to)
 			editor.updateDisplay()
-			state.to = editor.findRef(state.to)
+			state.to = editor.findObj(state.to)
 			init()
 		}
 		event.preventDefault()
@@ -586,7 +586,7 @@ function precisePointMapHandler(event, editor) {
 		}
 
 		// Shouldn't really use backend as it's only correct when updateDisplay is called
-		let data = editor.backend.reqId("pointmaps", lib.getId(map))
+		let data = editor.backend.obj(lib.getID(map))
 		if (data.type != "wall") {
 			throw new Error("Changing direction of doors not yet supported")
 		}
@@ -599,7 +599,6 @@ function precisePointMapHandler(event, editor) {
 		}
 
 		sub = editor.addPoint(sub)
-		console.log(data, sub)
 		editor.mapPoints("wall", data.a, sub)
 		editor.mapPoints("wall", sub, data.b)
 		editor.remove(map)
