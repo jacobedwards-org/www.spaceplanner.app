@@ -84,7 +84,7 @@ export function error(message, on) {
 		err_elem.append(msg)
 		err_elem.append(ui.button("Dismiss", "Dismiss error", "close", { handlers: { click: { function() { err_elem.remove() } } } }))
 
-                on.before(err_elem)
+                on.prepend(err_elem)
         }
 }
 

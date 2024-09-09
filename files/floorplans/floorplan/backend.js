@@ -86,6 +86,8 @@ class BackendHistory {
 			return group
 		}
 
+		this.truncate()
+
 		if (this.groups.length === 0) {
 			return pushGroup(this)
 		}
@@ -559,45 +561,65 @@ export class FloorplanBackend {
 	}
 
 	mapFurniture(params, id) {
-		let fm = id ? this.reqObj(id) : {}
+		let backend = this
+		const validInt = function(input, cur) {
+			let x = Math.round(input ?? cur)
+			if (isNaN(x)) {
+				throw new Error(input + " is NaN")
+			}
+			return x
+		}
+		const validSize = function(input, cur) {
+			let x = validInt(input, cur)
+			if (x <= 0) {
+				throw new Error(input + " must be a positive number")
+			}
+			return x
+		}
+		let parsers = {
+			x: validInt,
+			y: validInt,
+			width: validSize,
+			depth: validSize,
+			angle: function(input, cur) {
+				if (input == undefined) {
+					return cur ?? 0
+				}
+				let x = validInt(input)
+				if (x < 0 || x >= 360) {
+					throw new Error(input + ": Angle must be between 0 and 359 degrees")
+				}
+				return x
+			},
+			layout: function(input, cur) {
+				if (input == undefined) {
+					return cur ?? "1"
+				}
+				if (typeof input !== "string") {
+					throw new Error(input + ": Layout should be a string")
+				}
+				return input
+			},
+			furniture_id: function(id, cur) {
+				if (id == undefined) {
+					if (cur == null) {
+						throw new Error("Missing furniture id")
+					}
+					return cur
+				}
+				if (backend.obj(id) == undefined) {
+					throw new Error("invalid furniture id for furniture map")
+				}
+				return id
+			}
+		}
 
-		if (params.furniture_id != undefined) {
-			if (this.obj(params.furniture_id) == undefined) {
-				throw new Error("invalid furniture id for furniture map")
-			}
-			fm.furniture_id = params.furniture_id
-		} else if (fm.furniture_id == undefined) {
-			throw new Error("Missing furniture id")
+		let fm = id ? this.reqObj(id) : {}
+		for (let param in parsers) {
+			fm[param] = parsers[param](params[param], fm ? fm[param] : undefined)
 		}
-		if (params.x != undefined) {
-			if (typeof params.x !== "number") {
-				throw new Error("Invalid x coordinate")
-			}
-			fm.x = params.x
-		}
-		if (params.y != undefined) {
-			if (typeof params.x !== "number") {
-				throw new Error("Invalid y coordinate")
-			}
-			fm.y = params.y
-		}
-		if (params.angle != undefined) {
-			if (typeof params.angle !== "number" || params.angle < 0 ||
-				params.angle >= 360) {
-				throw new Error(params.angle + ": Invalid angle")
-			}
-			fm.angle = params.angle
-		}
-		if (params.layout != undefined) {
-			if (typeof params.layout !== "string") {
-				throw new Error(params.layout + ": Invalid layout")
-			}
-			fm.layout = params.layout
-		} else {
-			// for now, this should be handled by the server later
-			fm.layout = "1"
-		}
-		return this.addData("furniture_maps", fm)
+
+		return this.addData(id ?? "furniture_maps", fm)
 	}
 
 	unmapFurniture(id, options) {
@@ -606,7 +628,7 @@ export class FloorplanBackend {
 
 	addMappedFurniture(params, id) {
 		params.furniture_id = this.addFurniture(params, id ? this.reqObj(id).furniture_id : null)
-		return this.mapFurniture(params)
+		return this.mapFurniture(params, id)
 	}
 
 	reqObj(id) {

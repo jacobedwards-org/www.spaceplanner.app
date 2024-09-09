@@ -539,17 +539,19 @@ export class FloorplanEditor {
 	}
 
 	addFurniture(params, id) {
-		this.backend.addFurniture(params, id)
+		return this.backend.addFurniture(params, id)
 	}
 
 	mapFurniture(params, id) {
-		this.backend.mapFurniture(params, id)
+		id = this.backend.mapFurniture(params, id)
 		this.updateDisplay()
+		return id
 	}
 
 	addMappedFurniture(params, id) {
-		this.backend.addMappedFurniture(params, id)
+		id = this.backend.addMappedFurniture(params, id)
 		this.updateDisplay()
+		return id
 	}
 
 	selectedPoints() {
@@ -640,27 +642,28 @@ export class FloorplanEditor {
 					}
 				},
 				furniture: function(id, value) {
-					let maps = editor.backend.cache
-					for (let id in maps) {
-						if (maps[id].furniture_id == id) {
-							let m = editor.draw.findOneMax(byId(id))
+					let maps = editor.backend.cache.furniture_maps
+					for (let mid in maps) {
+						if (maps[mid].furniture_id == id) {
+							let m = editor.draw.findOneMax(byId(mid))
 							if (m != null) {
 								m.size(value.width, value.depth)
+								console.log("New name", furniture_name(value))
+								m.findOne("title").words(furniture_name(value))
 							}
 						}
 					}
 				},
 				furniture_maps: function(id, value) {
 					let fm = editor.draw.findOneMax(byId(id))
-					let f = editor.backend.cache.furniture[value.furniture_id]
 					if (!fm) {
-						console.log(f, editor.layoutG())
+						let f = editor.backend.reqObj(value.furniture_id)
 						fm = editor.layoutG().rect(f.width, f.depth)
-							.cx(value.x).cy(value.y)
 							.fill("black")
 							.attr({ id })
+						fm.element("title").words(furniture_name(f))
 					}
-					fm.element("title").words(f.name ?? f.type)
+					fm.cx(value.x).cy(value.y)
 					fm.transform({
 						rotate: value.angle
 					})
@@ -802,4 +805,8 @@ export function getID(thing, type) {
 
 function byId(id) {
 	return "#" + id
+}
+
+function furniture_name(f) {
+	return f.name ? `${f.name} (${f.type})` : f.type
 }

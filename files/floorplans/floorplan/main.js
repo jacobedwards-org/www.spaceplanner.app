@@ -117,8 +117,6 @@ function init() {
 		)
 	))
 
-	editor.draw.on("select", function(event) { selectHandler(event, editor) })
-
 	editor.backend.pull()
 		.then(function() {
 			if (editor.draw.findExactlyOne("#points").children().length === 0) {
@@ -127,7 +125,7 @@ function init() {
 		})
 }
 
-function selectHandler(event, editor) {
+function selectHandler(event, editor, state) {
 	let old = document.getElementById("selOps")
 	if (!event.detail.selected) {
 		if (old) {
@@ -169,6 +167,21 @@ function selectHandler(event, editor) {
 		}
 		c.appendChild(
 			selector(editor, { wall: true, door: true }, changeTypes, { text: "Type:" })
+		)
+	}
+
+	let fmaps = ids.filter(function(item) { return backend.idType(item) === "furmap" })
+	if (fmaps.length === 1) {
+		c.appendChild(
+			ui.input("edit", "Edit selected furniture", {
+				attributes: {
+					type: "button",
+					value: "Edit furniture"
+				},
+				handlers: { click: function() {
+					document.body.appendChild(furnitureMenu(editor, fmaps[0]))
+				}}
+			})
 		)
 	}
 
@@ -239,10 +252,11 @@ let modes = {
 		handlers: {
 			contextmenu: preventDefaultHandler,
 			mousedown: [selectionHandler, precisePointHandler, furnitureHandler],
-			mousemove: [precisePointHandler, precisePointMapHandler],
-			mouseup: precisePointHandler,
+			mousemove: [precisePointHandler, precisePointMapHandler, furnitureHandler],
+			mouseup: [precisePointHandler, furnitureHandler],
 			keydown: [zoomKeysHandler, undoRedoHandler],
-			dblclick: precisePointMapHandler
+			dblclick: [precisePointMapHandler, furnitureHandler],
+			select: selectHandler
 		}
 	}
 }
@@ -606,51 +620,116 @@ function precisePointMapHandler(event, editor) {
 	}
 }
 
-function furnitureHandler(ev, editor) {
-	if (ev.type != "mousedown" || ev.button !== buttons.left) {
-		return
+// mousedown, mouseup, mousemove, dblclick
+function furnitureHandler(ev, editor, state) {
+	const doMove = function() {
+		// racy
+		if (state.move) {
+			let id = state.moving.attr("id")
+			let p = editor.draw.point(state.move.x, state.move.y)
+			editor.mapFurniture({ x: p.x, y: p.y }, id)
+			delete state.move
+		}
 	}
-	if (editor.draw.findOne(".selected") != null) {
-		return
+
+	let sel = editor.draw.find("#furniture_layouts > * > .selected").array()
+	if (sel.length === 0 && ev.type === "dblclick" && ev.button === buttons.left) {
+		ev.preventDefault()
+		if (state.menu) {
+			state.menu.remove()
+			delete state.menu
+		}
+		state.menu = document.body.appendChild(
+			furnitureMenu(editor, editor.draw.point(ev.clientX, ev.clientY)))
+	} else if (sel.length === 1) {
+		if (ev.type === "dblclick") {
+			ev.preventDefault()
+			document.body.appendChild(furnitureMenu(editor, lib.getID(sel[0])))
+		} else if (ev.type === "mousedown") {
+			ev.preventDefault()
+			state.moving = sel[0]
+			return
+		} else {
+			if (!state.moving) {
+				return
+			}
+			if (ev.type === "mouseup") {
+				ev.preventDefault()
+				doMove()
+				delete state.moving
+				return
+			} else if (ev.type === "mousemove") {
+				ev.preventDefault()
+				if (state.move) {
+					state.move = { x: ev.clientX, y: ev.clientY }
+				} else {
+					state.move = { x: ev.clientX, y: ev.clientY }
+					setTimeout(doMove, 60)
+				}
+			}
+		}
 	}
-	ev.preventDefault()
-	let menu = document.getElementById("furniture_menu")
-	if (menu != null) {
-		menu.remove()
-	}
-	menu = furnitureMenu(editor, editor.draw.point(ev.clientX, ev.clientY))
-	menu.id = "furniture_menu"
-	document.body.append(menu)
 }
 
 function enumSelection(input, values) {
 	let a = typeof(values.keys) === "function"
 	for (let i in values) {
-		console.log("EnumSel", i, values[i])
 		let opt = input.appendChild(document.createElement("option"))
 		opt.appendChild(document.createTextNode(a ? values[i] : i))
 	}
 }
 
-function furnitureMenu(editor, p) {
-	if (p == null) {
-		p = { x: 0, y: 0 }
+function furnitureMenu(editor, pointOrID) {
+	console.warn("Furniture menu")
+	const def = function(obj) {
+		return obj[defKey(obj)]
+	}
+	const defKey = function(obj) {
+		for (let i in obj) {
+			return i
+		}
 	}
 
-	let defaultType
-	for (let t in editor.furniture_types) {
-		defaultType = t
-		break
+	editor.finishAction()
+	let p
+	let id
+	let params
+	if (typeof pointOrID === "string") {
+		id = pointOrID
+		params = editor.backend.reqObj(id)
+		let fp = editor.backend.reqObj(params.furniture_id)
+		for (let k in fp) {
+			params[k] = fp[k]
+		}
+	} else {
+		if (pointOrID == null) {
+			p = { x: 0, y: 0 }
+		} else if (typeof pointOrID === "object") {
+			p = pointOrID
+		}
+		let type = defKey(editor.furniture_types)
+		console.log(type, editor.furniture_types)
+		let v = def(editor.furniture_types[type].varieties)
+		params = {
+			x: p.x,
+			y: p.y,
+			type, 
+			width: v.width ?? 9600,
+			depth: v.height ?? 9600,
+			name: null
+			
+		}
+		id = editor.addMappedFurniture(params)
 	}
-
 	let items = [
 		menuItem("name", "Name"),
-		menuItem("type", "Type", { break: false, enum: editor.furniture_types, attributes: { required: true } }),
-		menuItem("variety", "Variety", { enum: editor.furniture_types[defaultType].varieties }),
-		menuItem("width", "Width", { attributes: { required: true } }),
-		menuItem("depth", "Depth", { attributes: { required: true } }),
-		menuItem("angle", "Angle", { attributes: { min: 0, max: 359, type: "number", value: 0, required: true } }),
-		menuItem("add", null, { attributes: { value: "Add", type: "Submit" } })
+		menuItem("type", "Type", { break: false, enum: editor.furniture_types, attributes: { value: params.type, required: true } }),
+		menuItem("variety", "Variety", { enum: editor.furniture_types[params.type].varieties }),
+		menuItem("width", "Width", { attributes: { value: params.width, required: true } }),
+		menuItem("depth", "Depth", { attributes: { value: params.height, required: true } }),
+		menuItem("angle", "Angle", { attributes: { value: params.angle, min: 0, max: 359, type: "number", value: 0, required: true } }),
+		menuItem("cancel", null, { attributes: { value: "Cancel", type: "button" }}),
+		menuItem("done", null, { attributes: { value: "Done", type: "submit" }})
 	]
 	let keys = {}
 	for (let i in items) {
@@ -658,14 +737,16 @@ function furnitureMenu(editor, p) {
 	}
 
 	const fromVariety = function(type, variety) {
+		console.log("Loading width & depth from variety")
 		let v
 		if (variety == null) {
 			v = { width: null, depth: null }
 		} else {
 			v = editor.furniture_types[type].varieties[variety]
 		}
-		items[keys.width].input.value = v.width
-		items[keys.depth].input.value = v.depth
+		params.width = items[keys.width].input.value = v.width
+		params.depth = items[keys.depth].input.value = v.depth
+		editor.addMappedFurniture(params, id)
 	}
 	const newVariety = function() {
 		let vars = editor.furniture_types[items[keys.type].input.value].varieties
@@ -689,29 +770,26 @@ function furnitureMenu(editor, p) {
 	items[keys.type].input.addEventListener("change", function(ev) {
 		newVariety()
 	})
-	menu.addEventListener("submit", function(ev) {
+	items[keys.cancel].input.addEventListener("click", function(ev) {
+		ev.preventDefault()
+		editor.undo()
+		menu.remove()
+	})
+	menu.addEventListener("change", function(ev) {
 		ev.preventDefault()
 		try {
-			let name = items[keys.name].input.value
-			if (name.length === 0) {
-				name = null
-			}
-			let params = {
-				type: items[keys.type].input.value,
-				x: p.x,
-				y: p.y,
-				width: Number(items[keys.width].input.value),
-				depth: Number(items[keys.depth].input.value),
-				angle: Number(items[keys.angle].input.value),
-				name
-			}
-			editor.addMappedFurniture(params)
-			editor.finishAction()
+			params[event.target.name] = event.target.value
+			console.log("Change", event.target.name, event.target.value)
+			editor.addMappedFurniture(params, id)
 		}
 		catch(err) {
 			etc.error(err, menu)
 			throw err
 		}
+	})
+	menu.addEventListener("submit", function(ev) {
+		ev.preventDefault()
+		editor.finishAction()
 		menu.remove()
 	})
 
@@ -782,7 +860,7 @@ function menuItem(name, label, options) {
 	if (options.value != undefined) {
 		attributes.value = options.value
 	}
-	if (attributes.title == undefined) {
+	if (attributes.title == undefined && label != undefined) {
 		attributes.title = label
 	}
 
