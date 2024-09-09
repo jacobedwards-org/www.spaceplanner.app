@@ -515,38 +515,40 @@ export class FloorplanBackend {
 		}
 	}
 
-	addFurniture(type, options) {
-		options = options ?? {}
-		if (options.width == null || options.depth == null) {
-			throw new Error("These 'options' are not yet optional")
-		}
+	addFurniture(params, id) {
+		params = params ?? {}
 
-		if (typeof type !== "string") {
-			throw new Error(type + ": Expected string type")
-		}
+		let f = id ? this.reqObj(id) : {}
 
-		let f = {
-			type: type,
-		}
-		if (options.width != undefined) {
-			f.width = Math.round(options.width)
+		if (params.width != undefined) {
+			f.width = Math.round(params.width)
 			if (f.width <= 0) {
-				throw new Error(options.width + ": rounded width must be greater than zero")
+				throw new Error(params.width + ": rounded width must be greater than zero")
 			}
 		}
-		if (options.depth != undefined) {
-			f.depth = Math.round(options.depth)
+		if (params.depth != undefined) {
+			f.depth = Math.round(params.depth)
 			if (f.depth <= 0) {
-				throw new Error(options.depth + ": rounded depth must be greater than zero")
+				throw new Error(params.depth + ": rounded depth must be greater than zero")
 			}
 		}
-		if (options.name != undefined) {
-			if (typeof options.name !== "string") {
-				throw new Error(options.name + ": Expected string name")
+		if (params.name != undefined) {
+			if (typeof params.name !== "string") {
+				throw new Error(params.name + ": Expected string name")
 			}
-			f.name = options.name
+			f.name = params.name
 		}
-		return this.addData("furniture", f)
+		if (params.type != undefined) {
+			if (typeof params.type !== "string") {
+				throw new Error("Invalid type")
+			}
+			f.type = params.type
+		}
+
+		if (f.width == null || f.depth == null || f.type == null) {
+			throw new Error("Missing required parameters")
+		}
+		return this.addData(id ?? "furniture", f)
 	}
 
 	removeFurniture(id, options) {
@@ -556,26 +558,41 @@ export class FloorplanBackend {
 		this.removeData(id, options)
 	}
 
-	mapFurniture(def, x, y, options) {
-		options = options ?? {}
+	mapFurniture(params, id) {
+		let fm = id ? this.reqObj(id) : {}
 
-		let fm = {
-			furniture_id: def,
-			x: Math.round(x),
-			y: Math.round(y)
-		}
-		if (options.angle != undefined) {
-			if (typeof options.angle !== "number" || options.angle < 0 ||
-				options.angle >= 360) {
-				throw new Error(options.angle + ": Invalid angle")
+		if (params.furniture_id != undefined) {
+			if (this.obj(params.furniture_id) == undefined) {
+				throw new Error("invalid furniture id for furniture map")
 			}
-			fm.angle = options.angle
+			fm.furniture_id = params.furniture_id
+		} else if (fm.furniture_id == undefined) {
+			throw new Error("Missing furniture id")
 		}
-		if (options.layout != undefined) {
-			if (typeof options.layout !== "string") {
-				throw new Error(options.layout + ": Invalid layout")
+		if (params.x != undefined) {
+			if (typeof params.x !== "number") {
+				throw new Error("Invalid x coordinate")
 			}
-			fm.layout = options.layout
+			fm.x = params.x
+		}
+		if (params.y != undefined) {
+			if (typeof params.x !== "number") {
+				throw new Error("Invalid y coordinate")
+			}
+			fm.y = params.y
+		}
+		if (params.angle != undefined) {
+			if (typeof params.angle !== "number" || params.angle < 0 ||
+				params.angle >= 360) {
+				throw new Error(params.angle + ": Invalid angle")
+			}
+			fm.angle = params.angle
+		}
+		if (params.layout != undefined) {
+			if (typeof params.layout !== "string") {
+				throw new Error(params.layout + ": Invalid layout")
+			}
+			fm.layout = params.layout
 		} else {
 			// for now, this should be handled by the server later
 			fm.layout = "1"
@@ -587,14 +604,14 @@ export class FloorplanBackend {
 		this.removeData(id, options)
 	}
 
-	addMappedFurniture(type, x, y, options) {
-		let id = this.addFurniture(type, options)
-		return this.mapFurniture(id, x, y, options)
+	addMappedFurniture(params, id) {
+		params.furniture_id = this.addFurniture(params, id ? this.reqObj(id).furniture_id : null)
+		return this.mapFurniture(params)
 	}
 
 	reqObj(id) {
-		let obj = this.data(id)
-		if (!obj) {
+		let obj = this.obj(id)
+		if (obj == null) {
 			throw new Error(id + " doesn't exist")
 		}
 		return obj

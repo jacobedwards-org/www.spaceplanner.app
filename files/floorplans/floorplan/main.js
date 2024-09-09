@@ -649,6 +649,7 @@ function furnitureMenu(editor, p) {
 		menuItem("variety", "Variety", { enum: editor.furniture_types[defaultType].varieties }),
 		menuItem("width", "Width", { attributes: { required: true } }),
 		menuItem("depth", "Depth", { attributes: { required: true } }),
+		menuItem("angle", "Angle", { attributes: { min: 0, max: 359, type: "number", value: 0, required: true } }),
 		menuItem("add", null, { attributes: { value: "Add", type: "Submit" } })
 	]
 	let keys = {}
@@ -695,15 +696,21 @@ function furnitureMenu(editor, p) {
 			if (name.length === 0) {
 				name = null
 			}
-			editor.addMappedFurniture(items[keys.type].input.value, p.x, p.y, {
-				width: items[keys.width].input.value,
-				depth: items[keys.depth].input.value,
+			let params = {
+				type: items[keys.type].input.value,
+				x: p.x,
+				y: p.y,
+				width: Number(items[keys.width].input.value),
+				depth: Number(items[keys.depth].input.value),
+				angle: Number(items[keys.angle].input.value),
 				name
-			})
+			}
+			editor.addMappedFurniture(params)
 			editor.finishAction()
 		}
 		catch(err) {
 			etc.error(err, menu)
+			throw err
 		}
 		menu.remove()
 	})

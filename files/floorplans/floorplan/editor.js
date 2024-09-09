@@ -538,17 +538,17 @@ export class FloorplanEditor {
 		return id
 	}
 
-	addFurniture(type, options) {
-		this.backend.addFurniture(type, options)
+	addFurniture(params, id) {
+		this.backend.addFurniture(params, id)
 	}
 
-	mapFurniture(def, x, y, options) {
-		this.backend.mapFurniture(def, x, y, options)
+	mapFurniture(params, id) {
+		this.backend.mapFurniture(params, id)
 		this.updateDisplay()
 	}
 
-	addMappedFurniture(type, x, y, options) {
-		this.backend.addMappedFurniture(type, x, y, options)
+	addMappedFurniture(params, id) {
+		this.backend.addMappedFurniture(params, id)
 		this.updateDisplay()
 	}
 
