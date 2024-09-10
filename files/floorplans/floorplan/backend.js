@@ -542,18 +542,9 @@ export class FloorplanBackend {
 			}
 			return x
 		}
-		const validSize = function(input, cur) {
-			let x = validInt(input, cur)
-			if (x <= 0) {
-				throw new Error(input + " must be a positive number")
-			}
-			return x
-		}
 		let parsers = {
 			x: validInt,
 			y: validInt,
-			width: validSize,
-			depth: validSize,
 			angle: function(input, cur) {
 				if (input == undefined) {
 					return cur ?? 0
