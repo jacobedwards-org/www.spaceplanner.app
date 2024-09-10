@@ -886,10 +886,18 @@ export class FloorplanBackend {
 	}
 
 	mapID(localID, serverID) {
-		if (serverID != null && this.localIDs[serverID] !== undefined) {
+		console.debug("Backend.mapID", localID, serverID)
+		if (localID == null || serverID == null) {
+			throw new Error("Requires local and server ID")
+		}
+		if (this.serverIDs[localID] === undefined) {
+			throw new Error("That local ID is already mapped to " + this.serverIDs[localID])
+		}
+		if (this.localIDs[serverID] !== undefined) {
 			throw new Error("That server ID is already mapped to " + this.localIDs[serverID])
 		}
 		this.localIDs[serverID] = localID
+		this.serverIDs[localID] = serverID
 	}
 }
 
