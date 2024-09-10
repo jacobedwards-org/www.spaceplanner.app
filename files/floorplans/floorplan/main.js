@@ -825,8 +825,7 @@ function furnitureMenu(editor, pointOrID) {
 	})
 	menu.addEventListener("escape", function(ev) {
 		ev.preventDefault()
-		//editor.undo() fix undo
-		editor.finishAction()
+		editor.undo()
 		menu.remove()
 	})
 
