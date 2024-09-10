@@ -695,7 +695,7 @@ export class FloorplanBackend {
 		return api.fetch("PATCH", this.endpoint, patch)
 			.then(function(data) {
 				backend.serverPosition = dirty.at(-1).id
-				updateIds(backend, data)
+				updateIDs(backend, data)
 				for (let i in dirty) {
 					delete dirty[i].dirty
 				}
@@ -708,7 +708,8 @@ export class FloorplanBackend {
 		let backend = this
 
 		return api.fetch("PUT", this.endpoint, this.toServerIDs(this.cache))
-			.then(function() {
+			.then(function(data) {
+				updateIDs(backend, data)
 				backend.serverPosition = backend.history.place
 			})
 	}
@@ -923,15 +924,17 @@ function gendiff(path, a, b) {
 	return diffs
 }
 
-function updateIds(backend, newdata) {
-	for (let srvID in newdata[type]) {
-		let x = newdata[id]
-		if (x.old_id != null) {
-			backend.localIDs[srvID] = x.old_id
-			backend.serverIDs[x.old_id] = srvID
-		} else {
-			backend.localIDs[srvID] = srvID
-			backend.serverIDs[srvID] = srvID
+function updateIDs(backend, newdata) {
+	for (let t in newdata) {
+		for (let srvID in newdata[t]) {
+			let x = newdata[t][srvID]
+			if (x.old_id != null) {
+				backend.localIDs[srvID] = x.old_id
+				backend.serverIDs[x.old_id] = srvID
+			} else {
+				backend.localIDs[srvID] = srvID
+				backend.serverIDs[srvID] = srvID
+			}
 		}
 	}
 }
