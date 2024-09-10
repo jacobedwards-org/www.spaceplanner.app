@@ -659,6 +659,9 @@ function furnitureHandler(ev, editor, state) {
 		state.menu = document.body.appendChild(
 			furnitureMenu(editor, editor.draw.point(ev.clientX, ev.clientY)))
 	} else if (sel.length === 1) {
+		if (ev.button != buttons.left) {
+			return
+		}
 		if (ev.type === "dblclick") {
 			ev.preventDefault()
 			document.body.appendChild(furnitureMenu(editor, lib.getID(sel[0])))
