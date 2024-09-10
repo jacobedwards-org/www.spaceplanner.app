@@ -679,6 +679,7 @@ function furnitureHandler(ev, editor, state) {
 				doMove()
 				delete state.moving
 				delete state.origin
+				editor.finishAction()
 				return
 			} else if (ev.type === "mousemove") {
 				let p = editor.draw.point(ev.clientX, ev.clientY).vec()
