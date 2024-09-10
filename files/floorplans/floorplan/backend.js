@@ -820,9 +820,9 @@ export class FloorplanBackend {
 				if (newids != this.localIDs) {
 					continue
 				}
-				let map = this.newID(idType(value[keys[i]]), value[keys[i]])
+				let map = this.newID(idType(value[keys[i]]), id)
 			}
-			value[keys[i]] = newids[value[keys[i]]]
+			value[keys[i]] = newids[id]
 		}
 		return value
 	}
