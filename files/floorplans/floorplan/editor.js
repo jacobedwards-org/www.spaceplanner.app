@@ -648,7 +648,6 @@ export class FloorplanEditor {
 							let m = editor.draw.findOneMax(byId(mid))
 							if (m != null) {
 								m.size(value.width, value.depth)
-								console.log("New name", furniture_name(value))
 								m.findOne("title").words(furniture_name(value))
 							}
 						}
