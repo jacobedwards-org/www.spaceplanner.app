@@ -24,8 +24,12 @@ class BackendHistory {
 			// -1 for before everything
 			this.place = -1,
 
-			// Metadata for diff groups
-			this.groups = [],
+			// Points in this.diffs which represent
+			// a completed action, etc. (Previously
+			// called groups.)
+			//   The diff marked is the final in the
+			// "group"
+			this.marks = [],
 
 			// Actual changes
 			this.diffs = [],
@@ -49,63 +53,17 @@ class BackendHistory {
 		return this.diffs.length - 1
 	}
 
-	get group() {
-		if (!this.diff) {
-			if (this.groups.length > 1) {
-				throw new Error("Expected at most one group")
-			}
-			return this.groups[0]
-		}
-		return this.groups[this.diff.group]
-	}
-
-	groupLength(group) {
-		if (group == undefined) {
-			return 0
-		}
-		if (typeof group === "number") {
-			group = this.groups[group]
-		}
-
-		if (group.first == undefined) {
-			return 0;
-		}
-		if (group.last == undefined) {
-			return this.diffs.length - 1 - group.first
-		}
-		return group.last - group.first
-	}
-
-	newGroup() {
-		const pushGroup = function(history) {
-			let group = {
-				type: "group",
-			}
-			group.id = history.groups.push(group) - 1
-			console.debug("Backend.History.newGroup", group.id)
-			return group
-		}
-
-		this.truncate()
-
-		if (this.groups.length === 0) {
-			return pushGroup(this)
-		}
-
-		if (this.groupLength(this.group) === 0) {
-			console.warn("Backend.History.newGroup",
-				"Not creating new group: In an empty group")
+	mark() {
+		if (this.marks.at(-1) === this.place) {
+			console.warn("Backend.History.mark", "Diff already marked")
 			return null
 		}
-
-		if (this.group.last && this.group.last != this.diffs.at(-1).id) {
-			throw new Error("I don't think this should happen")
-		}
-		this.group.last = this.diffs.at(-1).id
-		return pushGroup(this)
+		let mark = this.marks.push(this.place) - 1
+		console.debug("Backend.History.mark", mark, this.place)
+		return mark
 	}
 
-	addDiff(op, path, value, oldvalue, options) {
+	addDiff(op, path, value, oldValue, options) {
 		if (!op || !path) {
 			throw new Error("Requires op and path")
 		}
@@ -117,56 +75,93 @@ class BackendHistory {
 			throw new Error("Only add and remove operations supported")
 		}
 
-		this.truncate()
+		if (this.place != this.last) {
+			this.truncate()
+		}
 
-		let group
-		if (this.groups.length === 0) {
-			group = this.newGroup()
-		} else {
-			group = this.groups.at(-1)
+		if (op === "add") {
+			for (let i = this.place; i >= 0; --i) {
+				if (this.diffs[i].path === path) {
+					op = "replace"
+					if (!oldValue) {
+						throw new Error("replace requires oldValue")
+					}
+					break
+				}
+			}
+			if (op !== "replace") {
+				op = "new"
+				if (oldValue) {
+					throw new Error("new cannot have oldValue")
+				}
+			}
 		}
 
 		let diff = {
 			type: "diff",
-			group: group.id,
 			op: op,
 			path: path,
-			value: value,
-			oldValue: oldvalue, // Should probably do some checks on oldvalue
 			time: Date.now()
 		}
-
+		if (value) {
+			diff.value = structuredClone(value)
+		}
+		if (oldValue) {
+			// Should probably do some checks on oldValue
+			diff.oldValue = structuredClone(oldValue)
+		}
 		if (!options.clean) {
 			diff.dirty = true
 		}
 
 		diff.id = this.diffs.push(diff) - 1
-		if (group.first  == undefined) {
-			group.first = diff.id
-		}
 		this.place = diff.id
-		console.debug("History.Backend.addDiff", diff.id, diff)
+		console.debug("Backend.History.addDiff", diff.id, diff)
 		return diff.id
 	}
 
+	diffMark(diff) {
+		const r = function(mark) {
+			console.debug("Backend.History.diffMark", { diff, mark })
+			return mark
+		}
+
+		diff = diff ?? this.place
+		if (!this.marks[0] || diff < this.marks[0]) {
+			return r(-1)
+		}
+
+		// Use efficient algorithm
+		for (let i = 0; i < this.marks.length; ++i) {
+			if (diff <= this.marks[i]) {
+				return r(i)
+			}
+		}
+
+		return r(this.marks.length - 1)
+	}
+
 	truncate() {
-		if (!this.diff || this.diff.id === this.diffs.at(-1).id) {
+		if (this.place >= this.last) {
+			if (this.place > this.last) {
+				throw new Error("There is a bug in history")
+			}
 			return
 		}
 
+		let mark = this.diffMark(this.place)
+		console.log("Backend.History.truncate", { diff: this.place, mark })
+		this.diffs = this.between(-1, this.place)
+		this.marks = this.marks.slice(0, mark + 1)
+		this.mark()
 		this.truncated = Date.now()
-
-		console.debug("Backend.History.truncate", this.diff.id, "from", this.diffs.length - 1)
-		this.diffs = this.between(-1, this.diff.id)
-		this.groups = this.groups.slice(0, this.group.id + 1)
-		if (this.group.last != undefined) {
-			this.group.last = this.diff.id
-		}
-		this.newGroup()
 	}
 
-	// Get the required operations to go from a, a group or
-	// diff, to b, another group or diff
+	betweenMarks(a, b) {
+		return between(this.marks[a], this.marks[b])
+	}
+
+	// Get the required operations to go from diff a to diff b
 	between(a, b) {
 		const backend = this
 		const getDiff = function(v) {
@@ -177,15 +172,10 @@ class BackendHistory {
 				return v
 			}
 			if (typeof(v) === "object") {
-				if (!v.id) {
-					throw new Error("Doesn't have an id")
+				if (!v.type || v.type !== "diff") {
+					throw new Error(v + ": Expected 'diff' value for type field")
 				}
-				if (v.type === "diff") {
-					return v.id
-				} else if (v.type === "group") {
-					return backend.groups[v.id].first
-				}
-				throw new Error("Not a valid type")
+				return v.id
 			}
 			throw new Error(v + ": Invalid diff")
 		}
@@ -235,20 +225,20 @@ class BackendHistory {
 	reverseDiff(diff) {
 		diff = structuredClone(diff)
 
-		if (diff.op === "add") {
-			if (diff.oldValue) {
-				diff.op = "replace"
-				diff.value = diff.oldValue
-			} else {
-				diff.op = "remove"
-				diff.value = null
-			}
+		if (diff.op === "new") {
+			diff.op = "remove"
+			diff.value = null
+		} else if (diff.op === "replace") {
+			let t = diff.value
+			diff.value = diff.oldValue
+			diff.oldValue = t
 		} else if (diff.op === "remove") {
 			if (!diff.oldValue) {
 				throw new Error("There should be an old value")
 			}
 			diff.op = "add"
 			diff.value = diff.oldValue
+			delete diff.oldValue
 		} else {
 			throw new Error("Unsupported operation")
 		}
@@ -262,48 +252,31 @@ class BackendHistory {
 
 	// Step to the end of the next group
 	forward(diff) {
-		console.debug("Backend.History.forward", diff)
-		if (diff < 0) {
-			if (this.groups[0].last == undefined) {
-				return this.diffs.at(-1).id
-			}
-			return this.groups[0].last
+		let cur = this.diffMark(diff)
+		let to = cur + 1
+		console.debug("Backend.History.forward", diff, `from ${cur} to ${to}`)
+		if (this.marks[to] == undefined || this.marks[to] == this.last) {
+			console.warn("Cannot go forward; at the end")
+			return this.last
 		}
-
-		diff = this.diffs[diff]
-		if (!diff) {
-			throw new Error("Diff does not exist")
+		if (to == this.marks.length - 1) {
+			return this.last
 		}
-
-		if (diff.group === this.groups.at(-1).id) {
-			return this.diffs.at(-1).id
-		}
-		let group = this.groups[diff.group + 1]
-		if (group.last == undefined) {
-			throw new Error("Last should be defined. Bug!")
-		}
-		return group.last
+		return this.marks[to]
 	}
 
 	// Step to the beginning of the previous group
 	backward(diff) {
-		if (diff < 0) {
-			throw new Error("Cannot go backward")
+		let cur = this.diffMark(diff)
+		let to = cur - 1
+		console.debug("Backend.History.backward", diff, `from ${cur} to ${to}`)
+		if (to < 0) {
+			if (cur < 0) {
+				console.warn("Cannot go backward; already at beginning")
+			}
+			return -1
 		}
-
-		diff = this.diffs[diff]
-		if (!diff) {
-			throw new Error("Cannot go backward from nowhere! Bug!")
-		}
-
-		if (diff.group === 0) {
-			return -1;
-		}
-		let group = this.groups[diff.group - 1]
-		if (!group || group.last == undefined) {
-			throw new Error("This should not happen")
-		}
-		return group.last
+		return this.marks[to]
 	}
 }
 
@@ -398,11 +371,11 @@ export class FloorplanBackend {
 	}
 
 	undo() {
-		this.reconstructTo(this.history.backward(this.history.place))
+		this.reconstructTo(this.history.backward())
 	}
 
 	redo() {
-		this.reconstructTo(this.history.forward(this.history.place))
+		this.reconstructTo(this.history.forward())
 	}
 
 	/*
@@ -667,25 +640,14 @@ export class FloorplanBackend {
 		}
 
 		let patch = []
-
 		for (let i in dirty) {
-			let op
-			if (dirty[i].op != "add") {
-				op = dirty[i].op
-			} else {
-				if (!dirty[i].oldValue) {
-					op = "new"
-				} else {
-					op = "replace"
-				}
-			}
-
+			let op = dirty[i].op
 			let id = parsePath(dirty[i].path)
-			if (this.serverIDs[id]) {
-				patch.push({ op: op, path: idPath(this.serverIDs[id]),
-				    value: this.remapIDsValue(dirty[i].value, this.serverIDs) })
+			let value = dirty[i].value ? this.remapIDsValue(dirty[i].value, this.serverIDs) : null
+			if (op === "new" || this.serverIDs[id] == null) {
+				patch.push({ op: op, path: dirty[i].path, value: value })
 			} else {
-				patch.push({ op: "new", path: dirty[i].path, value: dirty[i].value })
+				patch.push({ op: op, path: idPath(this.serverIDs[id]), value })
 			}
 		}
 
@@ -716,7 +678,7 @@ export class FloorplanBackend {
 
 	/*
 	 * Pull updates from the server.
-	 * (Set AddData diff option to false, and call newGroup()
+	 * (Set AddData diff option to false, and call mark()
 	 * once at the end.)
 	 */
 	pull() {
@@ -742,11 +704,10 @@ export class FloorplanBackend {
 	applyDiff(diff, options) {
 		options = options ?? {}
 		if (!options.nodiff) {
-			this.history.newGroup()
+			this.history.mark()
 		}
 		for (let i in diff) {
 			let id = parsePath(diff[i].path)
-			console.log(id, diff[i])
 			if (diff[i].op === "remove") {
 				this.removeData(id, options)
 			} else {
@@ -754,7 +715,7 @@ export class FloorplanBackend {
 			}
 		}
 		if (!options.nodiff) {
-			this.history.newGroup()
+			this.history.mark()
 		}
 	}
 
@@ -798,7 +759,7 @@ export class FloorplanBackend {
 				let nid = idMap[id]
 				if (nid == null) {
 					if (idMap != this.localIDs) {
-						continue
+						throw new Error("Cannot create server ID")
 					}
 					nid = this.newID(objectTypes[t], id)
 				}

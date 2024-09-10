@@ -446,7 +446,7 @@ export class FloorplanEditor {
 
 	// Should be called after each user "action"
 	finishAction() {
-		this.backend.history.newGroup()
+		this.backend.history.mark()
 	}
 
 	undo() {
@@ -687,6 +687,7 @@ export class FloorplanEditor {
 			throw new Error("You messed up")
 		}
 		ops.replace = ops.add
+		ops.new = ops.add
 
 		if (!ops[diff.op]) {
 			throw new Error(diff.op + ": Unexpected patch operation")
