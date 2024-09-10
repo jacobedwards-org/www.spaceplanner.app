@@ -15,7 +15,10 @@ const buttons = {
 	middle: 1,
 	right: 2
 }
-	
+
+// turn off bubbling
+const escapeEvent = new Event("escape")
+
 function init() {
 	etc.authorize()
 	etc.bar()
@@ -171,7 +174,13 @@ function selectHandler(event, editor, state) {
 	}
 
 	let fmaps = ids.filter(function(item) { return backend.idType(item) === "furmap" })
-	if (fmaps.length === 1) {
+	if (fmaps.length !== 1) {
+		document.querySelectorAll(".furniture_menu").forEach(
+			function(e) {
+				e.remove()
+			}
+		)
+	} else {
 		c.appendChild(
 			ui.input("edit", "Edit selected furniture", {
 				attributes: {
@@ -254,7 +263,7 @@ let modes = {
 			mousedown: [selectionHandler, precisePointHandler, furnitureHandler],
 			mousemove: [precisePointHandler, precisePointMapHandler, furnitureHandler],
 			mouseup: [precisePointHandler, furnitureHandler],
-			keydown: [zoomKeysHandler, undoRedoHandler],
+			keydown: [controlKeyHandler, zoomKeysHandler, undoRedoHandler],
 			dblclick: [precisePointMapHandler, furnitureHandler],
 			select: selectHandler
 		}
@@ -288,6 +297,15 @@ function selectionHandler(event, editor) {
 	}
 
 	editor.draw.select()
+}
+
+function controlKeyHandler(ev, editor) {
+	if (ev.type === "keydown" && ev.key === "Escape") {
+		document.body.querySelectorAll(".escapable").forEach(function(e) {
+			console.log("Escape", e)
+			e.dispatchEvent(escapeEvent)
+		})
+	}
 }
 
 function zoomKeysHandler(event, editor) {
@@ -626,8 +644,7 @@ function furnitureHandler(ev, editor, state) {
 		// racy
 		if (state.move) {
 			let id = state.moving.attr("id")
-			let p = editor.draw.point(state.move.x, state.move.y)
-			editor.mapFurniture({ x: p.x, y: p.y }, id)
+			editor.mapFurniture({ x: state.move.x, y: state.move.y }, id)
 			delete state.move
 		}
 	}
@@ -648,6 +665,7 @@ function furnitureHandler(ev, editor, state) {
 		} else if (ev.type === "mousedown") {
 			ev.preventDefault()
 			state.moving = sel[0]
+			state.origin = editor.draw.point(ev.clientX, ev.clientY).vec()
 			return
 		} else {
 			if (!state.moving) {
@@ -657,13 +675,18 @@ function furnitureHandler(ev, editor, state) {
 				ev.preventDefault()
 				doMove()
 				delete state.moving
+				delete state.origin
 				return
 			} else if (ev.type === "mousemove") {
+				let p = editor.draw.point(ev.clientX, ev.clientY).vec()
+				if (p.distanceTo(state.origin) < 100) {
+					return
+				}
 				ev.preventDefault()
 				if (state.move) {
-					state.move = { x: ev.clientX, y: ev.clientY }
+					state.move = p
 				} else {
-					state.move = { x: ev.clientX, y: ev.clientY }
+					state.move = p
 					setTimeout(doMove, 60)
 				}
 			}
@@ -680,7 +703,6 @@ function enumSelection(input, values) {
 }
 
 function furnitureMenu(editor, pointOrID) {
-	console.warn("Furniture menu")
 	const def = function(obj) {
 		return obj[defKey(obj)]
 	}
@@ -721,10 +743,11 @@ function furnitureMenu(editor, pointOrID) {
 		}
 		id = editor.addMappedFurniture(params)
 	}
+	
 	let items = [
 		menuItem("name", "Name"),
 		menuItem("type", "Type", { break: false, enum: editor.furniture_types, attributes: { value: params.type, required: true } }),
-		menuItem("variety", "Variety", { enum: editor.furniture_types[params.type].varieties }),
+		menuItem("variety", "Variety", { enum: editor.furniture_types[params.type].varieties, attributes: { value: editor.variety(id) } }),
 		menuItem("width", "Width", { attributes: { value: params.width, required: true } }),
 		menuItem("depth", "Depth", { attributes: { value: params.height, required: true } }),
 		menuItem("angle", "Angle", { attributes: { value: params.angle, min: 0, max: 359, type: "number", value: 0, required: true } }),
@@ -737,13 +760,12 @@ function furnitureMenu(editor, pointOrID) {
 	}
 
 	const fromVariety = function(type, variety) {
-		console.log("Loading width & depth from variety")
-		let v
+		console.log(`Setting with and depth to ${variety} ${type}`)
 		if (variety == null) {
-			v = { width: null, depth: null }
-		} else {
-			v = editor.furniture_types[type].varieties[variety]
+			return
 		}
+
+		let v = editor.furniture_types[type].varieties[variety]
 		params.width = items[keys.width].input.value = v.width
 		params.depth = items[keys.depth].input.value = v.depth
 		editor.addMappedFurniture(params, id)
@@ -755,7 +777,9 @@ function furnitureMenu(editor, pointOrID) {
 			fromVariety()
 			return
 		}
-		let v = menuItem("variety", "Variety", { enum: vars })
+		let v = menuItem("variety", "Variety", { enum: vars, attributes: {
+			value: editor.varietyFrom(params)
+		}})
 		let c = makeItem(v)
 		c.addEventListener("change", function(ev) {
 			fromVariety(items[keys.type].input.value, ev.target.value)
@@ -781,6 +805,9 @@ function furnitureMenu(editor, pointOrID) {
 			params[event.target.name] = event.target.value
 			console.log("Change", event.target.name, event.target.value)
 			editor.addMappedFurniture(params, id)
+			if (event.target.name === "width" || event.target.name === "depth") {
+				items[keys.variety].input.value = editor.varietyFrom(params)
+			}
 		}
 		catch(err) {
 			etc.error(err, menu)
@@ -792,6 +819,12 @@ function furnitureMenu(editor, pointOrID) {
 		editor.finishAction()
 		menu.remove()
 	})
+	menu.addEventListener("escape", function(ev) {
+		ev.preventDefault()
+		//editor.undo() fix undo
+		editor.finishAction()
+		menu.remove()
+	})
 
 	return menu
 }
@@ -799,6 +832,7 @@ function furnitureMenu(editor, pointOrID) {
 function makeMenu(items) {
 	let c = document.createElement("form")
 	c.classList.add("furniture_menu")
+	c.classList.add("escapable")
 
 	// In case I make c != form later
 	let form = c

@@ -724,6 +724,33 @@ export class FloorplanEditor {
 	findObj(id) {
 		return this.draw.findExactlyOne(byId(getID(id)))
 	}
+
+	variety(id) {
+		let t = backend.idType(id)
+		if (t === "furmap") {
+			id = this.backend.reqObj(id).furniture_id
+		} else if (t !== "fur") {
+			throw new Error(id + ": Unable to get furniture definition from that ID")
+		}
+
+		let f = structuredClone(this.backend.reqObj(id))
+		let d = f.depth
+		console.log(f)
+		return this.varietyFrom(f)
+	}
+
+	varietyFrom(params) {
+		if (this.furniture_types[params.type] == null) {
+			throw new Error(params.type + ": Invalid furniture type")
+		}
+		let vars = this.furniture_types[params.type].varieties
+		for (let v in vars) {
+			if (params.width == vars[v].width && params.depth == vars[v].depth) {
+				return v
+			}	
+		}
+		return null
+	}
 }
 
 function layoutID(name) {
