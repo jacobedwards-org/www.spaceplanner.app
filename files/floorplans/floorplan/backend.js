@@ -811,7 +811,7 @@ export class FloorplanBackend {
 	remapIDsValue(value, newids) {
 		value = structuredClone(value)
 		let keys = ['a', 'b', 'furniture_id']
-	
+
 		for (let i in keys) {
 			let id = value[keys[i]]
 			if (id == null) {
@@ -880,6 +880,7 @@ export class FloorplanBackend {
 
 	newID(type, serverID) {
 		let local = uniqueKey(type + "_", this.serverIDs)
+		console.debug("Backend.newID", local)
 		if (serverID != null) {
 			this.mapID(local, serverID)
 		}
