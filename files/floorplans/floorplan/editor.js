@@ -735,7 +735,6 @@ export class FloorplanEditor {
 
 		let f = structuredClone(this.backend.reqObj(id))
 		let d = f.depth
-		console.log(f)
 		return this.varietyFrom(f)
 	}
 

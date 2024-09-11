@@ -214,7 +214,7 @@ function selector(editor, things, select, options) {
 
 	let list = form.appendChild(document.createElement("ul"))
 	for (let thing in things) {
-		console.log("selector", options.text ?? "something", thing)
+		console.debug("selector", options.text ?? "something", thing)
 		let item = list.appendChild(document.createElement("li"))
 		let selector = item
 			.appendChild(ui.input(thing, "Select " + thing, {
@@ -302,7 +302,7 @@ function selectionHandler(event, editor) {
 function controlKeyHandler(ev, editor) {
 	if (ev.type === "keydown" && ev.key === "Escape") {
 		document.body.querySelectorAll(".escapable").forEach(function(e) {
-			console.log("Escape", e)
+			console.debug("Escape", e)
 			e.dispatchEvent(escapeEvent)
 		})
 	}
@@ -734,7 +734,7 @@ function furnitureMenu(editor, pointOrID) {
 			p = pointOrID
 		}
 		let type = defKey(editor.furniture_types)
-		console.log(type, editor.furniture_types)
+		console.debug("furnitureMenu", "default type", type)
 		let v = def(editor.furniture_types[type].varieties)
 		params = {
 			x: p.x,
@@ -764,7 +764,7 @@ function furnitureMenu(editor, pointOrID) {
 	}
 
 	const fromVariety = function(type, variety) {
-		console.log(`Setting with and depth to ${variety} ${type}`)
+		console.debug(`Setting with and depth to ${variety} ${type}`)
 		if (variety == null) {
 			return
 		}
@@ -807,7 +807,7 @@ function furnitureMenu(editor, pointOrID) {
 		ev.preventDefault()
 		try {
 			params[event.target.name] = event.target.value
-			console.log("Change", event.target.name, event.target.value)
+			console.debug("furnitureMenu.change(event)", event.target.name, event.target.value)
 			editor.addMappedFurniture(params, id)
 			if (event.target.name === "width" || event.target.name === "depth") {
 				items[keys.variety].input.value = editor.varietyFrom(params)
