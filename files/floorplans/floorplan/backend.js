@@ -72,7 +72,7 @@ class BackendHistory {
 		return mark
 	}
 
-	addDiff(op, path, value, oldValue, options) {
+	addDiff(op, path, value, options) {
 		if (!op || !path) {
 			throw new Error("Requires op and path")
 		}
@@ -88,21 +88,21 @@ class BackendHistory {
 			this.truncate()
 		}
 
+		let oldValue
 		if (op === "add") {
-			for (let i = this.place; i >= 0; --i) {
+			for (let i = this.place; !oldValue && i >= 0; --i) {
 				if (this.diffs[i].path === path) {
-					op = "replace"
-					if (!oldValue) {
-						throw new Error("replace requires oldValue")
+					if (this.diffs[i].op === "remove") {
+						throw new Error("Cannot reuse old ID")
 					}
-					break
+
+					oldValue = this.diffs[i].value
 				}
 			}
-			if (op !== "replace") {
+			if (oldValue) {
+				op = "replace"
+			} else {
 				op = "new"
-				if (oldValue) {
-					throw new Error("new cannot have oldValue")
-				}
 			}
 		}
 
@@ -116,7 +116,6 @@ class BackendHistory {
 			diff.value = structuredClone(value)
 		}
 		if (oldValue) {
-			// Should probably do some checks on oldValue
 			diff.oldValue = structuredClone(oldValue)
 		}
 		if (!options.clean) {
@@ -411,7 +410,7 @@ export class FloorplanBackend {
 		console.debug("Backend.addData", id, value)
 		let t = idTable(id)
 		if (!options.nodiff) {
-			this.history.addDiff("add", idPath(id), value, this.cache[t][id], options)
+			this.history.addDiff("add", idPath(id), value, options)
 		}
 		this.cache[t][id] = value
 
@@ -432,7 +431,7 @@ export class FloorplanBackend {
 		}
 
 		if (!options.nodiff) {
-			this.history.addDiff("remove", idPath(id), null, this.cache[t][id], options)
+			this.history.addDiff("remove", idPath(id), null, options)
 		}
 		delete this.cache[t][id]
 	}
