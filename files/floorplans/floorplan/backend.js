@@ -40,6 +40,15 @@ class BackendHistory {
 			this.truncated = null
 	}
 
+	set place(v) {
+		console.debug("Backend.History.place", "set", v)
+		this._place = v
+	}
+
+	get place() {
+		return this._place
+	}
+
 	set diff(diff) {
 		this.place = diff.id
 		return diff
