@@ -23,6 +23,9 @@ function init() {
 	etc.authorize()
 	etc.bar()
 
+	// Just to get stuff out of the way for now
+	let debug = (new URLSearchParams(new URL(document.URL).search)).get("debug") != undefined
+
 	let floorplan = (new URLSearchParams(new URL(document.URL).search)).get("name")
 	if (!floorplan) {
 		document.location.href = "/floorplans"
@@ -108,16 +111,19 @@ function init() {
 	toolbar.append(undoRedo)
 
 	toolbar.append(pushpull)
-	toolbar.append(item(
-		selector(editor, editor.modes, function(mode) { editor.useMode(mode) },
-			{ current: editor.mode, text: "Modes:" }
-		)
-	))
-	toolbar.append(item(
-		selector(editor, editor.units.systems, function(system) { editor.useUnits(system) },
-			{ current: editor.unitSystem, text: "Units:" }
-		)
-	))
+
+	if (debug) {
+		toolbar.append(item(
+			selector(editor, editor.modes, function(mode) { editor.useMode(mode) },
+				{ current: editor.mode, text: "Modes:" }
+			)
+		))
+		toolbar.append(item(
+			selector(editor, editor.units.systems, function(system) { editor.useUnits(system) },
+				{ current: editor.unitSystem, text: "Units:" }
+			)
+		))
+	}
 
 	editor.backend.pull()
 		.then(function() {
