@@ -128,7 +128,7 @@ class BackendHistory {
 		diff.id = this.diffs.push(diff) - 1
 		this.place = diff.id
 		console.debug("Backend.History.addDiff", diff.id, diff)
-		return diff.id
+		return diff
 	}
 
 	diffMark(diff) {
@@ -414,7 +414,7 @@ export class FloorplanBackend {
 		console.debug("Backend.addData", id, value)
 		let t = idTable(id)
 		if (!options.nodiff) {
-			this.history.addDiff("add", idPath(id), value, options)
+			this.cb("patch",  this.history.addDiff("add", idPath(id), value, options))
 		}
 		this.cache[t][id] = value
 
@@ -435,7 +435,7 @@ export class FloorplanBackend {
 		}
 
 		if (!options.nodiff) {
-			this.history.addDiff("remove", idPath(id), null, options)
+			this.cb("patch", this.history.addDiff("remove", idPath(id), null, options))
 		}
 		delete this.cache[t][id]
 	}
@@ -621,6 +621,7 @@ export class FloorplanBackend {
 
 	cb(name, arg) {
 		if (this.callbacks[name]) {
+			console.debug("Backend.cb", name, arg)
 			this.callbacks[name](arg)
 		}
 	}
@@ -716,6 +717,7 @@ export class FloorplanBackend {
 			} else {
 				this.addData(id, diff[i].value, options)
 			}
+			this.cb("patch", diff[i])
 		}
 		if (!options.nodiff) {
 			this.history.mark()

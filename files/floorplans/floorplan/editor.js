@@ -247,6 +247,8 @@ export class FloorplanEditor {
 			options = {}
 		}
 
+		let editor = this
+
 		this.draw = svg
 		this.mode
 		this.modes = {}
@@ -265,13 +267,9 @@ export class FloorplanEditor {
 		if (!options.backend.callbacks) {
 			options.backend.callbacks = {}
 		}
-
-		let editor = this
+		options.backend.callbacks["patch"] = function(diff) { editor.applyOp(diff) }
 
 		this.backend = new backend.FloorplanBackend(floorplan, options.backend)
-
-		// The diff which reflects the state of the displayed objects
-		this.diff = -1
 
 		this.grids = {}
 		for (let system in this.units.systems) {
@@ -451,12 +449,10 @@ export class FloorplanEditor {
 
 	undo() {
 		this.backend.undo()
-		this.updateDisplay()
 	}
 
 	redo() {
 		this.backend.redo()
-		this.updateDisplay()
 	}
 
 	addPoint(point, force) {
@@ -466,9 +462,7 @@ export class FloorplanEditor {
 				return already
 			}
 		}
-		let p = this.backend.addPoint(point)
-		this.updateDisplay()
-		return p
+		return this.backend.addPoint(point)
 	}
 
 	remove(...elements) {
@@ -496,7 +490,6 @@ export class FloorplanEditor {
 		}
 
 		this.backend.removeOrphans()
-		this.updateDisplay()
 	}
 
 	movePoint(point, coordinate) {
@@ -533,9 +526,7 @@ export class FloorplanEditor {
 	}
 
 	mapPoints(type, p1, p2) {
-		let id = this.backend.mapPoints(type, getID(p1, "points"), getID(p2, "points"))
-		this.updateDisplay()
-		return id
+		return this.backend.mapPoints(type, getID(p1, "points"), getID(p2, "points"))
 	}
 
 	addFurniture(params, id) {
@@ -543,15 +534,11 @@ export class FloorplanEditor {
 	}
 
 	mapFurniture(params, id) {
-		id = this.backend.mapFurniture(params, id)
-		this.updateDisplay()
-		return id
+		return this.backend.mapFurniture(params, id)
 	}
 
 	addMappedFurniture(params, id) {
-		id = this.backend.addMappedFurniture(params, id)
-		this.updateDisplay()
-		return id
+		return this.backend.addMappedFurniture(params, id)
 	}
 
 	selectedPoints() {
@@ -569,21 +556,8 @@ export class FloorplanEditor {
 		return this.draw.findOneMax("#points > .last_selected")
 	}
 
-	updateDisplay() {
-		let diffs = this.backend.history.between(this.diff, this.backend.history.place)
-		if (diffs.length > 0) {
-			this.applyDiffs(diffs)
-			this.diff = diffs.at(-1).id
-			if (this.diff > this.backend.history.place) {
-				this.diff -= 1
-			}
-			console.debug("Editor.updateDisplay", "Updated display to diff id", this.diff)
-		}
-	}
-
 	applyDiffs(diffs) {
 		for (let op in diffs) {
-			// TODO: Catch errors and update this.diff accordingly
 			this.applyOp(diffs[op])
 		}
 	}

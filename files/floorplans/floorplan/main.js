@@ -46,7 +46,6 @@ function init() {
 		{ backend: {
 			callbacks: {
 				pull: function() {
-					editor.updateDisplay()
 					suffix.data = ""
 				},
 				push: function() {
@@ -165,7 +164,6 @@ function selectHandler(event, editor, state) {
 		const changeTypes = function(newvalue) {
 			for (let i in maps) {
 				editor.mapPoints(newvalue, maps[i].a, maps[i].b)
-				editor.updateDisplay()
 			}
 		}
 		c.appendChild(
@@ -452,7 +450,6 @@ function precisePointHandler(event, editor, state) {
 
 		if (state.snapmap == null) {
 			editor.movePoint(state.to, p)
-			editor.updateDisplay()
 		}
 
 		let points = editor.thingsAt(p, "#points")
@@ -484,7 +481,6 @@ function precisePointHandler(event, editor, state) {
 			state.snapmap = null
 			state.to = editor.addPoint(p, true)
 			editor.mapPoints("wall", state.from, state.to)
-			editor.updateDisplay()
 			state.to = editor.findObj(state.to)
 		}
 
@@ -562,7 +558,6 @@ function precisePointHandler(event, editor, state) {
 		    state.origin.distanceTo(cursor) > 200) {
 			state.to = editor.addPoint(cursor, true)
 			editor.mapPoints("wall", state.from, state.to)
-			editor.updateDisplay()
 			state.to = editor.findObj(state.to)
 			init()
 		}
@@ -617,7 +612,6 @@ function precisePointMapHandler(event, editor) {
 			return
 		}
 
-		// Shouldn't really use backend as it's only correct when updateDisplay is called
 		let data = editor.backend.obj(lib.getID(map))
 		if (data.type != "wall") {
 			throw new Error("Changing direction of doors not yet supported")
@@ -634,7 +628,6 @@ function precisePointMapHandler(event, editor) {
 		editor.mapPoints("wall", data.a, sub)
 		editor.mapPoints("wall", sub, data.b)
 		editor.remove(map)
-		editor.updateDisplay()
 	}
 }
 
@@ -993,7 +986,6 @@ function addWallHandler(click, editor) {
 	}
 
 	editor.addPoint(editor.draw.point(click.clientX, click.clientY))
-	editor.updateDisplay()
 	if (editor.draw.findOne("#points").children().length >= 2) {
 		editor.mapSelected("wall")
 	}
