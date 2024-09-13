@@ -89,35 +89,38 @@ class BackendHistory {
 		}
 
 		let oldValue
-		if (op === "add") {
-			for (let i = this.place; !oldValue && i >= 0; --i) {
-				if (this.diffs[i].path === path) {
-					if (this.diffs[i].op === "remove") {
-						throw new Error("Cannot reuse old ID")
-					}
-
-					oldValue = this.diffs[i].value
+		for (let i = this.place; !oldValue && i >= 0; --i) {
+			if (this.diffs[i].path === path) {
+				if (this.diffs[i].op === "remove") {
+					throw new Error("Cannot reuse old ID")
 				}
-			}
-			if (oldValue) {
-				op = "replace"
-			} else {
-				op = "new"
+				oldValue = this.diffs[i].value
 			}
 		}
 
+		if (op === "add") {
+			op = oldValue ? "replace" : "new"
+		} else {
+			if (oldValue == null) {
+				throw new Error("Remove requires oldValue")
+			}
+		}
+			
 		let diff = {
 			type: "diff",
 			op: op,
 			path: path,
 			time: Date.now()
 		}
+
 		if (value) {
 			diff.value = structuredClone(value)
 		}
+
 		if (oldValue) {
 			diff.oldValue = structuredClone(oldValue)
 		}
+
 		if (!options.clean) {
 			diff.dirty = true
 		}
@@ -235,7 +238,8 @@ class BackendHistory {
 
 		if (diff.op === "new") {
 			diff.op = "remove"
-			diff.value = null
+			diff.oldValue = diff.value
+			delete diff.value
 		} else if (diff.op === "replace") {
 			let t = diff.value
 			diff.value = diff.oldValue
@@ -244,11 +248,11 @@ class BackendHistory {
 			if (!diff.oldValue) {
 				throw new Error("There should be an old value")
 			}
-			diff.op = "add"
+			diff.op = "new"
 			diff.value = diff.oldValue
 			delete diff.oldValue
 		} else {
-			throw new Error("Unsupported operation")
+			throw new Error(diff.op + ": Unsupported operation")
 		}
 
 		return diff
