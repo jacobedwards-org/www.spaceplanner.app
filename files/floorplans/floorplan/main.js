@@ -58,7 +58,9 @@ function init() {
 		}
 	})
 	editor.useUnits("imperial")
-	editor.draw.viewbox(0, 0, editor.units.get("foot", 40), editor.units.get("foot", 40))
+	let s = editor.units.get("foot", 40)
+	let p = -s / 2
+	editor.draw.viewbox(p, p, s, s)
 	editor.draw.hide()
 	api.fetch("GET", "furniture")
 		.then(function(furniture) {
