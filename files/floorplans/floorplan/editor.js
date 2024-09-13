@@ -588,7 +588,7 @@ export class FloorplanEditor {
 		}
 	}
 
-	applyOp(diff, reverse) {
+	applyOp(diff) {
 		console.debug("Editor.applyOp", diff)
 		let editor = this
 
