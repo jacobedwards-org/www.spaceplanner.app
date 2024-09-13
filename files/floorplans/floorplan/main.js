@@ -540,7 +540,7 @@ function precisePointHandler(event, editor, state) {
 			if  (state.lastUp != null && elapsed(state.lastUp) <= 500) {
 				state.to = state.from
 				state.from = null
-	
+
 				// I want the first pointmap defined, but this for now
 				let m = editor.backend.mappedPoints[lib.getID(state.to)]
 				for (let point in m) {
@@ -600,7 +600,7 @@ function precisePointHandler(event, editor, state) {
 		console.warn("Bit of a state mismatch, not that big of a deal though")
 		commit()
 		return
-	}		
+	}
 	event.preventDefault()
 }
 
@@ -738,15 +738,15 @@ function furnitureMenu(editor, pointOrID) {
 		params = {
 			x: p.x,
 			y: p.y,
-			type, 
+			type,
 			width: v.width ?? 9600,
 			depth: v.height ?? 9600,
 			name: null
-			
+
 		}
 		id = editor.addMappedFurniture(params)
 	}
-	
+
 	let items = [
 		menuItem("name", "Name"),
 		menuItem("type", "Type", { break: false, enum: editor.furniture_types, attributes: { value: params.type, required: true } }),
@@ -931,7 +931,7 @@ function parseUserLength(editor, length) {
 	if (amount) {
 		rebuilt.push({ unit: editor.unit, amount: amount })
 	}
-	
+
 	return editor.units.combine(rebuilt)
 }
 

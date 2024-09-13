@@ -720,7 +720,7 @@ export class FloorplanEditor {
 		for (let v in vars) {
 			if (params.width == vars[v].width && params.depth == vars[v].depth) {
 				return v
-			}	
+			}
 		}
 		return null
 	}

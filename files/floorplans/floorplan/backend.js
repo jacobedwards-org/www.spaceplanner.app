@@ -105,7 +105,7 @@ class BackendHistory {
 				throw new Error("Remove requires oldValue")
 			}
 		}
-			
+
 		let diff = {
 			type: "diff",
 			op: op,
