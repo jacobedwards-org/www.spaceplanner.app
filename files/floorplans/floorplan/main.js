@@ -322,6 +322,7 @@ function zoomKeysHandler(event, editor) {
 	} else {
 		return
 	}
+	editor.updateGrid()
 	event.preventDefault()
 }
 
