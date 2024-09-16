@@ -309,7 +309,7 @@ export class FloorplanEditor {
 			for (const m of mutations) {
 				if (m.type === "childList" && m.removedNodes) {
 					m.removedNodes.forEach(function(node) {
-						if (node.classList.contains("selected")) {
+						if (node.classList && node.classList.contains("selected")) {
 							console.debug("selectionRemoval",
 								"Detected selected node being removed")
 							editor.draw.reselect()
