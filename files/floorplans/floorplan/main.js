@@ -323,7 +323,7 @@ function zoomKeysHandler(event, editor) {
 		return
 	}
 	editor.updateGrid()
-	event.preventDefault()
+	handled(event)
 }
 
 function radioMenu(editor, key, values, initial, options) {
@@ -348,7 +348,7 @@ function radioMenu(editor, key, values, initial, options) {
 		if (options.callbacks.change) {
 			radios[i].addEventListener("change", function(event) {
 				options.callbacks.change(event.target.value)
-				event.preventDefault()
+				handled(event)
 			})
 		}
 		container.append(radios[i])
@@ -367,7 +367,7 @@ function radioMenu(editor, key, values, initial, options) {
 		if (options.callbacks.commit) {
 			options.callbacks.commit(event)
 		}
-		event.preventDefault()
+		handled(event)
 	})
 
 	return menu
@@ -408,10 +408,10 @@ function undoRedoHandler(event, editor) {
 			return
 		}
 	}
-	event.preventDefault()
+	handled(event)
 }
 
-// mousedown, mousemove, mouseup
+// mousedown, mousemove, mouseup, dblclick
 function precisePointHandler(event, editor, state) {
 	const init = function() {
 		state.menu = document.body.querySelector(".toolbar")
@@ -562,15 +562,17 @@ function precisePointHandler(event, editor, state) {
 			state.origin = state.from.vec()
 		} else if (event.type === "mouseup") {
 			cleanup()
-			return // Or should I preventDefault()?
+			//return // Or should I preventDefault()?
 		} else if (event.type === "mousemove" && state.origin != undefined &&
 		    state.origin.distanceTo(cursor) > 200) {
 			state.to = editor.addPoint(cursor, true)
 			editor.mapPoints("wall", state.from, state.to)
 			state.to = editor.findObj(state.to)
 			init()
+		} else {
+			return
 		}
-		event.preventDefault()
+		handled(event)
 		return
 	}
 
@@ -602,9 +604,9 @@ function precisePointHandler(event, editor, state) {
 	}  else {
 		console.warn("Bit of a state mismatch, not that big of a deal though")
 		commit()
-		return
 	}
-	event.preventDefault()
+
+	handled(event)
 }
 
 // mousedown, mousemove, mouseup
@@ -626,7 +628,7 @@ function precisePointMapHandler(event, editor) {
 			throw new Error("Changing direction of doors not yet supported")
 		}
 
-		event.preventDefault()
+		handled(event)
 
 		let sub = map.whereIsPoint(cursor.x, cursor.y)
 		if (sub == null) {
@@ -677,7 +679,7 @@ function furnitureHandler(ev, editor, state) {
 				return
 			}
 			if (ev.type === "mouseup") {
-				ev.preventDefault()
+				handled(ev)
 				doMove()
 				delete state.moving
 				delete state.origin
@@ -688,7 +690,7 @@ function furnitureHandler(ev, editor, state) {
 				if (p.distanceTo(state.origin) < 100) {
 					return
 				}
-				ev.preventDefault()
+				handled(ev)
 				if (state.move) {
 					state.move = p
 				} else {
@@ -801,12 +803,12 @@ function furnitureMenu(editor, pointOrID) {
 		newVariety()
 	})
 	items[keys.cancel].input.addEventListener("click", function(ev) {
-		ev.preventDefault()
+		handled(ev)
 		editor.undo()
 		menu.remove()
 	})
 	menu.addEventListener("change", function(ev) {
-		ev.preventDefault()
+		handled(ev)
 		try {
 			params[event.target.name] = event.target.value
 			console.debug("furnitureMenu.change(event)", event.target.name, event.target.value)
@@ -821,12 +823,12 @@ function furnitureMenu(editor, pointOrID) {
 		}
 	})
 	menu.addEventListener("submit", function(ev) {
-		ev.preventDefault()
+		handled(ev)
 		editor.finishAction()
 		menu.remove()
 	})
 	menu.addEventListener("escape", function(ev) {
-		ev.preventDefault()
+		handled(ev)
 		editor.undo()
 		menu.remove()
 	})
@@ -999,11 +1001,11 @@ function addWallHandler(click, editor) {
 		editor.mapSelected("wall")
 	}
 	editor.finishAction()
-	click.preventDefault()
+	handled(click)
 }
 
 function preventDefaultHandler(event) {
-	event.preventDefault()
+	handled(event)
 }
 
 function notify(message, id) {
@@ -1035,6 +1037,11 @@ function item(node) {
 
 function elapsed(since) {
 	return Date.now() - since
+}
+
+function handled(event) {
+	event.stopImmediatePropagation()
+	event.preventDefault()
 }
 
 window.onload = init
