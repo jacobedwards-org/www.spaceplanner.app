@@ -88,16 +88,30 @@ class BackendHistory {
 			this.truncate()
 		}
 
-		let oldValue
-		for (let i = this.place; !oldValue && i >= 0; --i) {
+		/*
+		 * TODO: Keep a table of the last diffs for various paths
+		 * to speed this up
+		 */
+		let oldDiff
+		for (let i = this.place; !oldDiff && i >= 0; --i) {
 			if (this.diffs[i].path === path) {
 				if (this.diffs[i].op === "remove") {
 					throw new Error("Cannot reuse old ID")
 				}
-				oldValue = this.diffs[i].value
+				oldDiff = i
 			}
 		}
 
+		if (op === "add" && oldDiff != undefined && this.diffMark(oldDiff) == this.diffMark()) {
+			let d = this.diffs[oldDiff]
+			d.value = value
+			d.time = Date.now()
+			this.truncated = Date.now()
+			console.debug("Backend.History.addDiff", "replacing", d.id)
+			return d
+		}
+
+		let oldValue = oldDiff ? this.diffs[oldDiff].value : undefined
 		if (op === "add") {
 			op = oldValue ? "replace" : "new"
 		} else {
