@@ -654,23 +654,28 @@ function furnitureHandler(ev, editor, state) {
 	}
 
 	let sel = editor.draw.find("#furniture_layouts > * > .selected").array()
-	if (sel.length === 0 && ev.type === "dblclick" && ev.button === buttons.left) {
-		ev.preventDefault()
-		if (state.menu) {
-			state.menu.remove()
-			delete state.menu
+	if (sel.length === 0 && ev.button === buttons.left) {
+		if (ev.type === "mousedown") {
+			handled(ev)
+			let p = editor.draw.point(ev.clientX, ev.clientY)
+			state.timeout = setTimeout(function() {
+				state.menu = document.body.appendChild(furnitureMenu(editor, p))
+			}, 350)
+			return
+		} else if (ev.type === "mouseup" && state.timeout != undefined) {
+			handled(ev)
+			clearTimeout(state.timeout)
+			delete state.timeout
 		}
-		state.menu = document.body.appendChild(
-			furnitureMenu(editor, editor.draw.point(ev.clientX, ev.clientY)))
 	} else if (sel.length === 1) {
 		if (ev.button != buttons.left) {
 			return
 		}
 		if (ev.type === "dblclick") {
-			ev.preventDefault()
+			handled(ev)
 			document.body.appendChild(furnitureMenu(editor, lib.getID(sel[0])))
 		} else if (ev.type === "mousedown") {
-			ev.preventDefault()
+			handled(ev)
 			state.moving = sel[0]
 			state.origin = editor.draw.point(ev.clientX, ev.clientY).vec()
 			return
