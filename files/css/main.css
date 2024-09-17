@@ -1,5 +1,5 @@
 :root {
-	--bar-height: 2em;
+	--bar-height: 2.5em;
 }
 
 body {
@@ -9,19 +9,19 @@ body {
 }
 
 #bar {
-        position: absolute;
+	position: absolute;
 	box-sizing: border-box;
 	top: 0;
 	left: 0;
 	width: 100vw;
 	max-width: 100%;
-        height: var(--bar-height);
+	height: var(--bar-height);
 	display: flex;
 	align-items: center;
 	padding: .4em;
 
-        background-color: #EEE;
-	border-bottom: medium ridge #EEE;
+	background-color: white;
+	border-bottom: thin solid black;
 }
 
 #bar > ul {
@@ -40,12 +40,10 @@ body {
 	display: inline-block;
 }
 
-#bar > ul > li > a {
-	padding: 0.1em;
-}
-
 #bar > ul > li > a > img.icon {
-	width: 1.5em;
+	margin: 0.15em;
+	padding: 0.1em;
+	width: calc(var(--bar-height) - .8em);
 	border-radius: .2em;
 }
 
@@ -118,7 +116,7 @@ input:not([type]), input[type="password"], input[type="email"] {
 }
 
 button, input[type="submit"] {
-        font-size: large;
+	font-size: large;
 	background-color: #EEE;
 	border: .15em outset #BBB;
 	border-radius: .2em;
@@ -140,7 +138,7 @@ form.credentials {
 }
 
 form.credentials > label, form.credentials > input {
-        display: block;
+	display: block;
 }
 
 form.credentials > input {
@@ -157,4 +155,29 @@ form.credentials > input {
 
 .small {
 	font-size: smaller;
+}
+
+a.button:hover {
+	background-color: #FAFAFA;
+}
+
+a.button {
+	margin: .2em;
+	padding: .25em;
+	border-radius: .15em;
+	text-decoration: none;
+	font-weight: bold;
+	color: black;
+	border: thin solid lightgrey;
+}
+
+a.pop:hover {
+	background-color: #0000D0;
+}
+
+a.pop {
+	font-weight: bold;
+	background-color: blue;
+	color: white;
+	border: thin solid black;
 }
