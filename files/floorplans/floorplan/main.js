@@ -561,8 +561,11 @@ function precisePointHandler(event, editor, state) {
 
 			state.origin = state.from.vec()
 		} else if (event.type === "mouseup") {
-			cleanup()
-			//return // Or should I preventDefault()?
+			if (state.from) {
+				cleanup()
+			} else {
+				return
+			}
 		} else if (event.type === "mousemove" && state.origin != undefined &&
 		    state.origin.distanceTo(cursor) > 200) {
 			state.to = editor.addPoint(cursor, true)
