@@ -763,10 +763,13 @@ export class FloorplanBackend {
 			for (let id in data[t]) {
 				let nid = idMap[id]
 				if (nid == null) {
-					if (idMap != this.localIDs) {
-						throw new Error("Cannot create server ID")
+					if (idMap == this.localIDs) {
+						nid = this.newID(objectTypes[t], id)
+					} else {
+						// For my purposes this will be fine.
+						console.warn("backend.remapIDs", "Not remapping; cannot create server ID")
+						nid = id
 					}
-					nid = this.newID(objectTypes[t], id)
 				}
 				newdata[t][nid] = this.remapIDsValue(data[t][id], idMap)
 			}
