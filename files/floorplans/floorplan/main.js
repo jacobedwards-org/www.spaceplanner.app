@@ -812,7 +812,7 @@ function furnitureMenu(editor, pointOrID) {
 	}
 
 	const fromVariety = function(type, variety) {
-		console.log(`Setting with and depth to ${variety} ${type}`)
+		console.debug(`Setting with and depth to ${variety} ${type}`)
 		if (variety == null) {
 			return
 		}
