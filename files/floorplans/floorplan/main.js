@@ -523,7 +523,6 @@ function precisePointHandler(event, editor, state) {
 
 		let points = editor.backend.cache.points
 		let snaps = {}
-		console.log(points)
 		let exclude = lib.getID(state.to)
 		for (let p in points) {
 			if (p != exclude) {
@@ -537,7 +536,6 @@ function precisePointHandler(event, editor, state) {
 		if (snaps.y != null) {
 			snapped.y = snaps.y.v
 		}
-		console.log(snaps.x, snaps.y)
 		updatePoint(snapped)
 	}
 	const revert = function() {
