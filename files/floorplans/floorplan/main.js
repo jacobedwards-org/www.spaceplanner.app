@@ -746,7 +746,7 @@ function furnitureHandler(ev, editor, state) {
 	}
 }
 
-function enumSelection(input, values) {
+function enumSelection(input, values, selected) {
 	let a = typeof(values.keys) === "function"
 	for (let i in values) {
 		let opt = input.appendChild(document.createElement("option"))
@@ -789,7 +789,7 @@ function furnitureMenu(editor, pointOrID) {
 			y: p.y,
 			type,
 			width: v.width ?? 9600,
-			depth: v.height ?? 9600,
+			depth: v.depth ?? 9600,
 			name: null
 
 		}
@@ -797,12 +797,12 @@ function furnitureMenu(editor, pointOrID) {
 	}
 
 	let items = [
-		menuItem("name", "Name"),
+		menuItem("name", "Name", { attributes: { value: params.name } }),
 		menuItem("type", "Type", { break: false, enum: editor.furniture_types, attributes: { value: params.type, required: true } }),
-		menuItem("variety", "Variety", { enum: editor.furniture_types[params.type].varieties, attributes: { value: editor.variety(id) } }),
+		menuItem("variety", "Variety", { enum: editor.furniture_types[params.type].varieties, attributes: { value: editor.varietyFrom(params) } }),
 		menuItem("width", "Width", { attributes: { value: params.width, required: true } }),
-		menuItem("depth", "Depth", { attributes: { value: params.height, required: true } }),
-		menuItem("angle", "Angle", { attributes: { value: params.angle, min: 0, max: 359, type: "number", value: 0, required: true } }),
+		menuItem("depth", "Depth", { attributes: { value: params.depth, required: true } }),
+		menuItem("angle", "Angle", { attributes: { value: params.angle, min: 0, max: 359, type: "number", required: true } }),
 		menuItem("cancel", null, { attributes: { value: "Cancel", type: "button" }}),
 		menuItem("done", null, { attributes: { value: "Done", type: "submit" }})
 	]
@@ -812,7 +812,7 @@ function furnitureMenu(editor, pointOrID) {
 	}
 
 	const fromVariety = function(type, variety) {
-		console.debug(`Setting with and depth to ${variety} ${type}`)
+		console.log(`Setting with and depth to ${variety} ${type}`)
 		if (variety == null) {
 			return
 		}
@@ -829,16 +829,16 @@ function furnitureMenu(editor, pointOrID) {
 			fromVariety()
 			return
 		}
-		let v = menuItem("variety", "Variety", { enum: vars, attributes: {
-			value: editor.varietyFrom(params)
-		}})
+		let v = menuItem("variety", "Variety", { enum: vars })
 		let c = makeItem(v)
+		items[keys.variety].container.replaceWith(c)
+		items[keys.variety] = v
+		items[keys.variety].input.value = editor.varietyFrom(params)
+		fromVariety(items[keys.type].input.value)
+
 		c.addEventListener("change", function(ev) {
 			fromVariety(items[keys.type].input.value, ev.target.value)
 		})
-		items[keys.variety].container.replaceWith(c)
-		items[keys.variety] = v
-		fromVariety(items[keys.type].input.value, items[keys.variety].input.value)
 	}
 
 	let menu = makeMenu(items)
