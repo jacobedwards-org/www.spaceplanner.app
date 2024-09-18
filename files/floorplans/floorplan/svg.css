@@ -1,6 +1,6 @@
 /* SVG element CSS */
 
-rect.selected, circle.selected {
+circle.selected {
 	fill: blue;
 }
 

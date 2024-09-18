@@ -624,6 +624,7 @@ export class FloorplanEditor {
 								m.size(value.width, value.depth)
 								m.findOne("title").words(furniture_name(value))
 							}
+							m.load(`/furniture/${value.type}.svg`)
 						}
 					}
 				},
@@ -631,9 +632,9 @@ export class FloorplanEditor {
 					let fm = editor.draw.findOneMax(byId(id))
 					if (!fm) {
 						let f = editor.backend.reqObj(value.furniture_id)
-						fm = editor.layoutG().rect(f.width, f.depth)
-							.fill("black")
-							.attr({ id })
+						fm = editor.layoutG().image(`/furniture/${f.type}.svg`)
+							.size(f.width, f.depth)
+							.attr({ id, preserveAspectRatio: "none" })
 						fm.element("title").words(furniture_name(f))
 					}
 					fm.cx(value.x).cy(value.y)
