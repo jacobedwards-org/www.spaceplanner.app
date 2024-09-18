@@ -499,9 +499,46 @@ function precisePointHandler(event, editor, state) {
 		}
 	}
 	const doMove = function() {
+		const ad = function(a, b) {
+			return Math.abs(a - b)
+		}
+		const updsnaps = function(snaps, k, from, test) {
+			let thres = 650
+			let d = ad(from[k], test[k])
+			if (d <= thres) {
+				if (!snaps[k] || d < snaps[k].d) {
+					snaps[k] = { d, v: test[k] }
+				}
+			}
+		}
+
 		// This is racy
 		state.moveTimeout = null
-		updatePoint(snap(editor.units.snapTo(state.move, editor.unit), state.origin, 8))
+		if (state.nosnap) {
+			updatePoint(state.move)
+			return
+		}
+
+		let snapped = snap(editor.units.snapTo(state.move, editor.unit), state.origin, 8)
+
+		let points = editor.backend.cache.points
+		let snaps = {}
+		console.log(points)
+		let exclude = lib.getID(state.to)
+		for (let p in points) {
+			if (p != exclude) {
+				updsnaps(snaps, "x", snapped, points[p])
+				updsnaps(snaps, "y", snapped, points[p])
+			}
+		}
+		if (snaps.x != null) {
+			snapped.x = snaps.x.v
+		}
+		if (snaps.y != null) {
+			snapped.y = snaps.y.v
+		}
+		console.log(snaps.x, snaps.y)
+		updatePoint(snapped)
 	}
 	const revert = function() {
 		/*
@@ -589,6 +626,7 @@ function precisePointHandler(event, editor, state) {
 	if (event.type === "mousemove") {
 		// This is still far too expensive, it runs up my fans in seconds.
 		state.move = cursor
+		state.nosnap = event.shiftKey
 		if (state.moveTimeout == null) {
 			state.moveTimeout = setTimeout(doMove, 35)
 		}
