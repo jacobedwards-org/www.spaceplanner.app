@@ -187,17 +187,7 @@ function selectHandler(event, editor, state) {
 			}
 		)
 	} else {
-		c.appendChild(
-			ui.input("edit", "Edit selected furniture", {
-				attributes: {
-					type: "button",
-					value: "Edit furniture"
-				},
-				handlers: { click: function() {
-					document.body.appendChild(furnitureMenu(editor, fmaps[0]))
-				}}
-			})
-		)
+		furnitureMenu(editor, fmaps[0])
 	}
 
 	if (old) {
@@ -698,7 +688,7 @@ function furnitureHandler(ev, editor, state) {
 			handled(ev)
 			let p = editor.draw.point(ev.clientX, ev.clientY)
 			state.timeout = setTimeout(function() {
-				state.menu = document.body.appendChild(furnitureMenu(editor, p))
+				furnitureMenu(editor, p)
 			}, 350)
 			return
 		} else if (ev.type === "mouseup" && state.timeout != undefined) {
@@ -712,7 +702,7 @@ function furnitureHandler(ev, editor, state) {
 		}
 		if (ev.type === "dblclick") {
 			handled(ev)
-			document.body.appendChild(furnitureMenu(editor, lib.getID(sel[0])))
+			furnitureMenu(editor, lib.getID(sel[0]))
 		} else if (ev.type === "mousedown") {
 			handled(ev)
 			state.moving = sel[0]
@@ -755,6 +745,17 @@ function enumSelection(input, values, selected) {
 }
 
 function furnitureMenu(editor, pointOrID) {
+	let oldMenu = document.getElementById("furniture_menu")
+	let menu = furnitureMenuX(editor, pointOrID)
+	menu.id = "furniture_menu"
+	if (oldMenu) {
+		oldMenu.replaceWith(menu)
+	} else {
+		document.body.append(menu)
+	}
+}
+
+function furnitureMenuX(editor, pointOrID) {
 	const def = function(obj) {
 		return obj[defKey(obj)]
 	}
@@ -803,7 +804,6 @@ function furnitureMenu(editor, pointOrID) {
 		menuItem("width", "Width", { attributes: { value: params.width, required: true } }),
 		menuItem("depth", "Depth", { attributes: { value: params.depth, required: true } }),
 		menuItem("angle", "Angle", { attributes: { value: params.angle, min: 0, max: 359, type: "number", required: true } }),
-		menuItem("cancel", null, { attributes: { value: "Cancel", type: "button" }}),
 		menuItem("done", null, { attributes: { value: "Done", type: "submit" }})
 	]
 	let keys = {}
@@ -812,7 +812,7 @@ function furnitureMenu(editor, pointOrID) {
 	}
 
 	const fromVariety = function(type, variety) {
-		console.debug(`Setting with and depth to ${variety} ${type}`)
+		console.log(`Setting with and depth to ${variety} ${type}`)
 		if (variety == null) {
 			return
 		}
@@ -846,11 +846,6 @@ function furnitureMenu(editor, pointOrID) {
 	items[keys.type].input.addEventListener("change", function(ev) {
 		newVariety()
 	})
-	items[keys.cancel].input.addEventListener("click", function(ev) {
-		handled(ev)
-		editor.undo()
-		menu.remove()
-	})
 	menu.addEventListener("change", function(ev) {
 		handled(ev)
 		try {
@@ -866,16 +861,13 @@ function furnitureMenu(editor, pointOrID) {
 			throw err
 		}
 	})
-	menu.addEventListener("submit", function(ev) {
+	let commitHandler = function(ev) {
 		handled(ev)
 		editor.finishAction()
 		menu.remove()
-	})
-	menu.addEventListener("escape", function(ev) {
-		handled(ev)
-		editor.undo()
-		menu.remove()
-	})
+	}
+	menu.addEventListener("submit", commitHandler)
+	menu.addEventListener("escape", commitHandler)
 
 	return menu
 }
