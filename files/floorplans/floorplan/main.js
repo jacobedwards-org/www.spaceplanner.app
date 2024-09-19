@@ -413,18 +413,10 @@ function precisePointHandler(event, editor, state) {
 		state.len.value = 0
 		state.len.addEventListener("input", function(event) {
 			let vecs = state.line.vecs()
-			let len
-			try {
-				len = editor.units.snapTo(
-					parseUserLength(editor, event.target.value), editor.unit
-				)
-			}
-			catch (err) {
-				state.len.classList.add("invalid")
-				console.log("Invalid input length", err)
+			let len =  editor.units.snapTo(unitInput(editor, event.target.value), editor.unit)
+			if (len == null) {
 				return
 			}
-			state.len.classList.remove("invalid")
 			if (len> 0) {
 				vecs[1] = setLength(vecs[0], vecs[1], len)
 				updatePoint(vecs[1], { leave_input: true })
@@ -484,7 +476,7 @@ function precisePointHandler(event, editor, state) {
 		}
 
 		if (!options.leave_input) {
-			state.len.value = userLength(editor,
+			unitInput(editor, state.len,
 			    editor.units.snapTo(state.origin.distanceTo(p), editor.unit))
 		}
 	}
@@ -948,6 +940,22 @@ function menuItem(name, label, options) {
 		break: options.break == null ? true : options.break
 	}
 }
+
+function unitInput(editor, input, value) {
+	if (value != null) {
+		input.value = userLength(editor, value)
+		return
+	}
+
+	try {
+		return parseUserLength(editor, input.value)
+	}
+	catch(err) {
+		input.setCustomValidity(err)
+		input.reportValidity()
+	}
+}
+
 
 function parseUserLength(editor, length) {
 	let a = length.replaceAll(" ", "").split(/([0-9]+)/)
