@@ -772,15 +772,21 @@ function furnitureMenuX(editor, pointOrID) {
 		} else if (typeof pointOrID === "object") {
 			p = pointOrID
 		}
-		let type = defKey(editor.furniture_types)
-		console.debug("furnitureMenu", "default type", type)
-		let v = def(editor.furniture_types[type].varieties)
+		let type = "any"
+		let vars = editor.furniture_types[type].varieties
+		let v
+		if (def(vars)) {
+			v = def(vars)
+		} else {
+			let s = editor.units.get("inch", 32)
+			v = { width: s, depth: s }
+		}
 		params = {
 			x: p.x,
 			y: p.y,
 			type,
-			width: v.width ?? 9600,
-			depth: v.depth ?? 9600,
+			width: v.width,
+			depth: v.depth,
 			name: null
 
 		}
@@ -788,12 +794,12 @@ function furnitureMenuX(editor, pointOrID) {
 	}
 
 	let items = [
-		menuItem("name", "Name", { attributes: { value: params.name } }),
+		menuItem("name", "Name", { attributes: { value: params.name ?? "" } }),
 		menuItem("type", "Type", { break: false, enum: editor.furniture_types, attributes: { value: params.type, required: true } }),
 		menuItem("variety", "Variety", { enum: editor.furniture_types[params.type].varieties, attributes: { value: editor.varietyFrom(params) } }),
 		menuItem("width", "Width", { attributes: { value: params.width, required: true } }),
 		menuItem("depth", "Depth", { attributes: { value: params.depth, required: true } }),
-		menuItem("angle", "Angle", { attributes: { value: params.angle, min: 0, max: 359, type: "number", required: true } }),
+		menuItem("angle", "Angle", { attributes: { value: params.angle ?? 0, min: 0, max: 359, type: "number", required: true } }),
 		menuItem("done", null, { attributes: { value: "Done", type: "submit" }})
 	]
 	let keys = {}
@@ -812,7 +818,7 @@ function furnitureMenuX(editor, pointOrID) {
 		params.depth = items[keys.depth].input.value = v.depth
 		editor.addMappedFurniture(params, id)
 	}
-	const newVariety = function() {
+	const newVariety = function(init) {
 		let vars = editor.furniture_types[items[keys.type].input.value].varieties
 		if (vars == undefined) {
 			items[keys.variety].container.classList.add("hidden")
@@ -824,7 +830,7 @@ function furnitureMenuX(editor, pointOrID) {
 		items[keys.variety].container.replaceWith(c)
 		items[keys.variety] = v
 		items[keys.variety].input.value = editor.varietyFrom(params)
-		fromVariety(items[keys.type].input.value)
+		fromVariety(items[keys.type].input.value, init ? null : defKey(vars))
 
 		c.addEventListener("change", function(ev) {
 			fromVariety(items[keys.type].input.value, ev.target.value)
@@ -832,7 +838,8 @@ function furnitureMenuX(editor, pointOrID) {
 	}
 
 	let menu = makeMenu(items)
-	newVariety()
+	items[keys.type].input.value = params.type
+	newVariety(true)
 	items[keys.type].input.addEventListener("change", function(ev) {
 		newVariety()
 	})
