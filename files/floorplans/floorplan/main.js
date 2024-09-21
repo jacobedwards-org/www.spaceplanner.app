@@ -293,14 +293,12 @@ function selectionHandler(event, editor) {
 	}
 
 	editor.draw.select()
+	escape()
 }
 
 function controlKeyHandler(ev, editor) {
 	if (ev.type === "keydown" && ev.key === "Escape") {
-		document.body.querySelectorAll(".escapable").forEach(function(e) {
-			console.debug("Escape", e)
-			e.dispatchEvent(escapeEvent)
-		})
+		escape()
 	}
 }
 
@@ -1086,6 +1084,13 @@ function elapsed(since) {
 function handled(event) {
 	event.stopImmediatePropagation()
 	event.preventDefault()
+}
+
+function escape() {
+	document.body.querySelectorAll(".escapable").forEach(function(e) {
+		console.debug("Escape", e)
+		e.dispatchEvent(escapeEvent)
+	})
 }
 
 window.onload = init
