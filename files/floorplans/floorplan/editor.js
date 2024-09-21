@@ -636,6 +636,13 @@ export class FloorplanEditor {
 							.size(f.width, f.depth)
 							.attr({ id, preserveAspectRatio: "none" })
 						fm.element("title").words(furniture_name(f))
+						fm.on("error", function() {
+							if (this.attr("href") === "/furniture/any.svg") {
+								etc.error("Unable to load furniture assets")
+								throw new Error("Unable to load furniture assets")
+							}
+							this.load("/furniture/any.svg")
+						})
 					}
 					fm.cx(value.x).cy(value.y)
 					fm.transform({
