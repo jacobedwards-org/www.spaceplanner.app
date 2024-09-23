@@ -256,9 +256,9 @@ let modes = {
 		points: true,
 		handlers: {
 			contextmenu: preventDefaultHandler,
-			mousedown: [selectionHandler, precisePointHandler, furnitureHandler],
-			mousemove: [precisePointHandler, precisePointMapHandler, furnitureHandler],
-			mouseup: [precisePointHandler, furnitureHandler],
+			mousedown: [selectionHandler, precisePointHandler, precisePointMapHandler, furnitureHandler],
+			mousemove: [precisePointHandler, furnitureHandler],
+			mouseup: [precisePointHandler, precisePointMapHandler, furnitureHandler],
 			keydown: [controlKeyHandler, zoomKeysHandler, undoRedoHandler],
 			dblclick: [precisePointMapHandler, furnitureHandler],
 			select: selectHandler
@@ -628,25 +628,36 @@ function precisePointHandler(event, editor, state) {
 	handled(event)
 }
 
-// mousedown, mousemove, mouseup
-function precisePointMapHandler(event, editor) {
+// mousedown, mouseup, dblclick
+function precisePointMapHandler(event, editor, state) {
+	const cleanup = function() {
+		for (let i in state) {
+			delete state[i]
+		}
+	}
+
+	let cursor = editor.draw.point(event.clientX, event.clientY).vec()
+	if (editor.thingAt(cursor, "#points")) {
+		return
+	}
+
+	if (state.door && event.type === "mouseup") {
+		handled(event)
+		editor.backend.mapPoints(state.door.type, state.door.a, state.door.b, { door_swing: state.hinge + "+" })
+		cleanup()
+		return
+	}
+
+	let map = editor.thingAt(cursor, "#pointmaps")
+	if (map == null) {
+		return
+	}
+
+	let id = lib.getID(map)
+	let data = editor.backend.obj(id)
+
 	// Explicitly check button in case UA isn't complient
-	if (event.type === "dblclick" && event.button == buttons.left) {
-		let cursor = editor.draw.point(event.clientX, event.clientY).vec()
-		if (editor.thingAt(cursor, "#points")) {
-			return
-		}
-
-		let map = editor.thingAt(cursor, "#pointmaps")
-		if (map == null) {
-			return
-		}
-
-		let data = editor.backend.obj(lib.getID(map))
-		if (data.type != "wall") {
-			throw new Error("Changing direction of doors not yet supported")
-		}
-
+	if (event.type === "dblclick" && data.type === "wall" && event.button == buttons.left) {
 		handled(event)
 
 		let sub = map.whereIsPoint(cursor.x, cursor.y)
@@ -797,8 +808,8 @@ function furnitureMenuX(editor, pointOrID) {
 		menuItem("name", "Name", { attributes: { value: params.name ?? "" } }),
 		menuItem("type", "Type", { break: false, enum: editor.furniture_types, attributes: { value: params.type, required: true } }),
 		menuItem("variety", "Variety", { enum: editor.furniture_types[params.type].varieties, attributes: { value: editor.varietyFrom(params) } }),
-		menuItem("width", "Width", { attributes: { value: params.width, required: true } }),
-		menuItem("depth", "Depth", { attributes: { value: params.depth, required: true } }),
+		menuItem("width", "Width", { attributes: { value: userLength(editor, params.width), required: true } }),
+		menuItem("depth", "Depth", { attributes: { value: userLength(editor, params.depth), required: true } }),
 		menuItem("angle", "Angle", { attributes: { value: params.angle ?? 0, min: 0, max: 359, type: "number", required: true } }),
 		menuItem("done", null, { attributes: { value: "Done", type: "submit" }})
 	]
@@ -814,8 +825,10 @@ function furnitureMenuX(editor, pointOrID) {
 		}
 
 		let v = editor.furniture_types[type].varieties[variety]
-		params.width = items[keys.width].input.value = v.width
-		params.depth = items[keys.depth].input.value = v.depth
+		params.width = v.width
+		items[keys.width].input.value = userLength(v.width)
+		params.depth = v.depth
+		items[keys.depth].input.value = userLength(v.depth)
 		editor.addMappedFurniture(params, id)
 	}
 	const newVariety = function(init) {
@@ -846,12 +859,18 @@ function furnitureMenuX(editor, pointOrID) {
 	menu.addEventListener("change", function(ev) {
 		handled(ev)
 		try {
-			params[event.target.name] = event.target.value
 			console.debug("furnitureMenu.change(event)", event.target.name, event.target.value)
-			editor.addMappedFurniture(params, id)
 			if (event.target.name === "width" || event.target.name === "depth") {
+				let u = unitInput(editor, event.target)
+				if (u == undefined) {
+					return
+				}
+				params[event.target.name] = u
 				items[keys.variety].input.value = editor.varietyFrom(params)
+			} else {
+				params[event.target.name] = event.target.value
 			}
+			editor.addMappedFurniture(params, id)
 		}
 		catch(err) {
 			etc.error(err, menu)
