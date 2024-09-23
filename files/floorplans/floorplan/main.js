@@ -643,7 +643,12 @@ function precisePointMapHandler(event, editor, state) {
 
 	if (state.door && event.type === "mouseup") {
 		handled(event)
-		editor.backend.mapPoints(state.door.type, state.door.a, state.door.b, { door_swing: state.hinge + "+" })
+		let o = editor.findObj(state.doorID).point_offset(cursor)
+		if (state.hinge === "b") {
+			o = -o
+		}
+		let s = (o > 0 ? "+" : "-")
+		editor.backend.mapPoints(state.door.type, state.door.a, state.door.b, { door_swing: state.hinge + s })
 		cleanup()
 		return
 	}
@@ -669,6 +674,20 @@ function precisePointMapHandler(event, editor, state) {
 		editor.mapPoints("wall", data.a, sub)
 		editor.mapPoints("wall", sub, data.b)
 		editor.remove(map)
+		return
+	}
+
+	if (data.type !== "door" || event.button !== buttons.left) {
+		return
+	}
+
+	if (event.type === "mousedown") {
+		handled(event)
+		state.door = data
+		state.doorID = id
+		state.hinge = Math.round(editor.findObj(id).closestLinearInterpolation(cursor)) ? "b" : "a"
+	} else {
+		console.log("Hmm", event)
 	}
 }
 
