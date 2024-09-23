@@ -494,6 +494,7 @@ export class FloorplanBackend {
 
 	// Returns map id
 	mapPoints(type, a, b, options) {
+		options = options ?? {}
 		if (type != "wall" && type != "door") {
 			throw new Error("Only walls and doors allowed in pointmap so far")
 		}
