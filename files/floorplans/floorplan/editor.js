@@ -692,7 +692,10 @@ export class FloorplanEditor {
 				},
 				pointmaps: function(id) {
 					editor.draw.findExactlyOne(byId(id)).remove()
-					editor.draw.findOne(byId(swingID(id))).remove()
+					let s = editor.draw.findOne(byId(swingID(id)))
+					if (s != null) {
+						s.remove()
+					}
 				},
 				furniture: function(name) {},
 				furniture_maps: function(id) {
