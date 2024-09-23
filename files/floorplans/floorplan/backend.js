@@ -64,7 +64,7 @@ class BackendHistory {
 
 	mark() {
 		if (this.marks.at(-1) === this.place) {
-			console.warn("Backend.History.mark", "Diff already marked")
+			console.warn("Backend.History.mark", this.place, "Diff already marked")
 			return null
 		}
 		let mark = this.marks.push(this.place) - 1
