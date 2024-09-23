@@ -5,13 +5,13 @@ libs =\
 	github.com/ros2jsguy/threejs-math@9a7b4c81c58b200b11670fd597edadd5972c0ae5 \
 
 install:
-	rsync $$(libnames ${libs} | sed 's/^/--exclude=lib\//') -va --del files/ ${prefix}
+	rsync $$(./libnames ${libs} | sed 's/^/--exclude=lib\//') -va --del files/ ${prefix}
 
 uninstall:
 	rm -rf ${prefix}/*
 
 install_libs: update_libs
-	for lib in $$(libnames ${libs}); do \
+	for lib in $$(./libnames ${libs}); do \
 		rm -rf ${prefix}/lib/"$$lib"; \
 		mkdir -p ${prefix}/lib/"$$lib"; \
 		(cd "lib/$$lib"/src/src && pax -w .) | (cd ${prefix}/lib/"$$lib" && pax -r); \
@@ -19,7 +19,7 @@ install_libs: update_libs
 
 update_libs:
 .for lib in ${libs}
-	getlib "${lib}"
+	./getlib "${lib}"
 .endfor
 
 clean:
