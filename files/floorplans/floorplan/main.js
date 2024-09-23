@@ -429,7 +429,7 @@ function precisePointHandler(event, editor, state) {
 			state.menu.remove()
 		}
 		for (let i in state) {
-			if (i !== "lastUp") {
+			if (i !== "lastLastDown") {
 				delete state[i]
 			}
 		}
@@ -548,8 +548,9 @@ function precisePointHandler(event, editor, state) {
 	}
 
 	let cursor = editor.draw.point(event.clientX, event.clientY).vec()
-	if (event.type === "mouseup") {
-		state.lastUp = Date.now()
+	state.lastDown = state.lastLastDown
+	if (event.type === "mousedown") {
+		state.lastLastDown = Date.now()
 	}
 
 	if (state.to == undefined) {
@@ -563,7 +564,7 @@ function precisePointHandler(event, editor, state) {
 				return
 			}
 
-			if  (state.lastUp != null && elapsed(state.lastUp) <= 500) {
+			if  (state.lastDown != null && elapsed(state.lastDown) <= 500) {
 				state.to = state.from
 				state.from = null
 
