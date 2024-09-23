@@ -29,6 +29,20 @@ SVG.extend(SVG.Line, {
 		return vecs
 	},
 
+	// See https://math.stackexchange.com/questions/274712/calculate-on-which-side-of-a-straight-line-is-a-given-po
+	vecs_top_first: function() {
+		let v = this.vecs()
+		return v[1].y > v[0].y ? v : [v[1], v[0]];
+	},
+
+	point_offset: function(point) {
+		const cross = function(a, b, o) {
+			return (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x)
+		}
+		const t = this.vecs_top_first()
+  		return cross(point, t[1], t[0])
+	},
+
 	/*
 	 * Most of this copied from the svg.js math library,
 	 * but I didn't particularly like the look of the
