@@ -616,7 +616,14 @@ export class FloorplanEditor {
 							.addClass(value.type)
 							.data("type", value.type)
 					}
-					if (value.type === "door" && value.door_swing) {
+
+					let sid = swingID(id)
+					if (value.type !== "door" || !value.door_swing) {
+						let s = editor.draw.findOne(byId(sid))
+						if (s != null) {
+							s.remove()
+						}
+					} else {
 						a = new Vector2(a.x, a.y)
 						b = new Vector2(b.x, b.y)
 						let len = a.distanceTo(b)
@@ -632,18 +639,15 @@ export class FloorplanEditor {
 						let n = 90
 						let deg = value.door_swing.at(1) === "+" ? n : -n
 						let e = t.clone().rotateAround(f, deg * Math.PI / 180)
-						let swingID = id + "-swing"
-						let swing = editor.draw.findOne(byId(swingID))
+						let swing = editor.draw.findOne(byId(sid))
 						let d = `M ${f.x} ${f.y} L ${e.x} ${e.y} L ${t.x} ${t.y} Z`
 						if (swing != null) {
 							swing.plot(d)
 						} else {
 							editor.doorSwings.path(d)
 								.fill("rgba(0,0,0,.05)").stroke({ width: 100, color: "#AAA", dasharray: "400 100" })
-								.attr({ id: swingID })
+								.attr({ id: sid })
 						}
-					} else {
-						wall.find("title").remove()
 					}
 				},
 				furniture: function(id, value) {
@@ -688,6 +692,7 @@ export class FloorplanEditor {
 				},
 				pointmaps: function(id) {
 					editor.draw.findExactlyOne(byId(id)).remove()
+					editor.draw.findOne(byId(swingID(id))).remove()
 				},
 				furniture: function(name) {},
 				furniture_maps: function(id) {
@@ -848,4 +853,8 @@ function byId(id) {
 
 function furniture_name(f) {
 	return f.name ? `${f.name} (${f.type})` : f.type
+}
+
+function swingID(id) {
+	return id + "_swing"
 }
