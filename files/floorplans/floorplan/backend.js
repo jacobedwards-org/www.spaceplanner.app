@@ -102,7 +102,9 @@ class BackendHistory {
 			}
 		}
 
-		if (op === "add" && oldDiff != undefined && this.diffMark(oldDiff) == this.diffMark()) {
+		let m = this.diffMark()
+		if (op === "add" && oldDiff != undefined && this.marks[m] != this.place &&
+		    this.diffMark(oldDiff) === m) {
 			let d = this.diffs[oldDiff]
 			d.value = value
 			d.time = Date.now()
