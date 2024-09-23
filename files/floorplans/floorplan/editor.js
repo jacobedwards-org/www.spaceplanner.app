@@ -1,5 +1,6 @@
 import { default as SVG } from "/lib/github.com/svgdotjs/svg.js/svg.js"
 import * as backend from "./backend.js"
+import { Vector2 } from "/lib/github.com/ros2jsguy/threejs-math/math/Vector2.js"
 
 const selectEvent = new Event("select")
 const unselectEvent = new Event("unselect")
@@ -282,6 +283,7 @@ export class FloorplanEditor {
 		this.ui.bottom = this.draw.group().attr({ id: "bottom" })
 
 		let data = this.draw.group().attr({ id: "floorplan" })
+		this.doorSwings = data.group().attr({ id: "door_swings" })
 		data.group().attr({ id: "pointmaps" }) // lines
 		data.group().attr({ id: "points" }) // circles
 		this.layouts = data.group().attr({ id: "furniture_layouts" })  // g of furniture
@@ -607,12 +609,41 @@ export class FloorplanEditor {
 							.addClass(value.type)
 							.data("type", value.type)
 					} else {
-						editor.draw.findExactlyOne("#pointmaps")
+						wall = editor.draw.findExactlyOne("#pointmaps")
 							.line(a.x, a.y, b.x, b.y)
 							.stroke({ color: "black", width: 400 })
 							.attr({ id })
 							.addClass(value.type)
 							.data("type", value.type)
+					}
+					if (value.type === "door" && value.door_swing) {
+						a = new Vector2(a.x, a.y)
+						b = new Vector2(b.x, b.y)
+						let len = a.distanceTo(b)
+						let f, t
+						if (value.door_swing.at(0) === "a") {
+							f = a
+							t = b
+						} else {
+							f = b
+							t = a
+						}
+
+						let n = 90
+						let deg = value.door_swing.at(1) === "+" ? n : -n
+						let e = t.clone().rotateAround(f, deg * Math.PI / 180)
+						let swingID = id + "-swing"
+						let swing = editor.draw.findOne(byId(swingID))
+						let d = `M ${f.x} ${f.y} L ${e.x} ${e.y} L ${t.x} ${t.y} Z`
+						if (swing != null) {
+							swing.plot(d)
+						} else {
+							editor.doorSwings.path(d)
+								.fill("rgba(0,0,0,.05)").stroke({ width: 100, color: "#AAA", dasharray: "400 100" })
+								.attr({ id: swingID })
+						}
+					} else {
+						wall.find("title").remove()
 					}
 				},
 				furniture: function(id, value) {
