@@ -652,7 +652,13 @@ function precisePointMapHandler(event, editor, state) {
 
 	if (state.door && event.type === "mouseup") {
 		handled(event)
-		let o = editor.findObj(state.doorID).point_offset(cursor)
+
+		let door = editor.findObj(state.doorID)
+		if (state.doorSwingFrom.distanceTo(cursor) < 500) {
+			cleanup()
+			return
+		}
+		let o = door.point_offset(cursor)
 		if (state.hinge === "b") {
 			o = -o
 		}
@@ -694,6 +700,7 @@ function precisePointMapHandler(event, editor, state) {
 		handled(event)
 		state.door = data
 		state.doorID = id
+		state.doorSwingFrom = cursor.clone()
 		state.hinge = Math.round(editor.findObj(id).closestLinearInterpolation(cursor)) ? "b" : "a"
 	} else {
 		console.log("Hmm", event)
