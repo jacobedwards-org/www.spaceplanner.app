@@ -501,11 +501,21 @@ export class FloorplanBackend {
 			throw new Error(`${a}, ${b}: Pointmap must reference existing points`)
 		}
 
-		return this.addData(this.whichPointMap(a, b) ?? "pointmaps", {
+		let d = {
 			type: type,
 			a: a,
 			b: b
-		}, options)
+		}
+		if (options.door_swing != null) {
+			switch (options.door_swing) {
+			case "a+": case "a-": case "b+": case "b-":
+				break;
+			default:
+				throw new Error(options.door_swing + ": Invalid door swing")
+			}
+			d.door_swing = options.door_swing
+		}
+		return this.addData(this.whichPointMap(a, b) ?? "pointmaps", d, options)
 	}
 
 	unmapPoints(id, options) {
