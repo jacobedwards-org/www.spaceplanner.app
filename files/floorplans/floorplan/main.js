@@ -463,10 +463,18 @@ function precisePointHandler(event, editor, state) {
 					editor.remove(state.snapmap)
 				}
 				state.to = editor.findObj(instead)
+				if (state.removeSnapmap == undefined) {
+					state.removeSnapmap = editor.backend.whichPointMap(
+						lib.getID(state.from), lib.getID(state.to)
+					) == null
+				}
 				state.snapmap = editor.mapPoints("wall", state.from, state.to)
 			}
 		} else if (state.snapmap != null) {
-			editor.remove(state.snapmap)
+			if (state.removeSnapmap) {
+				editor.remove(state.snapmap)
+				delete state.removeSnapmap
+			}
 			state.snapmap = null
 			state.to = editor.addPoint(p, true)
 			editor.mapPoints("wall", state.from, state.to)
