@@ -58,14 +58,10 @@ function init() {
 		}
 	})
 	editor.useUnits("imperial")
-	let s = editor.units.get("foot", 40)
-	let p = -s / 2
-	editor.draw.viewbox(p, p, s, s)
 	editor.draw.hide()
 	api.fetch("GET", "furniture")
 		.then(function(furniture) {
 			editor.furniture_types = furniture
-			editor.draw.show()
 		})
 		.catch(function(err) {
 			etc.error("That's unexpected. Unable to get furniture definitions")
@@ -127,11 +123,34 @@ function init() {
 		))
 	}
 
+	editor.draw.show()
 	editor.backend.pull()
 		.then(function() {
 			if (editor.draw.findExactlyOne("#points").children().length === 0) {
 				editor.addPoint({ x: 0, y: 0 })
 			}
+
+			const adj = function(ns, t, pos, siz) {
+				t[pos] += (t[siz] - ns) / 2
+				t[siz] = ns
+			}
+			const add = function(d, t, pos, siz) {
+				return adj(t[siz] + d, t, pos, siz)
+			}
+
+			let bbox = editor.draw.findOne("#floorplan").bbox()
+			let ft = editor.units.get("foot")
+			let min = ft * 20
+			add(ft * 2, bbox, "x", "width")
+			if (bbox.width < min) {
+				adj(min, bbox, "x", "width")
+			}
+			add(ft * 2, bbox, "y", "height")
+			if (bbox.height < min) {
+				adj(min, bbox, "y", "height")
+			}
+			editor.draw.viewbox(bbox)
+			editor.updateGrid()
 		})
 }
 
