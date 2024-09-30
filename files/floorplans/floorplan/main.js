@@ -1011,6 +1011,7 @@ function unitInput(editor, input, value) {
 	catch(err) {
 		input.setCustomValidity(err)
 		input.reportValidity()
+		console.warn(err)
 	}
 }
 
