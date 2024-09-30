@@ -860,9 +860,9 @@ function furnitureMenuX(editor, pointOrID) {
 
 		let v = editor.furniture_types[type].varieties[variety]
 		params.width = v.width
-		items[keys.width].input.value = userLength(v.width)
+		items[keys.width].input.value = userLength(editor, v.width)
 		params.depth = v.depth
-		items[keys.depth].input.value = userLength(v.depth)
+		items[keys.depth].input.value = userLength(editor, v.depth)
 		editor.addMappedFurniture(params, id)
 	}
 	const newVariety = function(init) {
