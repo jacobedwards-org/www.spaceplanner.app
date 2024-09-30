@@ -190,10 +190,15 @@ class Units {
 		do {
 			let n = this.get(unit)
 			if (units >= n) {
-				let amount = Math.floor(units / n)
+				let amount = units / n
+				if (this.data[unit].base) {
+					amount = Math.floor(amount)
+				}
 				units -= amount * n // not sure about floating mod in js
 				parts.push({ unit: unit, symbol: this.data[unit].symbol, amount: amount })
 			}
+
+
 		} while (units > 0 && (unit = this.data[unit].base))
 		if (units > 0) {
 			parts.push({ "amount": units })
