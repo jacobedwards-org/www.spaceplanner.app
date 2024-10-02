@@ -1,0 +1,7 @@
+p {
+	max-width: 60ch;
+}
+
+label.description {
+	display: block;
+}
