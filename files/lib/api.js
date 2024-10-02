@@ -1,6 +1,19 @@
-const proto = "http"
-const host = "api.spaceplanner.app"
-const version = "v0"
+import * as dev from "/lib/dev.js"
+
+let config = {
+	proto: "https",
+	host: "api.spaceplanner.app",
+	version: "v0"
+}
+
+if (dev.setting("devapi")) {
+	console.warn("Using testing API")
+	config.proto = "http"
+	let url = new URL(document.URL)
+	config.host = url.host
+}
+
+console.log(`Floorplan API: ${config.proto}://${config.host}/${config.version}`)
 
 function verify_response(response) {
 	let type = response.headers.get("Content-Type")
@@ -42,7 +55,7 @@ function api_fetch(method, endpoint, body) {
 		params["body"] = JSON.stringify(body)
 	}
 	
-	return fetch(proto + "://" + host + "/" + version + "/" + requestPath(endpoint), params)
+	return fetch(config.proto + "://" + config.host + "/" + config.version + "/" + requestPath(endpoint), params)
 		.then(verify_response)
 		.then(parse_response)
 		.then(status)
