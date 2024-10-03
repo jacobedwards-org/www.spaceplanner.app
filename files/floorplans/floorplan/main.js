@@ -1139,23 +1139,6 @@ function setLength(a, b, length) {
 	return b.sub(a).normalize().multiplyScalar(length).add(a)
 }
 
-// click
-function addWallHandler(click, editor) {
-	if (click.type !== "click") {
-		throw new Error("Expected click event")
-	}
-	if (click.shiftKey) {
-		return
-	}
-
-	editor.addPoint(editor.draw.point(click.clientX, click.clientY))
-	if (editor.draw.findOne("#points").children().length >= 2) {
-		editor.mapSelected("wall")
-	}
-	editor.finishAction()
-	handled(click)
-}
-
 function preventDefaultHandler(event) {
 	handled(event)
 }
