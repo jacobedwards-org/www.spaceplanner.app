@@ -112,12 +112,12 @@ function init() {
 
 	if (debug) {
 		toolbar.append(item(
-			selector(editor, editor.modes, function(mode) { editor.useMode(mode) },
+			selector(editor.modes, function(mode) { editor.useMode(mode) },
 				{ current: editor.mode, text: "Modes:" }
 			)
 		))
 		toolbar.append(item(
-			selector(editor, editor.units.systems, function(system) { editor.useUnits(system) },
+			selector(editor.units.systems, function(system) { editor.useUnits(system) },
 				{ current: editor.unitSystem, text: "Units:" }
 			)
 		))
@@ -194,7 +194,7 @@ function selectHandler(event, editor, state) {
 			}
 		}
 		c.appendChild(
-			selector(editor, { wall: true, door: true }, changeTypes, { text: "Type:" })
+			selector({ wall: true, door: true }, changeTypes, { text: "Type:" })
 		)
 	}
 
@@ -217,7 +217,7 @@ function selectHandler(event, editor, state) {
 	}
 }
 
-function selector(editor, things, select, options) {
+function selector(things, select, options) {
 	options = options ?? {}
 
 	let form = document.createElement("form")
