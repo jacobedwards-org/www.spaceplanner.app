@@ -193,8 +193,15 @@ function selectHandler(event, editor, state) {
 				editor.mapPoints(newvalue, maps[i].a, maps[i].b)
 			}
 		}
+		let current = maps[0].type
+		for (let i = 0; i < maps.length; ++i) {
+			if (current !== maps[i].type) {
+				current = null
+				break;
+			}
+		}
 		c.appendChild(
-			selector({ wall: true, door: true }, changeTypes, { text: "Type:" })
+			selector({ wall: true, door: true }, changeTypes, { current, text: "Type:" })
 		)
 	}
 
