@@ -16,10 +16,20 @@ const buttons = {
 	right: 2
 }
 
+const params = {
+	threshold: 650
+}
+
+const panBit = 1
+const zoomBit = 2
+
+let State = {
+	panZoom: 0,
+	pointOp: 'Create'
+}
+
 // turn off bubbling
 const escapeEvent = new Event("escape")
-
-let pointOp = 'Create'
 
 function init() {
 	etc.authorize()
@@ -108,8 +118,14 @@ function init() {
 			}
 		})
 	)
-	toolbar.append(undoRedo)
 
+	let addFurn = ui.button("Add Furniture", "Add furniture", "add", { handlers: {
+		// TODO: Create it at the last clicked point if on screen, else somewhere reasonable on screen
+		click: function() { furnitureMenu(editor, { x: 0, y: 0 }) }
+	}})
+
+	toolbar.append(item(addFurn))
+	toolbar.append(undoRedo)
 	toolbar.append(pushpull)
 
 	if (debug) {
@@ -155,7 +171,18 @@ function init() {
 			editor.updateGrid()
 		})
 
+	let preventWhenSel = function(e) {
+		if (editor.draw.findOne(".selected")) {
+			e.preventDefault()
+		}
+	}
+
 	editor.draw.on("touchmove", function(e){ e.preventDefault() });
+	editor.draw.on("pinchZoomStart", preventWhenSel)
+	editor.draw.on("pinchZoomStart", function() { State.panZoom |= zoomBit })
+	editor.draw.on("pinchZoomEnd", function() { State.panZoom &= ~zoomBit})
+	editor.draw.on("panStart", function() { State.panZoom |= panBit })
+	editor.draw.on("panEnd", function() { State.panZoom &= ~panBit })
 }
 
 function selectHandler(event, editor, state) {
@@ -196,10 +223,11 @@ function selectHandler(event, editor, state) {
 	}
 
 	if (groups.pnt && groups.pnt.length === cnt) {
-		const pmode = function(mode) { pointOp = mode }
-		pmode('Create')
+		const pmode = function(mode) { State.pointOp = mode }
+		// NOTE: Not sure if this is the behavior I want.
+		//pmode("Create")
 		c.appendChild(
-			selector({ Create: true, Move: true }, pmode, { current: pointOp })
+			selector({ Create: true, Move: true }, pmode, { current: State.pointOp })
 		)
 	}
 
@@ -289,25 +317,13 @@ let modes = {
 			contextmenu: preventDefaultHandler
 		}
 	},
-	Testing: {
-		points: true,
-		handlers: {
-			/*
-			 * To allow using right click for panZoom's panning
-			 * (not sure if contextmenu is always right click
-			 * though.
-			 */
-			contextmenu: preventDefaultHandler,
-			mousedown: selectionHandler
-		}
-	},
 	Precise: {
 		points: true,
 		handlers: {
 			contextmenu: preventDefaultHandler,
-			mousedown: [selectionHandler, precisePointHandler, precisePointMapHandler, furnitureHandler],
-			mousemove: [precisePointHandler, furnitureHandler],
-			mouseup: [precisePointHandler, precisePointMapHandler, furnitureHandler],
+			pointerdown: [selectionHandler, precisePointHandler, precisePointMapHandler, furnitureHandler],
+			pointermove: [precisePointHandler, furnitureHandler],
+			pointerup: [precisePointHandler, precisePointMapHandler, furnitureHandler],
 			keydown: [controlKeyHandler, zoomKeysHandler, undoRedoHandler],
 			dblclick: [precisePointMapHandler, furnitureHandler],
 			select: selectHandler
@@ -315,9 +331,9 @@ let modes = {
 	}
 }
 
-// mousedown
+// pointerdown
 function selectionHandler(event, editor) {
-	if (event.button != buttons.left) {
+	if (event.pointerType === "mouse" && event.button === buttons.right) {
 		return
 	}
 
@@ -448,7 +464,7 @@ function undoRedoHandler(event, editor) {
 	handled(event)
 }
 
-// mousedown, mousemove, mouseup, dblclick
+// pointerdown, pointermove, pointerup
 function precisePointHandler(event, editor, state) {
 	const init = function() {
 		state.menu = document.body.querySelector(".toolbar")
@@ -478,9 +494,7 @@ function precisePointHandler(event, editor, state) {
 			state.menu.remove()
 		}
 		for (let i in state) {
-			if (i !== "lastLastDown") {
-				delete state[i]
-			}
+			delete state[i]
 		}
 	}
 	const updatePoint = function(p, options) {
@@ -540,9 +554,8 @@ function precisePointHandler(event, editor, state) {
 			return Math.abs(a - b)
 		}
 		const updsnaps = function(snaps, k, from, test) {
-			let thres = 650
 			let d = ad(from[k], test[k])
-			if (d <= thres) {
+			if (d <= params.threshold) {
 				if (!snaps[k] || d < snaps[k].d) {
 					snaps[k] = { d, v: test[k] }
 				}
@@ -592,18 +605,17 @@ function precisePointHandler(event, editor, state) {
 		cleanup()
 	}
 
-	if (event.button !== buttons.left) {
+	if (event.type === "pointermove") {
+		if (!primaryMove(event)) {
+			return
+		}
+	} else if (!truelyPrimary(event)) {
 		return
 	}
 
 	let cursor = editor.draw.point(event.clientX, event.clientY).vec()
-	state.lastDown = state.lastLastDown
-	if (event.type === "mousedown") {
-		state.lastLastDown = Date.now()
-	}
-
 	if (state.to == undefined) {
-		if (event.type === "mousedown") {
+		if (event.type === "pointerdown") {
 			if (state.from != undefined) {
 				return
 			}
@@ -613,7 +625,7 @@ function precisePointHandler(event, editor, state) {
 				return
 			}
 
-			if  (state.lastDown != null && elapsed(state.lastDown) <= 500) {
+			if  (State.pointOp === 'Move') {
 				state.to = state.from
 				state.from = null
 
@@ -633,13 +645,13 @@ function precisePointHandler(event, editor, state) {
 			}
 
 			state.origin = state.from.vec()
-		} else if (event.type === "mouseup") {
+		} else if (event.type === "pointerup") {
 			if (state.from) {
 				cleanup()
 			} else {
 				return
 			}
-		} else if (event.type === "mousemove" && state.origin != undefined &&
+		} else if (event.type === "pointermove" && state.origin != undefined &&
 		    state.origin.distanceTo(cursor) > 200) {
 			state.to = editor.addPoint(cursor, true)
 			editor.mapPoints("wall", state.from, state.to)
@@ -659,14 +671,14 @@ function precisePointHandler(event, editor, state) {
 		throw new Error("Hmm")
 	}
 
-	if (event.type === "mousemove") {
+	if (event.type === "pointermove") {
 		// This is still far too expensive, it runs up my fans in seconds.
 		state.move = cursor
 		state.nosnap = event.shiftKey
 		if (state.moveTimeout == null) {
 			state.moveTimeout = setTimeout(doMove, 35)
 		}
-	} else if (event.type === "mouseup") {
+	} else if (event.type === "pointerup") {
 		if (state.from && state.from.inside(cursor.x, cursor.y)) {
 			revert()
 		} else {
@@ -686,7 +698,7 @@ function precisePointHandler(event, editor, state) {
 	handled(event)
 }
 
-// mousedown, mouseup, dblclick
+// pointerdown, pointerup, dblclick
 function precisePointMapHandler(event, editor, state) {
 	const cleanup = function() {
 		for (let i in state) {
@@ -699,7 +711,7 @@ function precisePointMapHandler(event, editor, state) {
 		return
 	}
 
-	if (state.door && event.type === "mouseup") {
+	if (state.door && event.type === "pointerup") {
 		handled(event)
 
 		let door = editor.findObj(state.doorID)
@@ -725,6 +737,7 @@ function precisePointMapHandler(event, editor, state) {
 	let id = lib.getID(map)
 	let data = editor.backend.obj(id)
 
+	// TODO: Stop using double click
 	// Explicitly check button in case UA isn't complient
 	if (event.type === "dblclick" && data.type === "wall" && event.button == buttons.left) {
 		handled(event)
@@ -741,11 +754,11 @@ function precisePointMapHandler(event, editor, state) {
 		return
 	}
 
-	if (data.type !== "door" || event.button !== buttons.left) {
+	if (data.type !== "door" || !truelyPrimary(event)) {
 		return
 	}
 
-	if (event.type === "mousedown") {
+	if (event.type === "pointerdown") {
 		handled(event)
 		state.door = data
 		state.doorID = id
@@ -756,7 +769,7 @@ function precisePointMapHandler(event, editor, state) {
 	}
 }
 
-// mousedown, mouseup, mousemove, dblclick
+// pointerdown, pointerup, pointermove
 function furnitureHandler(ev, editor, state) {
 	const doMove = function() {
 		// racy
@@ -764,60 +777,59 @@ function furnitureHandler(ev, editor, state) {
 			let id = state.moving.attr("id")
 			editor.mapFurniture({ x: state.move.x, y: state.move.y }, id)
 			delete state.move
+			state.moved = true
+		}
+	}
+	const cleanup = function() {
+		if (state.moved) {
+			editor.finishAction()
+		}
+		for (let k in state) {
+			delete state[k]
 		}
 	}
 
+	if (state.panZoom) {
+		cleanup()
+		return
+	}
+
+	let press = editor.draw.point(ev.clientX, ev.clientY).vec()
 	let sel = editor.draw.find("#furniture_layouts > * > .selected").array()
-	if (sel.length === 0 && ev.button === buttons.left) {
-		if (ev.type === "mousedown") {
-			handled(ev)
-			let p = editor.draw.point(ev.clientX, ev.clientY)
-			state.timeout = setTimeout(function() {
-				furnitureMenu(editor, p)
-			}, 350)
+	if (sel.length !== 1) {
+		return
+	}
+
+	if (ev.type === "pointerdown" && truelyPrimary(ev)) {
+		handled(ev)
+		state.moving = sel[0]
+		state.origin = press
+		return
+	}
+
+	if (!state.moving) {
+		return
+	}
+
+	if (ev.type === "pointermove" && primaryMove(ev)) {
+		if (press.distanceTo(state.origin) < params.threshold) {
 			return
-		} else if (ev.type === "mouseup" && state.timeout != undefined) {
-			handled(ev)
-			clearTimeout(state.timeout)
-			delete state.timeout
 		}
-	} else if (sel.length === 1) {
-		if (ev.button != buttons.left) {
-			return
-		}
-		if (ev.type === "dblclick") {
-			handled(ev)
-			furnitureMenu(editor, lib.getID(sel[0]))
-		} else if (ev.type === "mousedown") {
-			handled(ev)
-			state.moving = sel[0]
-			state.origin = editor.draw.point(ev.clientX, ev.clientY).vec()
-			return
+		handled(ev)
+		if (state.move) {
+			state.move = press
 		} else {
-			if (!state.moving) {
-				return
-			}
-			if (ev.type === "mouseup") {
-				handled(ev)
-				doMove()
-				delete state.moving
-				delete state.origin
-				editor.finishAction()
-				return
-			} else if (ev.type === "mousemove") {
-				let p = editor.draw.point(ev.clientX, ev.clientY).vec()
-				if (p.distanceTo(state.origin) < 100) {
-					return
-				}
-				handled(ev)
-				if (state.move) {
-					state.move = p
-				} else {
-					state.move = p
-					setTimeout(doMove, 60)
-				}
-			}
+			state.move = press
+			setTimeout(doMove, 60)
 		}
+		return
+	}
+
+	if (ev.type === "pointerup" && truelyPrimary(ev)) {
+		handled(ev)
+		doMove()
+		cleanup()
+		return
 	}
 }
 
@@ -1184,6 +1196,20 @@ function escape() {
 		console.debug("Escape", e)
 		e.dispatchEvent(escapeEvent)
 	})
+}
+
+function truelyPrimary(ev) {
+	if (ev.pointerType === "mouse") {
+		return ev.button === buttons.left
+	}
+	return ev.isPrimary
+}
+
+function primaryMove(ev) {
+	if (ev.pointerType === "mouse") {
+		return true
+	}
+	return ev.isPrimary
 }
 
 window.onload = init
