@@ -154,6 +154,8 @@ function init() {
 			editor.draw.viewbox(bbox)
 			editor.updateGrid()
 		})
+
+	editor.draw.on("touchmove", function(e){ e.preventDefault() });
 }
 
 function selectHandler(event, editor, state) {
