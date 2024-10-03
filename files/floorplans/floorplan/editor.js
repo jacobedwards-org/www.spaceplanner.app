@@ -619,13 +619,7 @@ export class FloorplanEditor {
 					}
 					for (let oth in editor.backend.mappedPoints[id]) {
 						let map = editor.backend.mappedPoints[id][oth]
-						oth = editor.backend.obj(oth)
-						map = editor.draw.findOneMax(byId(map))
-						if (map) {
-							// It's probably being added later, that said, this isn't a good solution
-							// because it doesn't allow for checking for errors.
-							map.plot(oth.x, oth.y, value.x, value.y)
-						}
+						ops.add.pointmaps(map, editor.backend.obj(map))
 					}
 				},
 				pointmaps: function(id, value) {
