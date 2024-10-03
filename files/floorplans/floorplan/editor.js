@@ -37,7 +37,7 @@ SVG.extend(SVG.Svg, {
 	select: function(list) {
 		console.debug("Svg.select", list)
 
-		if (list.sameElements(this.find(".selected"))) {
+		if (list && list.sameElements(this.find(".selected"))) {
 			console.log("SVG.select", "Not reselecting")
 			return list
 		}
