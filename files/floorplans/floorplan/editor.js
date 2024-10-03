@@ -37,6 +37,11 @@ SVG.extend(SVG.Svg, {
 	select: function(list) {
 		console.debug("Svg.select", list)
 
+		if (list.sameElements(this.find(".selected"))) {
+			console.log("SVG.select", "Not reselecting")
+			return list
+		}
+
 		this.unselect()
 
 		if (list) {
@@ -70,7 +75,29 @@ SVG.extend(SVG.List, {
 			a.push(item)
 		})
 		return a
+	},
+
+	sameElements: function(list2) {
+		const cmp = function(a, b) {
+			return a.attr("id") < b.attr("id")
+		}
+
+		let a = this.array()
+		let b = list2.array()
+		if (a.length != b.length) {
+			return false
+		}
+
+		a = a.sort(cmp)
+		b = b.sort(cmp)
+		for (let i = 0; i < a.length; ++i) {
+			if (a[i].attr("id") !== b[i].attr("id")) {
+				return false
+			}
+		}
+		return true
 	}
+
 })
 
 SVG.extend(SVG.Element, {
