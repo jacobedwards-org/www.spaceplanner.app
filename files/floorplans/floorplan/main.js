@@ -19,6 +19,8 @@ const buttons = {
 // turn off bubbling
 const escapeEvent = new Event("escape")
 
+let pointOp = 'Create'
+
 function init() {
 	etc.authorize()
 	etc.bar()
@@ -180,10 +182,29 @@ function selectHandler(event, editor, state) {
 		ids[i] = lib.getID(a[i])
 	}
 
+	let groups = {}
+	let cnt = 0
+	for (let i = 0; i < ids.length; ++i) {
+		let t = backend.idType(ids[i])
+		if (groups[t] === undefined) {
+			groups[t] = []
+		}
+		groups[t].push(ids[i])
+		++cnt
+	}
+
+	if (groups.pnt && groups.pnt.length === cnt) {
+		const pmode = function(mode) { pointOp = mode }
+		pmode('Create')
+		c.appendChild(
+			selector({ Create: true, Move: true }, pmode, { current: pointOp })
+		)
+	}
+
 	let maps = []
-	for (let i in ids) {
-		if (backend.idType(ids[i]) === "pntmap") {
-			maps.push(editor.backend.cache.pointmaps[ids[i]])
+	if (groups.pntmap !== undefined) {
+		for (let i = 0; i < groups.pntmap.length; ++i) {
+			maps.push(editor.backend.cache.pointmaps[groups.pntmap[i]])
 		}
 	}
 
