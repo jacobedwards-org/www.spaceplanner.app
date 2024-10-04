@@ -117,17 +117,10 @@ input:not([type]), input[type="password"], input[type="email"] {
 
 button, input[type="submit"] {
 	font-size: large;
-	background-color: #EEE;
-	border: .15em outset #BBB;
-	border-radius: .2em;
 }
 
 button.big, input[type="submit"].big {
 	padding: .25em;
-}
-
-button:active, input[type="submit"]:active {
-	border-style: inset;
 }
 
 form.credentials {

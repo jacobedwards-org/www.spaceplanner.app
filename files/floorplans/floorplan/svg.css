@@ -12,11 +12,6 @@ line.selected {
 	stroke: blue;
 }
 
-line.door {
-	stroke-width: 140;
-	stroke-dasharray: 400 100;
-}
-
 .preview.wall {
 	stroke: grey;
 }
