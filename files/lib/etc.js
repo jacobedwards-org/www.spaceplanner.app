@@ -82,13 +82,15 @@ export function error(message, on) {
         if (err_elem) {
                 err_elem.textContent = message
         } else {
-                let err_elem = document.createElement("div")
+                let err_elem = document.createElement("form")
+		err_elem.addEventListener("submit", function(e) { e.preventDefault() })
                 err_elem.setAttribute("class", "error")
 
 		let msg = document.createElement("p")
 		msg.appendChild(document.createTextNode(message))
 		err_elem.append(msg)
-		err_elem.append(ui.button("Dismiss", "Dismiss error", "close", { handlers: { click: { function() { err_elem.remove() } } } }))
+		let b = err_elem.appendChild(ui.button("Dismiss", "Dismiss error", "close"))
+		b.addEventListener("click", function(ev) { err_elem.remove(); ev.preventDefault() })
 
                 on.prepend(err_elem)
         }
