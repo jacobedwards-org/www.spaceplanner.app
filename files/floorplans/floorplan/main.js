@@ -38,13 +38,20 @@ function init() {
 	// Just to get stuff out of the way for now
 	let debug = (new URLSearchParams(new URL(document.URL).search)).get("debug") != undefined
 
-	let floorplan = (new URLSearchParams(new URL(document.URL).search)).get("name")
+	let floorplan = (new URLSearchParams(new URL(document.URL).search)).get("id")
 	if (!floorplan) {
 		document.location.href = "/floorplans"
 	}
+
 	let h1 = document.querySelector("h1")
-	h1.textContent = floorplan
 	let suffix = h1.appendChild(document.createTextNode(""))
+	api.fetch("GET", `floorplans/:user/${floorplan}`)
+		.then(function(metadata) {
+			h1.textContent = metadata.name
+		})
+		.catch(function(err) {
+			document.location.href = "/floorplans"
+		})
 
 	let draw = SVG()
 		.addTo("#editor")

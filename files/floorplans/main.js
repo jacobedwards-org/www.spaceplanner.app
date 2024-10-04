@@ -84,7 +84,7 @@ function commit_editable_floorplan_func(element, data) {
 			return
 		}
 
-		return api.fetch("PUT", `floorplans/:user/${etc.url_literal(data.name)}`, newdata)
+		return api.fetch("PUT", `floorplans/:user/${data.id}`, newdata)
 			.then(function(rdata) {
 				for (let i in rdata) {
 					data[i] = rdata[i]
@@ -175,7 +175,7 @@ function floorplan_info_name(classname) {
 
 function delete_floorplan_func(item, floorplan) {
 	return function() {
-		api.fetch("DELETE", `floorplans/:user/${etc.url_literal(floorplan.name)}`)
+		api.fetch("DELETE", `floorplans/:user/${floorplan.id}`)
 			.then(function() {
 				item.parentElement.remove()
 			})
@@ -219,7 +219,7 @@ function create_floorplan(floorplan) {
 		if (!floorplan.name) {
 			throw new Error("Expected floorplan name")
 		}
-		header.append(create_field.name(floorplan.name))
+		header.append(create_field.name(floorplan.name, floorplan.id))
 		if (floorplan.synopsis) {
 			header.append(create_field.synopsis(floorplan.synopsis))
 		}
@@ -239,11 +239,11 @@ function create_floorplan(floorplan) {
 }
 
 var create_field = {
-	name: function(text) {
+	name: function(text, id) {
 		let heading = document.createElement("h2")
 		heading.setAttribute("class", floorplan_info_class("name"))
 		let link = document.createElement("a")
-		link.href = `./floorplan/?name=${etc.url_literal(text)}`
+		link.href = `./floorplan/?id=${id}`
 		link.appendChild(document.createTextNode(text))
 		heading.append(link)
 		return heading
