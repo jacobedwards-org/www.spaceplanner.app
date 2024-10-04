@@ -62,26 +62,29 @@ function commit_editable_floorplan_func(element, data) {
 	return function () {
 		let patches = []
 		let fields = Array.from(element.querySelectorAll("header > input"))
+		let updated = false
+		let newdata = {}
 		for (let i in fields) {
 			let name = floorplan_info_name(fields[i].getAttribute("class"))
 			let value = fields[i].value
+			if (value.length === 0) {
+				value = null
+			}
+
 			console.debug(fields[i], name, value)
-			if (value === data[name]) {
-				continue;
-			} else if (value) {
-				patches.push({ op: "add", path: name, value: value })
-			} else if (!value) {
-				patches.push({ op: "remove", path: name })
+			newdata[name] = value;
+			if (newdata[name] !== data[name]) {
+				updated = true
 			}
 		}
 
-		if (patches.length == 0) {
-			console.debug("No changes, skipping PATCH")
+		if (!updated) {
+			console.debug("No changes, skipping")
 			update_display()
 			return
 		}
 
-		return api.fetch("PATCH", `floorplans/:user/${etc.url_literal(data.name)}`, patches)
+		return api.fetch("PUT", `floorplans/:user/${etc.url_literal(data.name)}`, newdata)
 			.then(function(rdata) {
 				for (let i in rdata) {
 					data[i] = rdata[i]
