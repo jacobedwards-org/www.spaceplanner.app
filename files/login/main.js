@@ -22,6 +22,9 @@ function init() {
 			.then(function() {
 				window.location.href = default_page
 			})
+			.catch(function(err) {
+				etc.error(err, login)
+			})
 	})
 }
 
