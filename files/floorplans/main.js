@@ -24,7 +24,7 @@ function init() {
 	}
 	display_button.replaceWith(toggle)
 
-	api.fetch("GET", "floorplans/" + etc.url_literal(localStorage.getItem("username")))
+	api.fetch("GET", "floorplans/:user")
 		.then(show_floorplans)
 }
 
@@ -81,7 +81,7 @@ function commit_editable_floorplan_func(element, data) {
 			return
 		}
 
-		return api.fetch("PATCH", "floorplans/" + etc.url_literal(localStorage.getItem("username")) + "/" + etc.url_literal(data.name), patches)
+		return api.fetch("PATCH", `floorplans/:user/${etc.url_literal(data.name)}`, patches)
 			.then(function(rdata) {
 				for (let i in rdata) {
 					data[i] = rdata[i]
@@ -108,7 +108,7 @@ function editable_floorplan_create_func(element) {
 			}
 		}
 
-		return api.fetch("POST", "floorplans/" + etc.url_literal(localStorage.getItem("username")), data)
+		return api.fetch("POST", "floorplans/:user", data)
 			.then(function(rdata) {
 				for (let i in rdata) {
 					data[i] = rdata[i]
@@ -172,7 +172,7 @@ function floorplan_info_name(classname) {
 
 function delete_floorplan_func(item, floorplan) {
 	return function() {
-		api.fetch("DELETE", "floorplans/" + etc.url_literal(floorplan.user) + "/" + etc.url_literal(floorplan.name))
+		api.fetch("DELETE", `floorplans/:user/${etc.url_literal(floorplan.name)}`)
 			.then(function() {
 				item.parentElement.remove()
 			})
@@ -240,7 +240,7 @@ var create_field = {
 		let heading = document.createElement("h2")
 		heading.setAttribute("class", floorplan_info_class("name"))
 		let link = document.createElement("a")
-		link.href = "./floorplan/?name=" + etc.url_literal(text)
+		link.href = `./floorplan/?name=${etc.url_literal(text)}`
 		link.appendChild(document.createTextNode(text))
 		heading.append(link)
 		return heading
