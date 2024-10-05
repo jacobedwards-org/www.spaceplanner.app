@@ -652,25 +652,28 @@ export class FloorplanEditor {
 					} else {
 						a = new Vector2(a.x, a.y)
 						b = new Vector2(b.x, b.y)
-						let len = a.distanceTo(b)
-						let f, t
-						if (value.door_swing.at(0) === "a") {
-							f = a
-							t = b
-						} else {
-							f = b
-							t = a
+						if (value.door_swing.at(0) === "b") {
+							let t = a
+							a = b
+							b = t
+						}
+						const rad = function(deg) {
+							return deg * Math.PI / 180
 						}
 
-						let n = 90
-						let deg = value.door_swing.at(1) === "+" ? n : -n
-						let e = t.clone().rotateAround(f, deg * Math.PI / 180)
+						let deg = 90
+						if (value.door_swing.at(1) === "-") {
+							deg = -deg
+						}
+						let e = b.clone().rotateAround(a, rad(deg))
+						let r = a.distanceTo(b)
+						let d = `M ${b.x} ${b.y} A ${r} ${r} ${deg} 0 ${deg < 0 ? 0 : 1} ${e.x} ${e.y} L ${a.x} ${a.y} Z`
+
 						let swing = editor.draw.findOne(byId(sid))
-						let d = `M ${f.x} ${f.y} L ${e.x} ${e.y} L ${t.x} ${t.y} Z`
 						if (swing != null) {
 							swing.plot(d)
 						} else {
-							editor.doorSwings.path(d)
+							swing = editor.doorSwings.path(d)
 								.fill("rgba(0,0,0,.05)").stroke({ width: 100, color: "#AAA", dasharray: "400 100" })
 								.attr({ id: sid })
 						}
