@@ -1,6 +1,6 @@
 import { default as SVG } from "/lib/github.com/svgdotjs/svg.js/svg.js"
 import * as backend from "./backend.js"
-import { Vector2 } from "/lib/github.com/ros2jsguy/threejs-math/math/Vector2.js"
+import { Vector2 } from "/lib/github.com/mrdoob/three.js/math/Vector2.js"
 
 const selectEvent = new Event("select")
 const unselectEvent = new Event("unselect")

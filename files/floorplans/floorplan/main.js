@@ -3,7 +3,7 @@ import "/lib/github.com/svgdotjs/svg.panzoom.js/svg.panzoom.js"
 import * as ui from "/lib/ui.js"
 import * as etc from "/lib/etc.js"
 import * as lib from "./editor.js"	// Confusing, but I don't want to fix variable conflict
-import { Vector2 } from "/lib/github.com/ros2jsguy/threejs-math/math/Vector2.js"
+import { Vector2 } from "/lib/github.com/mrdoob/three.js/math/Vector2.js"
 import "./geometry.js"
 import * as backend from "./backend.js"
 import * as api from "/lib/api.js"

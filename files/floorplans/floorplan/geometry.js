@@ -1,5 +1,5 @@
 import { default as SVG } from "/lib/github.com/svgdotjs/svg.js/svg.js"
-import { Vector2 } from "/lib/github.com/ros2jsguy/threejs-math/math/Vector2.js"
+import { Vector2 } from "/lib/github.com/mrdoob/three.js/math/Vector2.js"
 
 SVG.extend(SVG.Point, {
 	vec: function() {
