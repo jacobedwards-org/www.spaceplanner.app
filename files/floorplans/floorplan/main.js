@@ -777,7 +777,7 @@ function precisePointMapHandler(event, editor, state) {
 		state.door = data
 		state.doorID = id
 		state.doorSwingFrom = cursor.clone()
-		state.hinge = Math.round(editor.findObj(id).closestLinearInterpolation(cursor)) ? "b" : "a"
+		state.hinge = Math.round(editor.findObj(id).closestLinearInterpolation(cursor)) ? "a" : "b"
 	} else {
 		console.log("Hmm", event)
 	}
