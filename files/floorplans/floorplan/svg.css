@@ -16,6 +16,12 @@ line.selected {
 	stroke: grey;
 }
 
+ 
+line.door {
+	stroke-width: 140;
+	stroke-dasharray: 400 100;
+}
+
 .point {
 	fill: lightgrey;
 }
