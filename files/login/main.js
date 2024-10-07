@@ -9,7 +9,7 @@ function init() {
 		window.location.href = default_page
 	}
 
-	let login = document.getElementById("login")
+	let login = document.body.appendChild(ui.login())
 	let username = document.getElementById("username")
 	let password = document.getElementById("password")
 	if (!login || !username || !password) {
