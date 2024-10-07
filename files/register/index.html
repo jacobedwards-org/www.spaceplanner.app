@@ -4,13 +4,11 @@
 		<meta name="viewport" content="width=device-width">
 		<title>Spaceplanner Signup</title>
 		<link rel="stylesheet" type="text/css" href="/css/main.css">
+		<link rel="stylesheet" type="text/css" href="/css/creds.css">
 		<link rel="stylesheet" type="text/css" href="./main.css">
 		<script type="module" src="./main.js"></script>
 	</head>
 	<body>
-		<div class="background" id="background-image"></div>
-		<div class="background" id="background-cover"></div>
-
 		<form id="register" class="credentials">
 			<h1>Signup</h1>
 
@@ -24,7 +22,6 @@
 			<input type="email" id="email" autocomplete="email" name="email" title="Email address for account communications" required/>
 
 			<aside id="opt_out">
-
 				<p>An email is required to alert you to
 				certain conditions about your account.  If
 				you don't want to receive emails about new
@@ -39,6 +36,13 @@
 
 			<label for="password">Password:</label>
 			<input type="password" id="password" autocomplete="new-password" name="password" title="Password for account" required/>
+
+                        <p><small><input type="checkbox"
+                        required></input>By checking this box
+                        you agree that you have read and accept the
+                        <a href="/legal/terms">terms</a> and <a
+                        href="/legal/privacy-policy">privacy
+                        policy</a>.</small></p>
 
 			<input type="submit" value="Signup"/>
 		</form>

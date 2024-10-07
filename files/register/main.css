@@ -1,33 +1,3 @@
-.background {
-	position: absolute;
-	top: 0;
-	left: 0;
-	width: 100vw;
-	height: 100vh;
-}
-
-#background-image {
-	background: url("/images/exhibit-a.svg");
-	background-size: cover;
-	filter: blur(1px);
-	z-index: 1;
-}
-
-#background-cover {
-	background-color: rgba(0,0,0,.2);
-	z-index: 2;
-}
-
-#register {
-	position: relative;
-	margin: 2em;
-	z-index: 100;
-}
-
-.credentials {
-	background-color: white;
-}
-
 #opt-out {
 	margin-bottom: 2em; 
 	margin-left: 1em;

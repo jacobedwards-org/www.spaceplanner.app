@@ -1,5 +1,6 @@
 import * as api from "/lib/api.js"
 import * as etc from "/lib/etc.js"
+import * as ui from "/lib/ui.js"
 
 function init() {
 	if (api.authorized()) {
@@ -9,8 +10,13 @@ function init() {
 
 	let email_input = document.getElementById("email")
 	let email_strict_input = document.getElementById("email-strict")
-	let username_input = document.getElementById("username")
-	let password_input = document.getElementById("password")
+
+	let username_input = ui.usernameInput()
+	document.getElementById("username").replaceWith(username_input)
+
+	let password_input = ui.passwordInput({ new: true })
+	document.getElementById("password").replaceWith(password_input)
+
 	if (!email_input || !email_strict_input || !username_input || !password_input) {
 		throw new Error("Unable to select email, username and password fields")
 	}
@@ -22,7 +28,7 @@ function init() {
 	form.addEventListener("submit", function(event) {
 		event.preventDefault()
 		api.register(username_input.value, password_input.value, email_input.value,
-		    { email_policy: email_strict_input.value })
+		    { email_policy: email_strict_input.checked })
 			.then(function() {
 				api.login(username_input.value, password_input.value)
 					.then(function() {
