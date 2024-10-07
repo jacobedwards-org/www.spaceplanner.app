@@ -79,21 +79,22 @@ export function login(callback) {
 	let form = document.createElement("form")
 	form.classList.add("credentials")
 
+	let aside = form.appendChild(document.createElement("aside"))
+	aside.append(document.createTextNode("Don't have an account? "))
+	let a = aside.appendChild(document.createElement("a"))
+	a.href = "/register"
+	a.append(document.createTextNode("Signup"))
+	aside.append(document.createTextNode(" now!"))
+
 	let label = form.appendChild(document.createElement("label"))
 	label.appendChild(document.createTextNode("Username:"))
 	label.setAttribute("for", "username")
-	let username = form.appendChild(document.createElement("input"))
-	username.id = "username"
-	username.setAttribute("autocomplete", "username")
-	username.setAttribute("name", "username")
+	form.appendChild(usernameInput())
 
 	label = form.appendChild(document.createElement("label"))
 	label.appendChild(document.createTextNode("Password:"))
 	label.setAttribute("for", "password")
-	let password = form.appendChild(document.createElement("input"))
-	password.setAttribute("autocomplete", "current-password")
-	password.setAttribute("type", "password")
-	password.setAttribute("name", "password")
+	form.appendChild(passwordInput())
 
 	let button = form.appendChild(document.createElement("input"))
 	button.setAttribute("type", "submit")
@@ -112,6 +113,56 @@ export function login(callback) {
 	})
 
 	return form
+}
+
+export function usernameInput() {
+	let username = document.createElement("input")
+	username.id = "username"
+	username.setAttribute("autocomplete", "username")
+	username.setAttribute("name", "username")
+	username.setAttribute("minlength", 3)
+	username.setAttribute("maxlength", 32)
+	username.setAttribute("pattern", "^[^@]*$")
+	username.addEventListener("change", function(ev) {
+		let v = ev.target.validity
+		if (v.tooShort || v.tooLong) {
+			ev.target.setCustomValidity("Usernames must be between 3-32 characters long.")
+		} else if (v.patternMismatch) {
+			ev.target.setCustomValidity("Usernames cannot contain the @ sign")
+		} else {
+			ev.target.setCustomValidity("")
+			return
+		}
+
+		ev.target.reportValidity()
+	})
+
+	return username
+}
+
+export function passwordInput(options) {
+	options = options ?? {}
+	let password = document.createElement("input")
+
+	password.id = "password"
+	password.setAttribute("autocomplete", options.new ? "new-password" : "current-password")
+	password.setAttribute("type", "password")
+	password.setAttribute("name", "password")
+	password.setAttribute("minlength", 8)
+	password.setAttribute("maxlength", 72)
+	password.addEventListener("change", function(ev) {
+		let v = ev.target.validity
+		if (v.tooShort || v.tooLong) {
+			ev.target.setCustomValidity("Passwords must be between 8-72 characters long.")
+		} else {
+			ev.target.setCustomValidity("")
+			return
+		}
+
+		ev.target.reportValidity()
+	})
+
+	return password
 }
 
 export function prettyName(name, options) {
