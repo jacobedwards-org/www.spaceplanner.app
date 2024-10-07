@@ -9,23 +9,8 @@ function init() {
 		window.location.href = default_page
 	}
 
-	let login = document.body.appendChild(ui.login())
-	let username = document.getElementById("username")
-	let password = document.getElementById("password")
-	if (!login || !username || !password) {
-		throw new Error("Expected login form, username, password fields")
-	}
+	let login = document.body.appendChild(ui.login(function() { window.location.href = default_page }))
 
-	login.addEventListener("submit", function(event) {
-		event.preventDefault()
-		api.login(username.value, password.value)
-			.then(function() {
-				window.location.href = default_page
-			})
-			.catch(function(err) {
-				etc.error(err, login)
-			})
-	})
 }
 
 window.onload = etc.handle_wrap(init)

@@ -79,6 +79,9 @@ export function login(callback) {
 	let form = document.createElement("form")
 	form.classList.add("credentials")
 
+	let h = form.appendChild(document.createElement("h1"))
+	h.append(document.createTextNode("Login"))
+
 	let aside = form.appendChild(document.createElement("aside"))
 	aside.append(document.createTextNode("Don't have an account? "))
 	let a = aside.appendChild(document.createElement("a"))
