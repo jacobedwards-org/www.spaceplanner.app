@@ -345,22 +345,28 @@ function selectionHandler(event, editor) {
 	}
 
 	let p = editor.draw.point(event.clientX, event.clientY)
-
-	let x = editor.thingAt(p, "#" + editor.layoutG())
-	if (x) {
-		x.select()
-		return
+	let order = [ "#" + editor.layoutG(), "#points", "#pointmaps" ]
+	for (let i = 0; i < order.length; ++i) {
+		let x = editor.thingAt(p, order[i])
+		if (x) {
+			x.select()
+			return
+		}
 	}
 
-	x = editor.thingAt(p, "#points")
-	if (x) {
-		x.select()
-		return
+	let close = editor.thingsAt(p, order.join(","), { method: "touching", minsize: 3500 })
+	let dist
+	let closest
+	for (let i = 0; i < close.length; ++i) {
+		let tmp = close[i].distanceTo(p.x, p.y)
+		if (dist == null || tmp < dist) {
+			dist = tmp
+			closest = close[i]
+		}
 	}
 
-	x = editor.thingAt(p, "#pointmaps")
-	if (x) {
-		x.select()
+	if (closest != null) {
+		closest.select()
 		return
 	}
 

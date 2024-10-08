@@ -16,6 +16,24 @@ SVG.extend(SVG.Circle, {
 SVG.extend(SVG.Shape, {
 	vec: function() {
 		return new Vector2(this.x(), this.y())
+	},
+
+	distanceTo: function(x, y) {
+		return this.bbox().distanceTo(x, y)
+	},
+
+	touching: function(x, y, minsize) {
+		let b = this.bbox()
+		if (b.width < minsize) {
+			b.x -= (minsize - b.width) / 2
+			b.width = minsize
+		}
+		if (b.height < minsize) {
+			b.y -= (minsize - b.height) / 2
+			b.height = minsize
+		}
+		return x >= b.x && x <= b.x + b.width &&
+			y >= b.y && y <= b.y + b.height
 	}
 })
 
@@ -81,9 +99,11 @@ SVG.extend(SVG.Line, {
 		}
 	},
 
-	whereIsPoint: function(x, y) {
+	whereIsPoint: function(x, y, width) {
 		let p = new Vector2(x, y)
-		let width = this.attr("stroke-width") ?? 1
+		if (width == null) {
+			width = this.attr("stroke-width") ?? 1
+		}
 		let closest = this.closestPoint(p)
 
 		/*
@@ -102,6 +122,51 @@ SVG.extend(SVG.Line, {
 
 	// This must use x and y to be compatible with Shape's inside()
 	inside: function(x, y) {
-		return this.whereIsPoint(x, y) != null ? true : false
+		return this.whereIsPoint(x, y) != null
+	},
+
+	touching: function(x, y, width) {
+		return this.whereIsPoint(x, y, width) != null
+	},
+
+	closestEdge: function(x, y) {
+		let p = new Vector2(x, y)
+		let w = this.attr("stroke-width") ?? 1
+		let c = this.closestPoint(p)
+
+		let b = new SVG.Box(c.x - w / 2, c.y - w / 2, w, w)
+		return b.closestEdge(p.x, p.y)
+	},
+
+	distanceTo: function(x, y) {
+		return this.closestEdge(x, y).distanceTo(new Vector2(x, y))
+	}
+})
+
+SVG.extend(SVG.Box, {
+	closestEdge: function(x, y) {
+		let ex
+		if (x < this.x) {
+			ex = this.x
+		} else if (x > this.x + this.width) {
+			ex = this.x + this.width
+		} else {
+			ex = x
+		}
+		let ey
+		if (y < this.y) {
+			ey = this.y
+		} else if (y > this.y + this.height) {
+			ey = this.y + this.height
+		} else {
+			ey = y
+		}
+
+		let ev = new Vector2(ex, ey)
+		return ev
+	},
+
+	distanceTo: function(x, y) {
+		return this.closestEdge(x, y).distanceTo(new Vector2(x, y))
 	}
 })

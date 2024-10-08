@@ -121,6 +121,21 @@ SVG.extend(SVG.Element, {
 			throw new Error("Didn't find " + selector)
 		}
 		return r
+	},
+
+	touching: function(x, y, minsize) {
+		let b = this.bbox()
+		let d = minsize - b.width 
+		if (d > 0) {
+			b.x -= d / 2
+			b.width = minsize
+		}
+		d = minsize - b.height
+		if (d > 0) {
+			b.y -= d / 2
+			b.height = minsize
+		}
+		return (x >= b.x && x <= b.x + b.width && y >= b.y && y <= b.y + b.height)
 	}
 })
 
@@ -534,23 +549,30 @@ export class FloorplanEditor {
 		return this.thingAt(point, "#points")
 	}
 
-	thingAt(point, selector) {
-		return this.thingsAt(point, selector, 1)[0]
+	thingAt(point, selector, options) {
+		options = options ?? {}
+		options.max = 1
+		return this.thingsAt(point, selector, options)[0]
 	}
 
-	thingsAt(point, selector, max) {
+	thingsAt(point, selector, options) {
+		options = options ?? {}
+
 		let children = this.draw.find(selector ?? "*")
 			.children()
 			.toArray()
 
+		let done = {}
 		let inside = []
-		for (let i in children) {
-			if (children[i].inside(point.x, point.y)) {
-				if (inside.push(children[i]) >= max) {
+		for (let i = 0; i < children.length; ++i) {
+			if (children[i][options.method ?? "inside"](point.x, point.y, options.minsize)) {
+				if (inside.push(children[i]) >= options.max) {
 					return inside
 				}
+				children[i] = null
 			}
 		}
+
 		return inside
 	}
 
