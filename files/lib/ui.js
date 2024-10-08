@@ -126,6 +126,9 @@ export function usernameInput() {
 	username.setAttribute("minlength", 3)
 	username.setAttribute("maxlength", 32)
 	username.setAttribute("pattern", "^[^@]*$")
+	username.setAttribute("autocapitalize", "none")
+	username.setAttribute("spellcheck", "false")
+	username.setAttribute("autocorrect", "off")
 	username.addEventListener("change", function(ev) {
 		let v = ev.target.validity
 		if (v.tooShort || v.tooLong) {
