@@ -162,6 +162,7 @@ function init() {
 		))
 	}
 
+	editor.useGrid()
 	editor.draw.show()
 	editor.backend.pull()
 		.then(function() {
@@ -189,6 +190,7 @@ function init() {
 				adj(min, bbox, "y", "height")
 			}
 			editor.draw.viewbox(bbox)
+			editor.useGrid("imperial")
 			editor.updateGrid()
 		})
 

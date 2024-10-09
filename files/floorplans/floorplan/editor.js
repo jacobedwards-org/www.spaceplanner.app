@@ -325,6 +325,7 @@ export class FloorplanEditor {
 		}
 
 		this.draw.rect().attr({ id: "grid" })
+		this.useGrid()
 
 		this.ui = {}
 		this.ui.bottom = this.draw.group().attr({ id: "bottom" })
@@ -488,7 +489,8 @@ export class FloorplanEditor {
 		let diff = val - box[swap[base]]
 		box[map[swap[base]]] -= diff / 2
 		box[swap[base]] = val
-		grid.size(box.width, box.height).move(box.x, box.y)
+		const margin = 10000
+		grid.size(box.width + margin, box.height + margin).move(box.x - margin / 2, box.y - margin / 2)
 	}
 
 	// Should be called after each user "action"
