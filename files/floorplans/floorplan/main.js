@@ -760,6 +760,7 @@ function precisePointMapHandler(event, editor, state) {
 
 		let s = (o > 0 ? "+" : "-")
 		editor.backend.mapPoints(state.door.type, state.door.a, state.door.b, { door_swing: state.hinge + s })
+		editor.finishAction()
 		cleanup()
 		return
 	}
