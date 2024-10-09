@@ -65,12 +65,21 @@ export function authorize() {
 
 function keep_authorized() {
 	return setInterval(function() {
-		let left = api.authorized_duration() / 60
-		if (left < 10) {
+		let left = Math.floor(api.authorized_duration() / 60)
+		if (left < 0) {
+			if (!document.getElementById("login")) {
+				let params = {
+					user: localStorage.getItem("username"),
+					forceUser: true
+				}
+				let login = document.body.appendChild(ui.login(params))
+				login.id = "login"
+			}
+		} else if (left < 30) {
 			console.log("keep_authorized", "refreshing", left, "minutes left")
 			api.refresh_token()
 		}
-	}, 1000 * 30)
+	}, 1000)
 }
 
 export function error(message, on) {

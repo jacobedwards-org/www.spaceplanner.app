@@ -126,3 +126,11 @@ input.invalid {
 #selOps > form {
 	display: inline-block;
 }
+
+#login {
+	border: thin solid lightgrey;
+        background-color: white;
+	position: absolute;
+	top: 2em;
+	left: 2em;
+}

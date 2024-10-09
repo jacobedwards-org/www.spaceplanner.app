@@ -9,8 +9,7 @@ function init() {
 		window.location.href = default_page
 	}
 
-	let login = document.body.appendChild(ui.login(function() { window.location.href = default_page }))
-
+	document.body.appendChild(ui.login(function() { window.location.href = default_page }))
 }
 
 window.onload = etc.handle_wrap(init)

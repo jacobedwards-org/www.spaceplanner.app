@@ -80,24 +80,34 @@ function toggle_setup_button(a, b) {
 	}, false)
 }
 
-export function login(callback) {
+export function login(options) {
+	options = options ?? {}
+
 	let form = document.createElement("form")
 	form.classList.add("credentials")
 
 	let h = form.appendChild(document.createElement("h1"))
 	h.append(document.createTextNode("Login"))
 
-	let aside = form.appendChild(document.createElement("aside"))
-	aside.append(document.createTextNode("Don't have an account? "))
-	let a = aside.appendChild(document.createElement("a"))
-	a.href = "/register"
-	a.append(document.createTextNode("Signup"))
-	aside.append(document.createTextNode(" now!"))
+	if (!options.user) {
+		let aside = form.appendChild(document.createElement("aside"))
+		aside.append(document.createTextNode("Don't have an account? "))
+		let a = aside.appendChild(document.createElement("a"))
+		a.href = "/register"
+		a.append(document.createTextNode("Signup"))
+		aside.append(document.createTextNode(" now!"))
+	}
 
 	let label = form.appendChild(document.createElement("label"))
 	label.appendChild(document.createTextNode("Username:"))
 	label.setAttribute("for", "username")
-	form.appendChild(usernameInput())
+	let u = form.appendChild(usernameInput())
+	if (options.user) {
+		u.value = options.user
+		if (options.forceUser) {
+			u.setAttribute("disabled", true)
+		}
+	}
 
 	label = form.appendChild(document.createElement("label"))
 	label.appendChild(document.createTextNode("Password:"))
@@ -113,7 +123,9 @@ export function login(callback) {
 		api.login(username.value, password.value)
 			.then(function() {
 				form.remove()
-				callback()
+				if (options.callback != null) {
+					options.callback()
+				}
 			})
 			.catch(function(err) {
 				etc.error(err + ": Unable to login", form)
