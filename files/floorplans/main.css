@@ -1,3 +1,7 @@
+#floorplans:not(.grid) {
+	list-style-type: none;
+}
+
 #floorplans.grid {
 	list-style: none;
 	display: grid;
