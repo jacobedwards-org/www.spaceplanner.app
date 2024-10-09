@@ -4,7 +4,7 @@ libs =\
 	github.com/svgdotjs/svg.panzoom.js@2.1.2 \
 	github.com/mrdoob/three.js@r169 \
 
-install:
+install: update_policies
 	rsync $$(./libnames ${libs} | sed 's/^/--exclude=lib\//') -va --del files/ ${prefix}
 
 uninstall:
@@ -22,7 +22,10 @@ update_libs:
 	./getlib "${lib}"
 .endfor
 
+update_policies:
+	for p in ./files/policies/*.md; do smu < $$p > $${p%.md}.html; done
+
 clean:
 	rm -rf lib/
 
-.PHONY: install install_libs update_libs
+.PHONY: install install_libs update_libs update_policies
