@@ -706,25 +706,29 @@ export class FloorplanEditor {
 					for (let mid in maps) {
 						if (maps[mid].furniture_id == id) {
 							let m = editor.draw.findOneMax(byId(mid))
-							if (m != null) {
-								m.size(value.width, value.depth)
-								m.findOne("title").words(furniture_name(value))
+							if (m == null) {
+								ops.add.furniture_maps(id, editor.backend.cache[id])
+								m = editor.draw.findOneMax(byId(mid))
 							}
-							m.load(`/furniture/${value.type}.svg`)
+							m.size(value.width, value.depth)
+							let t = m.findOne("title")
+							if (t == null) {
+								t = m.element("title")
+							}
+							t.words(furniture_name(value))
+							m.load(furnitureImage(value))
 						}
 					}
 				},
 				furniture_maps: function(id, value) {
+					let f = editor.backend.reqObj(value.furniture_id)
 					let fm = editor.draw.findOneMax(byId(id))
 					if (!fm) {
-						let f = editor.backend.reqObj(value.furniture_id)
-						fm = editor.layoutG().image(`/furniture/${f.type}.svg`)
+						fm = editor.layoutG().image(furnitureImage(f))
 							.size(f.width, f.depth)
 							.attr({ id, preserveAspectRatio: "none" })
-						fm.element("title").words(furniture_name(f))
 						fm.on("error", function() {
 							if (this.attr("href") === "/furniture/any.svg") {
-								etc.error("Unable to load furniture assets")
 								throw new Error("Unable to load furniture assets")
 							}
 							this.load("/furniture/any.svg")
@@ -911,4 +915,8 @@ function furniture_name(f) {
 
 function swingID(id) {
 	return id + "_swing"
+}
+
+function furnitureImage(f) {
+	return `/furniture/${f.type}/${f.style ?? "default"}.svg`
 }

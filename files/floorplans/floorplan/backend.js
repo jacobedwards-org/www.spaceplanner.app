@@ -532,7 +532,8 @@ export class FloorplanBackend {
 	addFurniture(params, id) {
 		params = params ?? {}
 
-		let f = id ? this.reqObj(id) : {}
+		//let f = id ? this.reqObj(id) : {}
+		let f = {}
 
 		if (params.width != undefined) {
 			f.width = Math.round(params.width)
@@ -557,6 +558,13 @@ export class FloorplanBackend {
 				throw new Error("Invalid type")
 			}
 			f.type = params.type
+		}
+
+		if (params.style != undefined) {
+			if (typeof params.style !== "string") {
+				throw new Error(params.style + ": Invalid style")
+			}
+			f.style = params.style
 		}
 
 		if (f.width == null || f.depth == null || f.type == null) {

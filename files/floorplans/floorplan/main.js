@@ -881,6 +881,13 @@ function furnitureMenuX(editor, pointOrID) {
 			return i
 		}
 	}
+	const styles = function(type) {
+		let styles = ['default']
+		if (editor.furniture_types[type].styles == null) {
+			return styles
+		}
+		return styles.concat(editor.furniture_types[type].styles)
+	}
 
 	editor.finishAction()
 	let p
@@ -923,6 +930,7 @@ function furnitureMenuX(editor, pointOrID) {
 	let items = [
 		menuItem("name", "Name", { attributes: { value: params.name ?? "" } }),
 		menuItem("type", "Type", { break: false, enum: editor.furniture_types, attributes: { value: params.type, required: true } }),
+		menuItem("style", "Style"),
 		menuItem("variety", "Variety", { enum: editor.furniture_types[params.type].varieties, attributes: { value: editor.varietyFrom(params) } }),
 		menuItem("width", "Width", { attributes: { value: userLength(editor, params.width), required: true } }),
 		menuItem("depth", "Depth", { attributes: { value: userLength(editor, params.depth), required: true } }),
@@ -964,26 +972,44 @@ function furnitureMenuX(editor, pointOrID) {
 			fromVariety(items[keys.type].input.value, ev.target.value)
 		})
 	}
+	const newStyle = function() {
+		let typeStyles = styles(params.type)
+		if (typeStyles.length === 1) {
+			items[keys.style].container.classList.add("hidden")
+		} else {
+			let s = menuItem("style", "Style", { enum: typeStyles })
+			items[keys.style].container.replaceWith(makeItem(s))
+			items[keys.style] = s
+			if (params.style != null) {
+				items[keys.style].input.value = params.style
+			}
+		}
+	}
 
 	let menu = makeMenu(items)
 	items[keys.type].input.value = params.type
 	newVariety(true)
+	newStyle(params.type)
 	items[keys.type].input.addEventListener("change", function(ev) {
 		newVariety()
 	})
 	menu.addEventListener("change", function(ev) {
 		handled(ev)
 		try {
-			console.debug("furnitureMenu.change(event)", event.target.name, event.target.value)
-			if (event.target.name === "width" || event.target.name === "depth") {
-				let u = unitInput(editor, event.target)
+			console.debug("furnitureMenu.change(ev)", ev.target.name, ev.target.value)
+			if (ev.target.name === "width" || ev.target.name === "depth") {
+				let u = unitInput(editor, ev.target)
 				if (u == undefined) {
 					return
 				}
-				params[event.target.name] = u
+				params[ev.target.name] = u
 				items[keys.variety].input.value = editor.varietyFrom(params)
 			} else {
-				params[event.target.name] = event.target.value
+				if (ev.target.name === "style" && ev.target.value === "default") {
+					params[ev.target.name] = null
+				} else {
+					params[ev.target.name] = ev.target.value.length === 0 ? null : ev.target.value
+				}
 			}
 			editor.addMappedFurniture(params, id)
 		}
