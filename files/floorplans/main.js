@@ -185,6 +185,41 @@ function delete_floorplan_func(item, floorplan) {
 	}
 }
 
+function ask_delete_floorplan_func(item, floorplan) {
+	return function() {
+		document.querySelectorAll(".delete_dialog").forEach(function(e) { e.remove() })
+		let c = document.body.appendChild(document.createElement("div"))
+		c.classList.add("delete_dialog")
+		let mkbutton = function(value) {
+			let b = document.createElement("input")
+			b.type = "button"
+			b.value = value
+			return b
+		}
+
+		let t = c.appendChild(document.createElement("p"))
+		t.appendChild(document.createTextNode("Delete "))
+		let q = t.appendChild(document.createElement("q"))
+		q.appendChild(document.createTextNode(floorplan.name))
+		t.append(document.createTextNode("?"))
+
+		let yes = c.appendChild(mkbutton("Yes"))
+		let no = c.appendChild(mkbutton("No"))
+
+		let p = new Promise(function(res, rej) {})
+		let hand = function(ev) {
+			if (ev.target.value == "Yes") {
+				delete_floorplan_func(item, floorplan)()
+			}
+			c.remove()
+		}
+		yes.addEventListener("click", hand)
+		no.addEventListener("click", hand)
+
+		return p
+	}
+}
+
 function create_floorplan_item(floorplan) {
 	let item = document.createElement("li")
 	item.append(create_floorplan(floorplan))
@@ -204,7 +239,7 @@ function create_floorplan(floorplan) {
 				{ button: ui.button("Save", "Save floorplan", "save"), func: commit_editable_floorplan_func(root, floorplan) },
 			)
 		)
-		aside.append(ui.button("Delete", "Delete floorplan", "trash", { handlers: { click: delete_floorplan_func(root, floorplan) } }))
+		aside.append(ui.button("Delete", "Delete floorplan", "trash", { handlers: { click: ask_delete_floorplan_func(root, floorplan) } }))
 	} else {
 		aside.append(ui.button("Create", "Create floorplan", "create", { handlers: { click: editable_floorplan_create_func(root) } }))
 	}

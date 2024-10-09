@@ -71,3 +71,23 @@ input.fp_name, input.fp_synopsis, input.fp_address {
 	display: block;
 	max-width: 60%;
 }
+
+.delete_dialog {
+	background-color: #F3F3F3;
+	position: absolute;
+	top: 20vh;
+	left: 20vw;
+	width: 60vw;
+	align-content: center;
+	border: thin solid black;
+	border-radius: .25em;
+	padding: 1em;
+}
+
+.delete_dialog > * {
+}
+
+.delete_dialog > input {
+	margin: .5em;
+	font-size: larger;
+}
