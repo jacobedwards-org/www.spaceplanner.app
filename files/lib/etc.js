@@ -79,7 +79,7 @@ function keep_authorized() {
 			console.log("keep_authorized", "refreshing", left, "minutes left")
 			api.refresh_token()
 		}
-	}, 1000)
+	}, 1000 * 60)
 }
 
 export function error(message, on) {
