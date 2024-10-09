@@ -31,11 +31,16 @@ export function input(name, memo, options) {
 
 export function button(name, memo, icon, options) {
 	let button = input(name, memo, options)
-	let attrs = {
-		alt: name,
-		type: "image",
-		class: "icon",
-	 	src: "/icons/" + icon + "-outline.svg"
+	let attrs
+	if (icon == null) {
+		attrs = { type: "button", value: name }
+	} else {
+		attrs = {
+			alt: name,
+			type: "image",
+			class: "icon",
+			src: "/icons/" + icon + "-outline.svg"
+		}
 	}
 	for (let i in attrs) {
 		console.debug("Button", name, i, attrs[i])
