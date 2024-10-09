@@ -494,6 +494,7 @@ export class FloorplanEditor {
 	// Should be called after each user "action"
 	finishAction() {
 		this.backend.history.mark()
+		this.backend.push()
 	}
 
 	undo() {
