@@ -3,7 +3,7 @@ import * as etc from "/lib/etc.js"
 import * as ui from "/lib/ui.js"
 
 // These are in the order they should appear
-const editables = [ "name", "synopsis", "address" ]
+const editables = [ "name", "address", "synopsis" ]
 
 function init() {
 	etc.authorize()
@@ -39,26 +39,6 @@ function gridview() {
 }
 
 function commit_editable_floorplan_func(element, data) {
-	let update_display = function() {
-		let parent = element.querySelector("header")
-		for (let i in editables) {
-			let c = floorplan_info_class(editables[i])
-			let field = parent.querySelector("." + c)
-			if (!field) {
-				throw new Error("Expected ." + c + ", got nothing")
-			}
-			if (!field.value) {
-				field.remove()
-			} else {
-				let creator = create_field[editables[i]]
-				if (!creator) {
-					throw new Error("Expected " + editables[i] + "in create_field")
-				}
-				field.replaceWith(creator(field.value))
-			}
-		}
-	}
-
 	return function () {
 		let patches = []
 		let fields = Array.from(element.querySelectorAll("header > input"))
@@ -80,7 +60,7 @@ function commit_editable_floorplan_func(element, data) {
 
 		if (!updated) {
 			console.debug("No changes, skipping")
-			update_display()
+			element.replaceWith(create_floorplan(data))
 			return
 		}
 
@@ -89,7 +69,7 @@ function commit_editable_floorplan_func(element, data) {
 				for (let i in rdata) {
 					data[i] = rdata[i]
 				}
-				update_display()
+				element.replaceWith(create_floorplan(data))
 			})
 			.catch(function(err) {
 				etc.error(err, element)
@@ -255,11 +235,12 @@ function create_floorplan(floorplan) {
 			throw new Error("Expected floorplan name")
 		}
 		header.append(create_field.name(floorplan.name, floorplan.id))
-		if (floorplan.synopsis) {
-			header.append(create_field.synopsis(floorplan.synopsis))
-		}
+
 		if (floorplan.address) {
 			header.append(create_field.address(floorplan.address))
+		}
+		if (floorplan.synopsis) {
+			header.append(create_field.synopsis(floorplan.synopsis))
 		}
 
 		if (floorplan.user != localStorage.getItem("username")) {

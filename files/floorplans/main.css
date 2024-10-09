@@ -58,11 +58,21 @@
 
 .fp_name {
 	font-size: large;
-	margin-bottom: .75em;
+	margin-bottom: .25em;
 }
 
 .fp_address {
 	font-style: italic;
+	margin-bottom: .5em;
+}
+
+.fp_terms {
+	margin-top: 0;
+}
+
+.fp_address::before {
+	content: "Address: ";
+	font-size: smaller;
 }
 
 /* Maybe I should give these elements two classes: fp_metadata and
@@ -82,9 +92,6 @@ input.fp_name, input.fp_synopsis, input.fp_address {
 	border: thin solid black;
 	border-radius: .25em;
 	padding: 1em;
-}
-
-.delete_dialog > * {
 }
 
 .delete_dialog > input {
