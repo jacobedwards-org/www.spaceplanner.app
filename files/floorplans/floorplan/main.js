@@ -25,7 +25,8 @@ const zoomBit = 2
 
 let State = {
 	panZoom: 0,
-	pointOp: 'Create'
+	pointOp: 'Create',
+	lastClick: null
 }
 
 // turn off bubbling
@@ -126,14 +127,27 @@ function init() {
 		})
 	)
 
-	let addFurn = ui.button("Add Furniture", "Add furniture", "add", { handlers: {
+	let addFurn = ui.button("Add Furniture", "Add furniture", null, { handlers: {
 		// TODO: Create it at the last clicked point if on screen, else somewhere reasonable on screen
-		click: function() { furnitureMenu(editor, { x: 0, y: 0 }) }
+		click: function() {
+			let p
+			const v = editor.draw.viewbox()
+			const c = { x: v.x + v.width / 2, y: v.y + v.height / 2 }
+			if (State.lastClick != null) {
+				p = State.lastClick
+				if (p.x < v.x || p.x > v.x + v.width || p.y < p.height || p.y > p.y + p.height) {
+					p = c
+				}
+			} else {
+				p = c
+			}
+			furnitureMenu(editor, p)
+		}
 	}})
 
-	toolbar.append(item(addFurn))
 	toolbar.append(undoRedo)
 	toolbar.append(pushpull)
+	toolbar.append(item(addFurn))
 
 	if (debug) {
 		toolbar.append(item(
@@ -345,6 +359,7 @@ function selectionHandler(event, editor) {
 	}
 
 	let p = editor.draw.point(event.clientX, event.clientY)
+	State.lastClick = structuredClone(p)
 	let order = [ "#" + editor.layoutG(), "#points", "#pointmaps" ]
 	for (let i = 0; i < order.length; ++i) {
 		let x = editor.thingAt(p, order[i])
@@ -925,6 +940,8 @@ function furnitureMenuX(editor, pointOrID) {
 
 		}
 		id = editor.addMappedFurniture(params)
+		editor.finishAction()
+		editor.findObj(id).select()
 	}
 
 	let items = [
