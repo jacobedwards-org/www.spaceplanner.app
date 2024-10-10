@@ -585,11 +585,17 @@ export class FloorplanEditor {
 
 	mapSelected(type) {
 		let points = this.selectedPoints()
-		return this.mapPoints(type, points.a, points.b)
+		return this.mapPoints({ type, a: points.a, b: points.b })
 	}
 
-	mapPoints(type, p1, p2) {
-		return this.backend.mapPoints(type, getID(p1, "points"), getID(p2, "points"))
+	mapPoints(params, id) {
+		if (params.a) {
+			params.a = getID(params.a, "points")
+		}
+		if (params.b) {
+			params.b = getID(params.b, "points")
+		}
+		return this.backend.mapPoints(params, id)
 	}
 
 	addFurniture(params, id) {

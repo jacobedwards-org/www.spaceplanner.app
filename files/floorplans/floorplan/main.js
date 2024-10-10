@@ -275,29 +275,30 @@ function selectHandler(event, editor, state) {
 		    userLength(editor, editor.pointmapLength(groups.pntmap[0]))))
 	}
 
-	let maps = []
 	if (groups.pntmap !== undefined) {
+		let maps = {}
 		for (let i = 0; i < groups.pntmap.length; ++i) {
-			maps.push(editor.backend.cache.pointmaps[groups.pntmap[i]])
+			maps[groups.pntmap[i]] = editor.backend.cache.pointmaps[groups.pntmap[i]]
 		}
-	}
-
-	if (maps.length > 0) {
-		const changeTypes = function(newvalue) {
-			for (let i in maps) {
-				editor.mapPoints(newvalue, maps[i].a, maps[i].b)
+		if (groups.pntmap.length > 0) {
+			const changeTypes = function(newvalue) {
+				for (let id in maps) {
+					editor.mapPoints({ type: newvalue }, id)
+				}
 			}
-		}
-		let current = maps[0].type
-		for (let i = 0; i < maps.length; ++i) {
-			if (current !== maps[i].type) {
-				current = null
-				break;
+			let current
+			for (let id in maps) {
+				if (current === undefined) {
+					current = maps[id].type
+				} else if (current !== maps[i].type) {
+					current = null
+					break;
+				}
 			}
+			c.appendChild(
+				selector({ wall: true, door: true }, changeTypes, { current, text: "Type:" })
+			)
 		}
-		c.appendChild(
-			selector({ wall: true, door: true }, changeTypes, { current, text: "Type:" })
-		)
 	}
 
 	let fmaps = ids.filter(function(item) { return backend.idType(item) === "furmap" })
@@ -537,6 +538,7 @@ function precisePointHandler(event, editor, state) {
 			}
 		})
 	}
+
 	const cleanup = function() {
 		if (state.moveTimeout != null) {
 			clearTimeout(state.moveTimeout)
@@ -548,58 +550,30 @@ function precisePointHandler(event, editor, state) {
 			delete state[i]
 		}
 	}
+
 	const updatePoint = function(p, options) {
 		options = options ?? {}
 
-		if (state.snapmap == null) {
-			editor.movePoint(state.to, p)
-		}
-
 		let points = editor.thingsAt(p, "#points")
 		let fid = lib.getID(state.from)
-		let tid
-		if (state.snapmap == null) {
-			tid = lib.getID(state.to)
-		}
-		let instead
+		let tid = lib.getID(state.to)
+		delete state.onPoint
 		for (let i in points) {
 			let id = lib.getID(points[i])
 			if (id !== tid && id !== fid) {
-				instead = id
+				state.onPoint = id
+				p = editor.backend.obj(id)
 			}
 		}
 
-		if (instead != undefined) {
-			if (instead !== state.to) {
-				if (state.snapmap == null) {
-					editor.remove(state.to)
-				} else {
-					editor.remove(state.snapmap)
-				}
-				state.to = editor.findObj(instead)
-				if (state.removeSnapmap == undefined) {
-					state.removeSnapmap = editor.backend.whichPointMap(
-						lib.getID(state.from), lib.getID(state.to)
-					) == null
-				}
-				state.snapmap = editor.mapPoints("wall", state.from, state.to)
-			}
-		} else if (state.snapmap != null) {
-			if (state.removeSnapmap) {
-				editor.remove(state.snapmap)
-				delete state.removeSnapmap
-			}
-			state.snapmap = null
-			state.to = editor.addPoint(p, true)
-			editor.mapPoints("wall", state.from, state.to)
-			state.to = editor.findObj(state.to)
-		}
+		editor.movePoint(state.to, p)
 
 		if (!options.leave_input) {
 			unitInput(editor, state.len,
 			    editor.units.snapTo(state.origin.distanceTo(p), editor.unit))
 		}
 	}
+
 	const doMove = function() {
 		const ad = function(a, b) {
 			return Math.abs(a - b)
@@ -639,6 +613,7 @@ function precisePointHandler(event, editor, state) {
 		}
 		updatePoint(snapped)
 	}
+
 	const revert = function() {
 		/*
 		 * NOTE: WARNING: If allowing asyncronous edits this would be bad
@@ -651,7 +626,14 @@ function precisePointHandler(event, editor, state) {
 		editor.undo()
 		cleanup()
 	}
+
 	const commit = function() {
+		if (state.onPoint) {
+			for (let oth in editor.backend.mappedPoints[state.to]) {
+				editor.mapPoints({ a: state.onPoint, b: oth }, editor.backend.mappedPoints[state.to][oth])
+			}
+			editor.remove(state.to)
+		}
 		editor.finishAction()
 		cleanup()
 	}
@@ -705,7 +687,7 @@ function precisePointHandler(event, editor, state) {
 		} else if (event.type === "pointermove" && state.origin != undefined &&
 		    state.origin.distanceTo(cursor) > 200) {
 			state.to = editor.addPoint(cursor, true)
-			editor.mapPoints("wall", state.from, state.to)
+			editor.mapPoints({ type: "wall", a: state.from, b: state.to})
 			state.to = editor.findObj(state.to)
 			init()
 		} else {
@@ -782,7 +764,7 @@ function precisePointMapHandler(event, editor, state) {
 		}
 
 		let s = (o > 0 ? "+" : "-")
-		editor.backend.mapPoints(state.door.type, state.door.a, state.door.b, { door_swing: state.hinge + s })
+		editor.backend.mapPoints({ door_swing: state.hinge + s }, state.doorID)
 		editor.finishAction()
 		cleanup()
 		return
@@ -807,8 +789,8 @@ function precisePointMapHandler(event, editor, state) {
 		}
 
 		sub = editor.addPoint(sub)
-		editor.mapPoints("wall", data.a, sub)
-		editor.mapPoints("wall", sub, data.b)
+		editor.mapPoints({ type: "wall", a: data.a, b: sub })
+		editor.mapPoints({ type: "wall", a: sub, b: data.b })
 		editor.remove(map)
 		return
 	}

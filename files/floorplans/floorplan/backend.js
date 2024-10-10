@@ -489,31 +489,40 @@ export class FloorplanBackend {
 		}
 	}
 
-	// Returns map id
-	mapPoints(type, a, b, options) {
-		options = options ?? {}
-		if (type != "wall" && type != "door") {
-			throw new Error("Only walls and doors allowed in pointmap so far")
-		}
-		if (!this.cache.points[a] || !this.cache.points[b]) {
-			throw new Error(`${a}, ${b}: Pointmap must reference existing points`)
+	mapPoints(params, id) {
+		const backend = this
+		const validPoint = function(id) {
+			return idType(id) === "pnt" && backend.obj(id)
 		}
 
-		let d = {
-			type: type,
-			a: a,
-			b: b
-		}
-		if (options.door_swing != null) {
-			switch (options.door_swing) {
-			case "a+": case "a-": case "b+": case "b-":
-				break;
-			default:
-				throw new Error(options.door_swing + ": Invalid door swing")
+		const m = this.updatedObject(params, id, {
+			type: {
+				required: true,
+				validate: function(type) {
+					return type === "wall" || type === "door"
+				}
+			},
+			a: {
+				required: true,
+				validate: validPoint
+			},
+			b: {
+				required: true,
+				validate: validPoint
+			},
+			door_swing: {
+				validate: function(swing) {
+					switch (swing) {
+					case "a+": case "a-": case "b+": case "b-":
+						return true
+					default:
+						return false
+					}
+				}
 			}
-			d.door_swing = options.door_swing
-		}
-		return this.addData(this.whichPointMap(a, b) ?? "pointmaps", d, options)
+		})
+
+		this.addData(this.whichPointMap(m.a, m.b) ?? "pointmaps", m)
 	}
 
 	unmapPoints(id, options) {
@@ -637,6 +646,38 @@ export class FloorplanBackend {
 	addMappedFurniture(params, id) {
 		params.furniture_id = this.addFurniture(params, id ? this.reqObj(id).furniture_id : null)
 		return this.mapFurniture(params, id)
+	}
+
+	updatedObject(params, id, vd) {
+		let obj = id ? structuredClone(this.reqObj(id)) : {}
+
+		for (let k in vd) {
+			let vdk = vd[k]
+			if (vdk.required && params[k] === null) {
+				throw new Error(`Cannot delete required parameter ("${k}")`)
+			}
+			if (params[k] === undefined) {
+				continue
+			}
+			if (typeof vdk.parse === "function") {
+				obj[k] = vdk.parse(params[k])
+			} else if (typeof vdk.validate === "function") {
+				if (!vdk.validate(params[k])) {
+					throw new Error(`Invalid value for "${k}" parameter ("${params[k]}")`)
+				}
+				obj[k] = params[k] 
+			} else {
+				throw new Error(`"${k}" parameter missing validate or parse function`)
+			}
+		}
+
+		for (let k in vd) {
+			if (vd[k].required && obj[k] == null) {
+				throw new Error(`Cannot omit required parameter ("${k}")`)
+			}
+		}
+
+		return obj
 	}
 
 	reqObj(id) {
