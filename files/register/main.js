@@ -6,7 +6,10 @@ function init() {
 	if (api.authorized()) {
 		// Maybe don't do this?
 		window.location.href = "/floorplans"
+		return
 	}
+
+	etc.bar()
 
 	let email_input = document.getElementById("email")
 	let email_strict_input = document.getElementById("email-strict")
