@@ -1173,15 +1173,16 @@ function parseUserLength(editor, length) {
 }
 
 function userLength(editor, units) {
-	let a = editor.units.separate(units, editor.unitSystem)
+	let a = editor.units.separate(units, editor.unitSystem, { whole: false })
 	let words = []
 	for (let i in a) {
 		if (!a[i].unit) {
 			// We don't allow anything smaller than smallest defined unit,
 			// though maybe this should be an error condition
-			continue
 		}
-		words.push(String(a[i].amount) + (a[i].symbol ?? a[i].name))
+
+		words.push(a[i].amount.toFixed(Math.min(2, precision(a[i].amount))) +
+		    (a[i].symbol ?? a[i].name ?? ""))
 	}
 	return words.join(" ")
 }
@@ -1278,6 +1279,19 @@ function primaryMove(ev) {
 		return true
 	}
 	return ev.isPrimary
+}
+
+function precision(a) {
+	if (!isFinite(a)) {
+		return 0;
+	}
+	let e = 1
+	let p = 0
+	while (Math.round(a * e) / e !== a) {
+		e *= 10
+		p++
+	}
+	return p
 }
 
 window.onload = init
