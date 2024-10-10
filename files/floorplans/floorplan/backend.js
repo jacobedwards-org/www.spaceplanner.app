@@ -716,7 +716,7 @@ export class FloorplanBackend {
 		// WARNING: This needs a lock
 		let backend = this
 
-		return api.fetch("PUT", this.endpoint, this.toServerIDs(this.cache))
+		return api.fetch("PUT", this.endpoint, this.cache)
 			.then(function(data) {
 				updateIDs(backend, data)
 				backend.serverPosition = backend.history.place
