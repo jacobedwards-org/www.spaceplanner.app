@@ -255,6 +255,17 @@ function selectHandler(event, editor, state) {
 		)
 	}
 
+	if (state.maplength) {
+		state.maplength.remove()
+		delete state.maplength
+	}
+	if (groups.pntmap && cnt === 1) {
+		state.maplength = document.body.querySelector(".toolbar")
+			.appendChild(document.createElement("li"))
+		state.maplength.appendChild(document.createTextNode("Length: " +
+		    userLength(editor, editor.pointmapLength(groups.pntmap[0]))))
+	}
+
 	let maps = []
 	if (groups.pntmap !== undefined) {
 		for (let i = 0; i < groups.pntmap.length; ++i) {
