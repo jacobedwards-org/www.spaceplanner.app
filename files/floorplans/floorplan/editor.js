@@ -834,6 +834,15 @@ export class FloorplanEditor {
 		}
 		return null
 	}
+
+	pointmapLength(map) {
+		map = this.backend.reqObj(getID(map))
+		let a = this.backend.reqObj(map.a)
+		a = new Vector2(a.x, a.y)
+		let b = this.backend.reqObj(map.b)
+		b = new Vector2(b.x, b.y)
+		return a.distanceTo(b)
+	}
 }
 
 function layoutID(name) {
