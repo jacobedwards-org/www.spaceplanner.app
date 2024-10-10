@@ -534,9 +534,10 @@ export class FloorplanEditor {
 		}
 
 		for (let i in later) {
-			if (backend.idType(later[i])=== "pnt") {
+			let t = backend.idType(later[i])
+			if (t === "pnt") {
 				this.backend.removePoint(later[i], { unmap: true })
-			} else if (backend.idType(later[i]) === "furmap") {
+			} else if (t === "fur") {
 				this.backend.removeFurniture(later[i])
 			} else {
 				throw new Error(backend.idType(later[i]) + ": Unsupported type")
