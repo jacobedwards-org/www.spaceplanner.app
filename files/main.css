@@ -1,0 +1,28 @@
+body {
+	font-size: larger;
+}
+
+h1 {
+	margin-bottom: .05em;
+}
+
+.slogan {
+	margin-left: .75em;
+	font-size: smaller;
+}
+
+aside {
+	float: none;
+	padding: .5em;
+	max-width: 30ch;
+}
+
+ul.points {
+	list-style-type: none;
+	padding-left: 0;
+}
+
+ul.points > li {
+	margin-bottom: 1em;
+	max-width: max(40ch, 40vw);
+}
