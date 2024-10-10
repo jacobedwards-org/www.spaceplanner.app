@@ -37,7 +37,10 @@ export function bar(on) {
 	right.classList.add("right")
 
 	if (!api.authorized()) {
-		let l = link("Login", "/login")
+		let l = link("Spaceplanner", "/")
+		additem(left, l)
+
+		l = link("Login", "/login")
 		l.classList.add("button")
 		additem(right, l)
 		l = link("Signup", "/register")
