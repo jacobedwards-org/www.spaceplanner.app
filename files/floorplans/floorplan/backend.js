@@ -1,6 +1,5 @@
 import * as api from "/lib/api.js"
 
-
 // Sequence numbers for uniqueKey
 let sequences = {}
 
@@ -314,17 +313,10 @@ export class FloorplanBackend {
 			options = {}
 		}
 
-		if (!floorplan || !floorplan.user || !floorplan.name) {
-			throw new Error("Requires floorplan")
+		if (floorplan && (!floorplan.user || !floorplan.id)) {
+			throw new Error("Invalid floorplan given")
 		}
 		this.floorplan = floorplan
-
-		if (!options.server) {
-			// This does nothing at the moment
-			this.server = "https://api.spaceplanner.app"
-		} else {
-			this.server = options.server
-		}
 
 		if (options.callbacks) {
 			this.callbacks = options.callbacks
@@ -386,7 +378,10 @@ export class FloorplanBackend {
 	}
 
 	get endpoint() {
-		return "floorplans/" + this.floorplan.user + "/" + this.floorplan.name + "/data"
+		if (!this.floorplan) {
+			throw new Error("Cannot access API: No floorplan (in demo mode)")
+		}
+		return `floorplans/${this.floorplan.user}/${this.floorplan.id}/data`
 	}
 
 	// Apply's diffs in order to get to the state at the beginning of the given diff id
@@ -664,6 +659,9 @@ export class FloorplanBackend {
 	}
 
 	push() {
+		if (!this.floorplan) {
+			return Promise.resolve()
+		}
 		// WARNING: This needs a lock
 
 		let put = (this.history.truncated &&
@@ -713,6 +711,10 @@ export class FloorplanBackend {
 	}
 
 	putServer() {
+		if (!this.floorplan) {
+			return Promise.resolve()
+		}
+
 		// WARNING: This needs a lock
 		let backend = this
 
@@ -729,6 +731,10 @@ export class FloorplanBackend {
 	 * once at the end.)
 	 */
 	pull() {
+		if (!this.floorplan) {
+			return Promise.resolve()
+		}
+
 		// WARNING: This probably needs a lock
 
 		// Since we set serverPosition below
