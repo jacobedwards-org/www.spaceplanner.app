@@ -706,6 +706,10 @@ export class FloorplanBackend {
 				}
 				backend.cb("push")
 			})
+			.catch(function(err) {
+				console.error("Unable to PATCH floorplan, trying PUT", err)
+				backend.putServer()
+			})
 	}
 
 	putServer() {
