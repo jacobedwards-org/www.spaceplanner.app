@@ -899,19 +899,29 @@ export class FloorplanBackend {
 		return local
 	}
 
-	mapID(localID, serverID) {
+	mapID(localID, serverID, options) {
+		options = options ?? {}
+
 		console.debug("Backend.mapID", localID, serverID)
 		if (localID == null || serverID == null) {
 			throw new Error("Requires local and server ID")
 		}
-		if (this.serverIDs[localID] === undefined) {
-			throw new Error("That local ID is already mapped to " + this.serverIDs[localID])
-		}
-		if (this.localIDs[serverID] !== undefined) {
-			throw new Error("That server ID is already mapped to " + this.localIDs[serverID])
+		if (!options.remap) {
+			if (this.serverIDs[localID] != undefined) {
+				throw new Error("That local ID is already mapped to " + this.serverIDs[localID])
+			}
+			if (this.localIDs[serverID] != undefined) {
+				throw new Error("That server ID is already mapped to " + this.localIDs[serverID])
+			}
 		}
 		this.localIDs[serverID] = localID
 		this.serverIDs[localID] = serverID
+	}
+
+	remapID(localID, serverID, options) {
+		options = options ?? {}
+		options.remap = true
+		return this.mapID(localID, serverID, options)
 	}
 }
 
@@ -942,11 +952,9 @@ function updateIDs(backend, newdata) {
 		for (let srvID in newdata[t]) {
 			let x = newdata[t][srvID]
 			if (x.old_id != null) {
-				backend.localIDs[srvID] = x.old_id
-				backend.serverIDs[x.old_id] = srvID
+				backend.remapID(x.old_id, srvID)
 			} else {
-				backend.localIDs[srvID] = srvID
-				backend.serverIDs[srvID] = srvID
+				backend.remapID(srvID, srvID)
 			}
 		}
 	}
