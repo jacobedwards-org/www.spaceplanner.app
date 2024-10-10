@@ -225,7 +225,8 @@ class Units {
 		return name
 	}
 
-	separate(units, system) {
+	separate(units, system, options) {
+		options = options ?? {}
 		let parts = []
 		let unit = this.biggest(this.systems[system])
 
@@ -233,14 +234,12 @@ class Units {
 			let n = this.get(unit)
 			if (units >= n) {
 				let amount = units / n
-				if (this.data[unit].base) {
+				if (this.data[unit].base || options.whole) {
 					amount = Math.floor(amount)
 				}
 				units -= amount * n // not sure about floating mod in js
 				parts.push({ unit: unit, symbol: this.data[unit].symbol, amount: amount })
 			}
-
-
 		} while (units > 0 && (unit = this.data[unit].base))
 		if (units > 0) {
 			parts.push({ "amount": units })
