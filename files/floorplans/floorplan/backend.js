@@ -663,6 +663,7 @@ export class FloorplanBackend {
 
 	push() {
 		// WARNING: This needs a lock
+
 		let put = (this.history.truncated &&
 		    (!this.lastUpdated || this.lastUpdated < this.history.truncated))
 
@@ -672,7 +673,8 @@ export class FloorplanBackend {
 			return this.putServer()
 		}
 
-		let dirty = this.history.between(this.serverPosition, this.history.last)
+		let newpos = this.history.place
+		let dirty = this.history.between(this.serverPosition, newpos)
 		if (dirty.length === 0) {
 			console.log("Not updating server: already up to date")
 			return Promise.resolve()
@@ -695,7 +697,7 @@ export class FloorplanBackend {
 		let backend = this
 		return api.fetch("PATCH", this.endpoint, patch)
 			.then(function(data) {
-				backend.serverPosition = dirty.at(-1).id
+				backend.serverPosition = newpos
 				updateIDs(backend, data)
 				for (let i in dirty) {
 					delete dirty[i].dirty
