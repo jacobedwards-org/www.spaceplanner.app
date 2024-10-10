@@ -225,6 +225,7 @@ function selectHandler(event, editor, state) {
 			attributes: { type: "button", value: "Delete" },
 			handlers: { click: function() {
 				editor.remove(...a)
+				editor.finishAction()
 			}},
 		})
 	)
