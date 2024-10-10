@@ -162,6 +162,8 @@ a.button {
 	font-weight: bold;
 	color: black;
 	border: thin solid lightgrey;
+	display: inline-block;
+	width: fit-content;
 }
 
 a.pop:hover {
