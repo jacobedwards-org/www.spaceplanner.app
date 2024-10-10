@@ -575,7 +575,9 @@ export class FloorplanBackend {
 
 	removeFurniture(id, options) {
 		for (let map in this.cache.furniture_maps) {
-			this.unmapFurniture(map)
+			if (map.furniture === id) {
+				this.unmapFurniture(map)
+			}
 		}
 		this.removeData(id, options)
 	}
