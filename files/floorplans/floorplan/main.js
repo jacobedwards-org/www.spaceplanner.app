@@ -851,9 +851,10 @@ function furnitureHandler(ev, editor, state) {
 	}
 
 	if (ev.type === "pointermove" && primaryMove(ev)) {
-		if (press.distanceTo(state.origin) < params.threshold) {
+		if (!state.moved && press.distanceTo(state.origin) < params.threshold) {
 			return
 		}
+		state.moved = true
 		handled(ev)
 		if (state.move) {
 			state.move = press
