@@ -501,10 +501,12 @@ export class FloorplanEditor {
 
 	undo() {
 		this.backend.undo()
+		this.backend.push()
 	}
 
 	redo() {
 		this.backend.redo()
+		this.backend.push()
 	}
 
 	addPoint(point, force) {
