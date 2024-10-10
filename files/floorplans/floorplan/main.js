@@ -33,26 +33,36 @@ let State = {
 const escapeEvent = new Event("escape")
 
 function init() {
-	etc.authorize()
-	etc.bar()
-
 	// Just to get stuff out of the way for now
 	let debug = (new URLSearchParams(new URL(document.URL).search)).get("debug") != undefined
 
-	let floorplan = (new URLSearchParams(new URL(document.URL).search)).get("id")
-	if (!floorplan) {
+	let floorplan_id = (new URLSearchParams(new URL(document.URL).search)).get("id")
+	if (!floorplan_id) {
 		document.location.href = "/floorplans"
+		return
 	}
+
+	let floorplan
+	if (floorplan_id !== "flp_demo") {
+		etc.authorize()
+		floorplan = { user: localStorage.getItem("username"), name: floorplan }
+	}
+
+	etc.bar()
 
 	let h1 = document.querySelector("h1")
 	let suffix = h1.appendChild(document.createTextNode(""))
-	api.fetch("GET", `floorplans/:user/${floorplan}`)
-		.then(function(metadata) {
-			h1.textContent = metadata.name
-		})
-		.catch(function(err) {
-			document.location.href = "/floorplans"
-		})
+	if (!floorplan) {
+		h1.textContent = "Demo"
+	} else {
+		api.fetch("GET", `floorplans/:user/${floorplan}`)
+			.then(function(metadata) {
+				h1.textContent = metadata.name
+			})
+			.catch(function(err) {
+				document.location.href = "/floorplans"
+			})
+	}
 
 	let draw = SVG()
 		.addTo("#editor")
@@ -64,8 +74,7 @@ function init() {
 			zoomFactor: .5
 		})
 
-	let editor = new lib.FloorplanEditor(draw,
-		{ user: localStorage.getItem("username"), name: floorplan },
+	let editor = new lib.FloorplanEditor(draw, floorplan,
 		{ backend: {
 			callbacks: {
 				pull: function() {
