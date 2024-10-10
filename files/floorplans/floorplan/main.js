@@ -45,7 +45,7 @@ function init() {
 	let floorplan
 	if (floorplan_id !== "flp_demo") {
 		etc.authorize()
-		floorplan = { user: localStorage.getItem("username"), name: floorplan }
+		floorplan = { user: localStorage.getItem("username"), id: floorplan_id }
 	}
 
 	etc.bar()
@@ -55,7 +55,7 @@ function init() {
 	if (!floorplan) {
 		h1.textContent = "Demo"
 	} else {
-		api.fetch("GET", `floorplans/:user/${floorplan}`)
+		api.fetch("GET", `floorplans/:user/${floorplan.id}`)
 			.then(function(metadata) {
 				h1.textContent = metadata.name
 			})
