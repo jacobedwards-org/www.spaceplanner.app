@@ -527,6 +527,8 @@ export class FloorplanEditor {
 			if (backend.idType(id) === "pntmap") {
 				this.backend.unmapPoints(id)
 			} else if (backend.idType(id) === "furmap") {
+				// For now, just remove the furniture too
+				later.push(this.backend.reqObj(id).furniture_id)
 				this.backend.unmapFurniture(id)
 			} else {
 				later.push(id)
