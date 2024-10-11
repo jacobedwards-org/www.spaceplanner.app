@@ -1,4 +1,9 @@
+body {
+	background-color: grey;
+}
+
 #services {
+	background-color: white;
 	max-width: 50vw;
 	min-width: min(40em, 70vw);
 	min-height: 60%;
@@ -11,7 +16,13 @@
 	text-align: center;
 }
 
+#wait {
+	color: lightgrey;
+	text-align: center;
+}
+
 .service {
+	background-color: #FBFBFB;
 	border: thin ridge grey;
 	border-radius: .25em;
 	padding: 2em;
