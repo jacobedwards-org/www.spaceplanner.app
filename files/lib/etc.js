@@ -48,13 +48,33 @@ export function bar(on) {
 		l.classList.add("pop")
 		additem(right, l)
 	} else {
-		additem(left, link("Floorplans", "/floorplans"))
+		userService()
+			.then(function(service) {
+				if (service == null) {
+					additem(left, link("Subscribe", "/services"))
+				} else {
+					additem(left, )
+				}
+			})
+			.catch(function() {
+				additem(left, link("Floorplans", "/floorplans"))
+			})
 
 		additem(right, link("Settings", "/settings", "settings"))
 		additem(right, link("Logout", "/logout", "log-out"))
 	}
 
 	on.prepend(nav)
+}
+
+export function userService() {
+	return api.fetch("GET", "users/:user/services/subscribed")
+		.then(function(r) {
+			if (r.services.length > 1) {
+				console.error("Only returning one service when multiple are subscribed to")
+			}
+			return r.services[0]
+		})
 }
 
 export function authorize() {
