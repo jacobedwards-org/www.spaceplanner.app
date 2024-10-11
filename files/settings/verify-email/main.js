@@ -43,6 +43,10 @@ function codeForm() {
 	)
 	input.id = "code"
 	input.setAttribute("autofocus", true)
+	input.setAttribute("name", "otp")
+	input.setAttribute("type", "number")
+
+	input.after(document.createTextNode(" "))
 
 	let submit = form.appendChild(
 		document.createElement("input")
