@@ -184,7 +184,7 @@ function update_verified_email() {
 function create_input(name, setting, current_value) {
 	let input = document.createElement("input")
 	if (setting.type == "string") {
-		input.type = "text"
+		input.type = name === "email" ? "email" : "text"
 	} else if (setting.type == "bool") {
 		input.type = "checkbox"
 		if (current_value) {
