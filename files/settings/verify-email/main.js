@@ -2,7 +2,7 @@ import * as api from "/lib/api.js"
 import * as etc from "/lib/etc.js"
 
 function main() {
-	api.fetch("GET", "users/" + localStorage.getItem("username") + "/email/code")
+	api.fetch("GET", "users/:user/email/code")
 		.then(function() {
 			document.getElementById("wait").remove()
 			document.body.appendChild(codeForm())
@@ -78,7 +78,7 @@ function resendForm() {
 
 	form.addEventListener("submit", function(event) {
 		event.preventDefault()
-		api.fetch("GET", "users/" + localStorage.getItem("username") + "/email/code")
+		api.fetch("GET", "users/:user/email/code")
 			.then(function(body) {
 				console.log(body)
 				let msg = document.createElement("p")
