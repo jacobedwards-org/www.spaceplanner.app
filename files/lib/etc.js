@@ -129,13 +129,12 @@ export function error(message, on) {
 }
 
 export function handle_wrap(func, on) {
-	return function() {
-		try {
-			func()
-		}
-		catch(err) {
-			error("There was an issue with the page: " + err, on)
-		}
+	try {
+		func()
+	}
+	catch(err) {
+		console.error(err)
+		error("There was an issue with the page: " + err, on)
 	}
 }
 
