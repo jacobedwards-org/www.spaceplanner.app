@@ -208,6 +208,10 @@ function create_input(name, setting, current_value) {
 function update_info(key, value) {
 	let dl = document.getElementById("userinfo")
 
+	if (value == null) {
+		return
+	}
+
 	let v = get_info_element(key)
 	if (v != undefined) {
 		v.textContent = value
