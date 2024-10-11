@@ -159,17 +159,12 @@ function update_verified_email() {
 				if (old_warning != null) {
 					old_warning.remove()
 				}
-			} else if (verified != setting_form.value) {
-				let content
-				if (verified == null)
-					content = ui.warning("This email is not verified.")
-				else {
-					content = document.createElement("p")
-					content.appendChild(document.createTextNode("This email is not verified. Please verify it "))
-					let a = content.appendChild(document.createElement("a"))
-					a.href = "./verify-email"
-					a.appendChild(document.createTextNode("here."))
-				}
+			} else if (verified == null || verified != setting_form.value) {
+				let content = document.createElement("p")
+				content.appendChild(document.createTextNode("This email is not verified. Please verify it "))
+				let a = content.appendChild(document.createElement("a"))
+				a.href = "./verify-email"
+				a.appendChild(document.createTextNode("here."))
 
 				let warning = ui.warning(content)
 				warning.id = "unverified_email_warning"
