@@ -54,8 +54,18 @@ function codeForm() {
 				if (!body.valid) {
 					etc.error("That was not the correct code, please try again.", form)
 				} else {
-					// redirect somewhere better
-					window.location.href = "/services"
+					etc.userService()
+						.then(function(service) {
+							if (service) {
+								window.location.href = "/settings"
+							} else {
+								window.location.href = "/services"
+							}
+						})
+						.catch(function() {
+							// Eh.
+							window.location.href = "/settings"
+						})
 				}
 			})
 			.catch(function(err) {
