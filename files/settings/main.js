@@ -151,7 +151,7 @@ function update_verified_email() {
 		throw new Error("Expected email setting")
 	}
 
-	api.fetch("GET", "users/:user/email/verified")
+	api.verifiedEmail()
 		.then(function(verified) {
 			update_info("Email", verified)
 			let old_warning = document.getElementById("unverified_email_warning")
