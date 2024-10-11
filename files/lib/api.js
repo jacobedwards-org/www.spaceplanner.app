@@ -89,6 +89,10 @@ export function login(username, password) {
 		})
 }
 
+export function verifiedEmail() {
+	return api_fetch("GET", "users/:user/email/verified")
+}
+
 export function refresh_token() {
 	api_fetch("GET", "tokens")
 		.then(function(resp) {
