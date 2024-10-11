@@ -11,6 +11,14 @@ function main() {
 		})
 		.catch(function(err) {
 			etc.error(err + ": Unable to send code")
+
+			let b = document.body.appendChild(document.createElement("input"))
+			b.type = "button"
+			b.value = "Retry"
+			b.addEventListener("click", function() {
+				b.remove()
+				main()
+			})
 		})
 
 }
