@@ -18,7 +18,7 @@ function chooseService(service) {
                 window.location.href = "/register"
         }
 
-        api.fetch("POST", "users/" + localStorage.getItem("username") + "/services/checkout",
+        api.fetch("POST", "users/:user/services/checkout",
                 { prices: [ service.prices[0].id ] }).then(function(body) {
 			console.warn(body)
                         window.location.href = body.url

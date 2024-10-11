@@ -14,7 +14,7 @@ function main() {
 	let errfunc = function(err) { etc.error("Unable to get settings: " + err, document.querySelector("#settings")) }
 	api.fetch("GET", "settings")
 		.then(function(params) {
-			api.fetch("GET", "users/" + localStorage.getItem("username") + "/settings")
+			api.fetch("GET", "users/:user/settings")
 				.then(function(current) {
 					show_settings(current, params)
 				})
@@ -58,7 +58,7 @@ function delete_form() {
 }
 
 function delete_user() {
-	api.fetch("DELETE", "users/" + localStorage.getItem("username"))
+	api.fetch("DELETE", "users/:user")
 		.then(function() {
 			api.update_token(null)
 			document.location.href = "/"
@@ -134,7 +134,7 @@ function update_settings(current, params) {
 	if (patch.length == 0) {
 		return
 	}
-	api.fetch("PATCH", "users/" + localStorage.getItem("username") + "/settings", patch)
+	api.fetch("PATCH", "users/:user/settings", patch)
 		.then(function(updated) {
 			for (let k in updated) {
 				current[k] = updated[k]
@@ -151,7 +151,7 @@ function update_verified_email() {
 		throw new Error("Expected email setting")
 	}
 
-	api.fetch("GET", "users/" + localStorage.getItem("username") + "/email/verified")
+	api.fetch("GET", "users/:user/email/verified")
 		.then(function(verified) {
 			update_info("Email", verified)
 			let old_warning = document.getElementById("unverified_email_warning")

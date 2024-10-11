@@ -41,7 +41,7 @@ function codeForm() {
 
 	form.addEventListener("submit", function(event) {
 		event.preventDefault()
-		api.fetch("POST", "users/" + localStorage.getItem("username") + "/email/code", { code: code.value })
+		api.fetch("POST", "users/:user/email/code", { code: code.value })
 			.then(function(body) {
 				if (!body.valid) {
 					etc.error("That was not the correct code, please try again.", form)
