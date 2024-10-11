@@ -23,6 +23,26 @@ const params = {
 const panBit = 1
 const zoomBit = 2
 
+const modes = {
+	None: {
+		handlers: {
+			contextmenu: preventDefaultHandler
+		}
+	},
+	Precise: {
+		points: true,
+		handlers: {
+			contextmenu: preventDefaultHandler,
+			pointerdown: [selectionHandler, precisePointHandler, precisePointMapHandler, furnitureHandler],
+			pointermove: [precisePointHandler, furnitureHandler],
+			pointerup: [precisePointHandler, precisePointMapHandler, furnitureHandler],
+			keydown: [controlKeyHandler, zoomKeysHandler, undoRedoHandler],
+			dblclick: [precisePointMapHandler, furnitureHandler],
+			select: selectHandler
+		}
+	}
+}
+
 let State = {
 	panZoom: 0,
 	pointOp: 'Create',
@@ -31,6 +51,8 @@ let State = {
 
 // turn off bubbling
 const escapeEvent = new Event("escape")
+
+etc.handle_wrap(init)
 
 function init() {
 	// Just to get stuff out of the way for now
@@ -354,26 +376,6 @@ function selector(things, select, options) {
 	}
 
 	return form
-}
-
-let modes = {
-	None: {
-		handlers: {
-			contextmenu: preventDefaultHandler
-		}
-	},
-	Precise: {
-		points: true,
-		handlers: {
-			contextmenu: preventDefaultHandler,
-			pointerdown: [selectionHandler, precisePointHandler, precisePointMapHandler, furnitureHandler],
-			pointermove: [precisePointHandler, furnitureHandler],
-			pointerup: [precisePointHandler, precisePointMapHandler, furnitureHandler],
-			keydown: [controlKeyHandler, zoomKeysHandler, undoRedoHandler],
-			dblclick: [precisePointMapHandler, furnitureHandler],
-			select: selectHandler
-		}
-	}
 }
 
 // pointerdown
@@ -1295,5 +1297,3 @@ function precision(a) {
 	}
 	return p
 }
-
-window.onload = init

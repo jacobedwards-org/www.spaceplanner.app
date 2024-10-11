@@ -1,6 +1,8 @@
 import * as etc from "/lib/etc.js"
 import * as api from "/lib/api.js"
 
+etc.handle_wrap(main)
+
 function main() {
         if (!api.authorized()) {
                 window.location.href = "/login"
@@ -15,5 +17,3 @@ function main() {
 			etc.error("There was an unexpected error.")
 		})
 }
-
-main()

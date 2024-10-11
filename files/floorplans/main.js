@@ -5,6 +5,8 @@ import * as ui from "/lib/ui.js"
 // These are in the order they should appear
 const editables = [ "name", "address", "synopsis" ]
 
+etc.handle_wrap(init)
+
 function init() {
 	etc.authorize()
 	etc.bar()
@@ -26,6 +28,7 @@ function init() {
 
 	api.fetch("GET", "floorplans/:user")
 		.then(show_floorplans)
+		.catch(etc.error)
 }
 
 function listview() {
@@ -291,5 +294,3 @@ function show_floorplans(floorplans) {
 		list.append(create_floorplan_item(floorplans[i]))
 	}
 }
-
-window.onload = etc.handle_wrap(init)

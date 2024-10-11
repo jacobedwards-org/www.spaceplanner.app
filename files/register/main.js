@@ -2,6 +2,8 @@ import * as api from "/lib/api.js"
 import * as etc from "/lib/etc.js"
 import * as ui from "/lib/ui.js"
 
+etc.handle_wrap(init)
+
 function init() {
 	if (api.authorized()) {
 		// Maybe don't do this?
@@ -47,5 +49,3 @@ function init() {
 			})
 	})
 }
-
-window.onload = etc.handle_wrap(init)

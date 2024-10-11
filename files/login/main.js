@@ -14,4 +14,4 @@ function init() {
 	document.body.appendChild(ui.login({ callback: function() { window.location.href = default_page } }))
 }
 
-window.onload = etc.handle_wrap(init)
+etc.handle_wrap(init)

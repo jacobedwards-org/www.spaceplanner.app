@@ -1,6 +1,8 @@
 import * as api from "/lib/api.js"
 import * as etc from "/lib/etc.js"
 
+etc.handle_wrap(main)
+
 function main() {
 	api.fetch("GET", "users/:user/email/code")
 		.then(function() {
@@ -111,5 +113,3 @@ function resendForm() {
 
 	return form
 }
-
-main()

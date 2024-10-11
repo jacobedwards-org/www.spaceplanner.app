@@ -2,6 +2,8 @@ import * as api from "/lib/api.js"
 import * as etc from "/lib/etc.js"
 import * as ui from "/lib/ui.js"
 
+etc.handle_wrap(init)
+
 function init() {
 	etc.authorize()
 	etc.bar()
@@ -232,5 +234,3 @@ function get_info_element(key) {
 
 	return undefined
 }
-
-window.onload = etc.handle_wrap(init)

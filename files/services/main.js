@@ -1,6 +1,8 @@
 import * as etc from "/lib/etc.js"
 import * as api from "/lib/api.js"
 
+etc.handle_wrap(main)
+
 function main() {
 	let wait = document.body.appendChild(document.createElement("p"))
 	wait.appendChild(document.createTextNode("Please wait..."))
@@ -97,5 +99,3 @@ function durationString(price) {
 	}
 	return String(price.intervalCount) + "mo"
 }
-
-main()
