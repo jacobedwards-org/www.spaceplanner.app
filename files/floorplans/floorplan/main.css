@@ -38,6 +38,10 @@ header > .toolbar > li {
 	padding-right: 1em;
 }
 
+#selOps > * {
+	margin: 0 .5em;
+}
+
 svg {
 	flex: 1;
 	border:  ridge thin;
