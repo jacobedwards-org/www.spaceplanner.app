@@ -28,6 +28,10 @@ function main() {
 					})
 			}
 		})
+		.catch(function() {
+			// Assume they need to signup for now
+			window.location.href = "/register"
+		})
 }
 
 function chooseService(service) {
