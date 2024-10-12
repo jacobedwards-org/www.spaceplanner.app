@@ -985,7 +985,7 @@ function furnitureMenuX(editor, pointOrID) {
 		items[keys.variety].input.value = editor.varietyFrom(params)
 		fromVariety(items[keys.type].input.value, init ? null : defKey(vars))
 
-		c.addEventListener("change", function(ev) {
+		c.addEventListener("input", function(ev) {
 			fromVariety(items[keys.type].input.value, ev.target.value)
 		})
 	}
@@ -1007,13 +1007,13 @@ function furnitureMenuX(editor, pointOrID) {
 	items[keys.type].input.value = params.type
 	newVariety(true)
 	newStyle(params.type)
-	items[keys.type].input.addEventListener("change", function(ev) {
+	items[keys.type].input.addEventListener("input", function(ev) {
 		newVariety()
 	})
-	menu.addEventListener("change", function(ev) {
+	menu.addEventListener("input", function(ev) {
 		handled(ev)
 		try {
-			console.debug("furnitureMenu.change(ev)", ev.target.name, ev.target.value)
+			console.debug("furnitureMenu.input(ev)", ev.target.name, ev.target.value)
 			if (ev.target.name === "width" || ev.target.name === "depth") {
 				let u = unitInput(editor, ev.target)
 				if (u == undefined) {
