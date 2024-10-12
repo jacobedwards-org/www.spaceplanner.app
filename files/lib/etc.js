@@ -110,7 +110,7 @@ export function error(message, on) {
                 on = document.body
         }
 
-        let err_elem = on.parentElement.querySelector(":scope > .error")
+        let err_elem = on.parentElement.querySelector(".error")
         if (err_elem) {
                 err_elem.textContent = message
         } else {
