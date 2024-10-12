@@ -172,3 +172,7 @@ a.pop {
 	color: white;
 	border: thin solid black;
 }
+
+dd, p {
+	max-width: 65ch;
+}
