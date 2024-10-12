@@ -65,7 +65,15 @@ function init() {
 	}
 
 	let floorplan
-	if (floorplan_id !== "flp_demo") {
+	if (floorplan_id === "flp_demo") {
+		let f = document.body.appendChild(document.createElement("footer"))
+		f.id = "demo_footer"
+		f.append(document.createTextNode("Missing something? Click "))
+		let a = f.appendChild(document.createElement("a"))
+		a.append(document.createTextNode("here"))
+		a.href = "/features/upcoming.html"
+		f.append(document.createTextNode(" to see upcoming features or put in a request"))
+	} else {
 		etc.authorize()
 		floorplan = { user: localStorage.getItem("username"), id: floorplan_id }
 	}
