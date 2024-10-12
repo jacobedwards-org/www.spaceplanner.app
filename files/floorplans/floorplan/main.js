@@ -1019,6 +1019,12 @@ function furnitureMenuX(editor, pointOrID) {
 				if (u == undefined) {
 					return
 				}
+				if (u <= 0) {
+					ev.target.setCustomValidity(ui.capitalize(ev.target.name) + " must be greater than zero")
+				} else {
+					ev.target.setCustomValidity("")
+				}
+				ev.target.reportValidity()
 				params[ev.target.name] = u
 				items[keys.variety].input.value = editor.varietyFrom(params)
 			} else {
