@@ -35,8 +35,7 @@ export function button(name, memo, icon, options) {
 	if (icon == null) {
 		attrs = {
 			type: "button",
-			value: name,
-			class: "big"
+			value: name
 		}
 	} else {
 		attrs = {

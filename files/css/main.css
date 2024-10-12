@@ -119,10 +119,6 @@ button, input[type="submit"] {
 	font-size: large;
 }
 
-button.big, input[type="submit"].big {
-	padding: .25em;
-}
-
 form.credentials {
 	width: fit-content;
 	max-width: 60ch;
