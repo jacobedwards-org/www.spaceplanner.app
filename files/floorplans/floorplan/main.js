@@ -118,14 +118,6 @@ function init() {
 			etc.error("That's unexpected. Unable to get furniture definitions")
 		})
 
-	let push = ui.button("Push", "Push updates", "arrow-up",
-		{ handlers: { click: function() { editor.backend.push(); notify("Pushed floorplan", "pushpull") } } })
-	let pull = ui.button("Pull", "Pull updates", "arrow-down",
-		{ handlers: { click: function() { editor.backend.pull(); notify("Pulled floorplan", "pushpull") } } })
-	let pushpull = document.createElement("li")
-	pushpull.appendChild(pull)
-	pushpull.appendChild(push)
-
 	for (let mode in modes) {
 		editor.addMode(mode, modes[mode])
 	}
@@ -177,7 +169,6 @@ function init() {
 	}})
 
 	toolbar.append(undoRedo)
-	toolbar.append(pushpull)
 	toolbar.append(item(addFurn))
 
 	if (debug) {
