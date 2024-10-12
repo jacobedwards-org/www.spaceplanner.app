@@ -33,7 +33,11 @@ export function button(name, memo, icon, options) {
 	let button = input(name, memo, options)
 	let attrs
 	if (icon == null) {
-		attrs = { type: "button", value: name }
+		attrs = {
+			type: "button",
+			value: name,
+			class: "big"
+		}
 	} else {
 		attrs = {
 			alt: name,
