@@ -951,7 +951,7 @@ function furnitureMenuX(editor, pointOrID) {
 		menuItem("variety", "Variety", { enum: editor.furniture_types[params.type].varieties, attributes: { value: editor.varietyFrom(params) } }),
 		menuItem("width", "Width", { attributes: { value: userLength(editor, params.width), required: true } }),
 		menuItem("depth", "Depth", { attributes: { value: userLength(editor, params.depth), required: true } }),
-		menuItem("angle", "Angle", { attributes: { value: params.angle ?? 0, min: 0, max: 359, type: "number", required: true } })
+		menuItem("angle", "Angle", { attributes: { value: params.angle ?? 0, min: 0, max: 359, step: 1, type: "number", required: true } })
 	]
 	let keys = {}
 	for (let i in items) {
