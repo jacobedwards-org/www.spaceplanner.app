@@ -6,6 +6,15 @@
    viewBox="0 0 100 100"
    xmlns="http://www.w3.org/2000/svg"
    xmlns:svg="http://www.w3.org/2000/svg">
-	<line x1="0" y1="0" x2="65" y2="65" stroke="grey" stroke-width="40"/>
-	<circle cx="65" cy="65" r="30" fill="blue"/>
+	<style>circle{
+		r: 15;
+		stroke: "white";
+		stroke-width: 5;
+	}</style>
+	<!-- <rect x="15" y="15" width="70" height="70" fill="white"/> -->
+	<polyline points="15,15 85,15 85,85, 15,85 15,15" stroke-width="15" stroke="black" fill="none"/>
+	<circle cx="15" cy="15" fill="grey"/>
+	<circle cx="85" cy="15" fill="grey"/>
+	<circle cx="15" cy="85" fill="grey"/>
+	<circle cx="85" cy="85" fill="blue"/>
 </svg>
