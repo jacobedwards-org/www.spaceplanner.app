@@ -97,7 +97,7 @@ function init() {
 	let draw = SVG()
 		.addTo("#editor")
 		.panZoom({
-			panButton: buttons.right,
+			panButton: buttons.left,
 			// These need to be set using device size
 			zoomMin: .001,
 			zoomMax: .5,
