@@ -175,3 +175,22 @@ export function rad(deg) {
 	return deg * Math.PI / 180
 }
 
+export function length(a, b, length) {
+	if (!length) {
+		return a.distanceTo(b)
+	}
+
+	/*
+	 * Not sure if a zero length line is worth supporting, it doesn't
+	 * really work naturally. To support it you would need another
+	 * store of information in addition to the vector
+	 */
+	if (length <= 0) {
+		throw new Error("Zero length line wouldn't be able to be lengthened again")
+	}
+	/*
+	 * Basically make it's origin zero, normalize it to be from
+	 * 0-1, multiply it by length, then add the origin back to it.
+	 */
+	return b.sub(a).normalize().multiplyScalar(length).add(a)
+}

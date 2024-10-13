@@ -4,7 +4,7 @@ import * as ui from "/lib/ui.js"
 import * as etc from "/lib/etc.js"
 import * as lib from "./editor.js"	// Confusing, but I don't want to fix variable conflict
 import { Vector2 } from "/lib/github.com/mrdoob/three.js/math/Vector2.js"
-import "./geometry.js"
+import * as geometry from "./geometry.js"
 import * as backend from "./backend.js"
 import * as api from "/lib/api.js"
 
@@ -535,7 +535,7 @@ function precisePointHandler(event, editor, state) {
 				return
 			}
 			if (len> 0) {
-				vecs[1] = setLength(vecs[0], vecs[1], len)
+				vecs[1] = geometry.length(vecs[0], vecs[1], len)
 				updatePoint(vecs[1], { leave_input: true })
 			}
 		})
@@ -1212,22 +1212,6 @@ function snap(point, on, directions) {
 		on.x + dist * Math.cos(angle),
 		on.y + dist * Math.sin(angle)
 	)
-}
-
-function setLength(a, b, length) {
-	/*
-	 * Not sure if a zero length line is worth supporting, it doesn't
-	 * really work naturally. To support it you would need another
-	 * store of information in addition to the vector
-	 */
-	if (length <= 0) {
-		throw new Error("Zero length line wouldn't be able to be lengthened again")
-	}
-	/*
-	 * Basically make it's origin zero, normalize it to be from
-	 * 0-1, multiply it by length, then add the origin back to it.
-	 */
-	return b.sub(a).normalize().multiplyScalar(length).add(a)
 }
 
 function preventDefaultHandler(event) {
