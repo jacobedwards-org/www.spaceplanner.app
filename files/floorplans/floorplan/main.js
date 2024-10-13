@@ -322,15 +322,16 @@ function selectHandler(event, editor, state) {
 		}
 	}
 
-	let fmaps = ids.filter(function(item) { return backend.idType(item) === "furmap" })
-	if (fmaps.length !== 1) {
-		document.querySelectorAll(".furniture_menu").forEach(
-			function(e) {
-				e.remove()
-			}
-		)
-	} else {
-		furnitureMenu(editor, fmaps[0])
+	if (groups.furmaps) {
+		if (groups.furmaps.length !== 1) {
+			document.querySelectorAll(".furniture_menu").forEach(
+				function(e) {
+					e.remove()
+				}
+			)
+		} else {
+			furnitureMenu(editor, groups.furmaps[0])
+		}
 	}
 
 	if (old) {
