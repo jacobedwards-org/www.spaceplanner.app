@@ -953,6 +953,10 @@ function furnitureMenuX(editor, pointOrID) {
 		editor.findObj(id).select()
 	}
 
+	/* We don't want to update these */
+	delete params.x
+	delete params.y
+
 	let items = [
 		menuItem("name", "Name", { attributes: { value: params.name ?? "" } }),
 		menuItem("type", "Type", { break: false, enum: editor.furniture_types, attributes: { value: params.type, required: true } }),
