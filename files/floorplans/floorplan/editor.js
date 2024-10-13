@@ -1,6 +1,7 @@
 import { default as SVG } from "/lib/github.com/svgdotjs/svg.js/svg.js"
 import * as backend from "./backend.js"
 import { Vector2 } from "/lib/github.com/mrdoob/three.js/math/Vector2.js"
+import * as geometry from "/lib/geometry.js"
 
 const selectEvent = new Event("select")
 const unselectEvent = new Event("unselect")
@@ -692,15 +693,12 @@ export class FloorplanEditor {
 							a = b
 							b = t
 						}
-						const rad = function(deg) {
-							return deg * Math.PI / 180
-						}
 
 						let deg = 90
 						if (value.door_swing.at(1) === "-") {
 							deg = -deg
 						}
-						let e = b.clone().rotateAround(a, rad(deg))
+						let e = b.clone().rotateAround(a, geometry.rad(deg))
 						let r = a.distanceTo(b)
 						let d = `M ${b.x} ${b.y} A ${r} ${r} ${deg} 0 ${deg < 0 ? 0 : 1} ${e.x} ${e.y} L ${a.x} ${a.y} Z`
 

@@ -170,3 +170,8 @@ SVG.extend(SVG.Box, {
 		return this.closestEdge(x, y).distanceTo(new Vector2(x, y))
 	}
 })
+
+export function rad(deg) {
+	return deg * Math.PI / 180
+}
+
