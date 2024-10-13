@@ -1015,10 +1015,7 @@ function furnitureMenuX(editor, pointOrID) {
 	let menu = makeMenu(items)
 	items[keys.type].input.value = params.type
 	newVariety(true)
-	newStyle(params.type)
-	items[keys.type].input.addEventListener("input", function(ev) {
-		newVariety()
-	})
+	newStyle()
 	menu.addEventListener("input", function(ev) {
 		handled(ev)
 		try {
@@ -1041,6 +1038,10 @@ function furnitureMenuX(editor, pointOrID) {
 					params[ev.target.name] = null
 				} else {
 					params[ev.target.name] = ev.target.value.length === 0 ? null : ev.target.value
+				}
+				if (ev.target.name === "type") {
+					newVariety()
+					newStyle()
 				}
 			}
 			editor.addMappedFurniture(params, id)
