@@ -1,27 +1,22 @@
 /* SVG element CSS */
 
-circle.selected {
+#points > * {
+	fill: lightgrey;
+}
+
+#points > .selected {
 	fill: blue;
 }
 
-line {
+#pointmaps > * {
 	stroke: black;
 }
 
-line.selected {
+#pointmaps > .selected {
 	stroke: blue;
 }
 
-.preview.wall {
-	stroke: grey;
-}
-
- 
-line.door {
+#pointmaps > .door {
 	stroke-width: 140;
 	stroke-dasharray: 400 100;
-}
-
-.point {
-	fill: lightgrey;
 }
