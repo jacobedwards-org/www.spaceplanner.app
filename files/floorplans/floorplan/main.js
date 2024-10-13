@@ -322,15 +322,15 @@ function selectHandler(event, editor, state) {
 		}
 	}
 
-	if (groups.furmaps) {
-		if (groups.furmaps.length !== 1) {
+	if (groups.furmap) {
+		if (groups.furmap.length !== 1) {
 			document.querySelectorAll(".furniture_menu").forEach(
 				function(e) {
 					e.remove()
 				}
 			)
 		} else {
-			furnitureMenu(editor, groups.furmaps[0])
+			furnitureMenu(editor, groups.furmap[0])
 		}
 	}
 
