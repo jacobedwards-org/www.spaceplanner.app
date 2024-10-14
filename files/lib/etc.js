@@ -106,6 +106,8 @@ function keep_authorized() {
 }
 
 export function error(message, on) {
+	console.error("etc.error", message)
+
         if (!on || !on.parentElement) {
                 on = document.body
         }
