@@ -462,6 +462,9 @@ export class FloorplanBackend {
 				parse: parseInt
 			}
 		})
+		if (params.x === params.y) {
+			throw new Error(`${params.x}:${params.y}: Cannot map a point to itself`)
+		}
 		return this.addData(id ?? "points", p)
 	}
 
