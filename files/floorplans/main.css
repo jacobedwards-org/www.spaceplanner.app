@@ -1,5 +1,5 @@
-#floorplans:not(.grid) > li {
-	min-width: 10em;
+.floorplan > header > input[type="button"] {
+	float: right;
 }
 
 #floorplans.grid {
@@ -61,9 +61,21 @@
 	max-width: 32rem;
 }
 
+.name_div {
+	display: flex;
+	align-items: center;
+	margin-bottom: .25em;
+}
+
+.name_div > input[type="image"] {
+	border: none;
+}
+
 .fp_name {
 	font-size: large;
 	margin-bottom: .25em;
+	display: inline;
+	
 }
 
 .fp_address {
@@ -82,7 +94,7 @@
 
 /* Maybe I should give these elements two classes: fp_metadata and
  * one of the following: */
-input.fp_name, input.fp_synopsis, input.fp_address {
+input.fp_synopsis, input.fp_address {
 	display: block;
 	max-width: 60%;
 }

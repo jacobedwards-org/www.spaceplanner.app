@@ -44,7 +44,7 @@ function gridview() {
 function commit_editable_floorplan_func(element, data) {
 	return function () {
 		let patches = []
-		let fields = Array.from(element.querySelectorAll("header > input"))
+		let fields = Array.from(element.querySelectorAll('input.fp_name, input.fp_address, input.fp_synopsis'))
 		let updated = false
 		let newdata = {}
 		for (let i in fields) {
@@ -135,7 +135,11 @@ function editable_floorplan_func(element, data) {
 				input = ui.input(editables[i], memo)
 				input.setAttribute("class", c)
 				if (prev) {
-					prev.after(input)
+					if (prev.classList.contains("fp_name")) {
+						parent.append(input)
+					} else {
+						prev.after(input)
+					}
 				} else {
 					parent.append(input)
 				}
@@ -214,14 +218,8 @@ function create_floorplan(floorplan) {
 	root.classList.add("class", "floorplan")
 
 	let aside = document.createElement("aside")
-
 	if (floorplan) {
-		aside.append(
-			ui.toggle(
-				{ button: ui.button("Edit", "Edit floorplan", "create"), func: editable_floorplan_func(root, floorplan) },
-				{ button: ui.button("Save", "Save floorplan", "save"), func: commit_editable_floorplan_func(root, floorplan) },
-			)
-		)
+		aside.append(ui.button("Edit", "Open floorplan editor", "create", { handlers: { click: function() { document.location.href = `./floorplan/?id=${floorplan.id}` } } }))
 		aside.append(ui.button("Copy", "Copy floorplan", "copy", { handlers: { click: function() { copy_floorplan(floorplan) } } }))
 		aside.append(ui.button("Delete", "Delete floorplan", "trash", { handlers: { click: ask_delete_floorplan_func(root, floorplan) } }))
 	} else {
@@ -245,7 +243,13 @@ function create_floorplan(floorplan) {
 		if (!floorplan.name) {
 			throw new Error("Expected floorplan name")
 		}
-		header.append(create_field.name(floorplan.name, floorplan.id))
+		let nameDiv = header.appendChild(document.createElement("div"))
+		nameDiv.classList.add("name_div")
+		nameDiv.append(create_field.name(floorplan.name, floorplan.id))
+		nameDiv.append(ui.toggle(
+			{ button: ui.button("Edit", "Edit floorplan metadata", "create"), func: editable_floorplan_func(root, floorplan) },
+			{ button: ui.button("Save", "Save floorplan metadata", "save"), func: commit_editable_floorplan_func(root, floorplan) },
+		))
 
 		if (floorplan.address) {
 			header.append(create_field.address(floorplan.address))
