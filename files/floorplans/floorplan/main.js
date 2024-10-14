@@ -302,9 +302,11 @@ function selectHandler(event, editor, state) {
 		}
 		if (groups.pntmap.length > 0) {
 			const changeTypes = function(newvalue) {
+				editor.finishAction()
 				for (let id in maps) {
 					editor.mapPoints({ type: newvalue }, id)
 				}
+				editor.finishAction()
 			}
 			let current
 			for (let id in maps) {
