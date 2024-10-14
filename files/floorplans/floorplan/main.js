@@ -284,17 +284,6 @@ function selectHandler(event, editor, state) {
 		)
 	}
 
-	if (state.maplength) {
-		state.maplength.remove()
-		delete state.maplength
-	}
-	if (groups.pntmap && cnt === 1) {
-		state.maplength = document.body.querySelector(".toolbar")
-			.appendChild(document.createElement("li"))
-		state.maplength.appendChild(document.createTextNode("Length: " +
-		    userLength(editor, editor.pointmapLength(groups.pntmap[0]))))
-	}
-
 	if (groups.pntmap !== undefined || groups.pnt !== undefined) {
 		const getMaps = function() {
 			let maps = {}
@@ -335,6 +324,12 @@ function selectHandler(event, editor, state) {
 		c.appendChild(
 			selector(editor.backend.params.pointmaps.types, changeTypes, { current, text: "Type:" })
 		)
+	}
+
+	if (groups.pntmap && cnt === 1) {
+		c.appendChild(document.createElement("li"))
+			.appendChild(document.createTextNode("Length: " +
+		    userLength(editor, editor.pointmapLength(groups.pntmap[0]))))
 	}
 
 	if (groups.furmap) {
