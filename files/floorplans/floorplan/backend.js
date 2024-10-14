@@ -309,6 +309,7 @@ class BackendHistory {
 
 export class FloorplanBackend {
 	constructor(floorplan, options) {
+		let backend = this
 		if (!options) {
 			options = {}
 		}
@@ -321,6 +322,18 @@ export class FloorplanBackend {
 		if (options.callbacks) {
 			this.callbacks = options.callbacks
 		}
+
+		this.params = {}
+		this.initialized = api.fetch("GET", "pointmaps")
+			.then(function(resp) {
+				backend.params.pointmaps = resp
+			})
+		this.initialized = Promise.all([this.initialized,
+			api.fetch("GET", "furniture")
+				.then(function(furniture) {
+					backend.params.furniture = furniture
+				})
+			])
 
 		// Cache for server (both from and to)
 		this.cache = {
@@ -494,7 +507,13 @@ export class FloorplanBackend {
 			type: {
 				required: true,
 				validate: function(type) {
-					return type === "wall" || type === "door" || type === "window" || type === "railing"
+					let types = backend.params.pointmaps.types
+					for (let i = 0; i < types.length; ++i) {
+						if (type === types[i]) {
+							return true
+						}
+					}
+					return false
 				}
 			},
 			a: {

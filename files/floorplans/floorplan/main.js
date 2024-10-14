@@ -49,15 +49,14 @@ let State = {
 	lastClick: null
 }
 
+const debug = (new URLSearchParams(new URL(document.URL).search)).get("debug") != undefined
+
 // turn off bubbling
 const escapeEvent = new Event("escape")
 
 etc.handle_wrap(init)
 
 function init() {
-	// Just to get stuff out of the way for now
-	let debug = (new URLSearchParams(new URL(document.URL).search)).get("debug") != undefined
-
 	let floorplan_id = (new URLSearchParams(new URL(document.URL).search)).get("id")
 	if (!floorplan_id) {
 		document.location.href = "/floorplans"
@@ -116,15 +115,15 @@ function init() {
 			}
 		}
 	})
+
+	editor.initialized
+		.then(function() { run(editor) })
+		.catch(etc.error)
+}
+
+function run(editor) {
 	editor.useUnits("imperial")
 	editor.draw.hide()
-	api.fetch("GET", "furniture")
-		.then(function(furniture) {
-			editor.furniture_types = furniture
-		})
-		.catch(function(err) {
-			etc.error("That's unexpected. Unable to get furniture definitions")
-		})
 
 	for (let mode in modes) {
 		editor.addMode(mode, modes[mode])
@@ -317,7 +316,7 @@ function selectHandler(event, editor, state) {
 				}
 			}
 			c.appendChild(
-				selector({ wall: true, door: true }, changeTypes, { current, text: "Type:" })
+				selector(editor.backend.params.pointmaps.types, changeTypes, { current, text: "Type:" })
 			)
 		}
 	}

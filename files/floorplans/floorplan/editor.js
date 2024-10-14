@@ -374,6 +374,8 @@ export class FloorplanEditor {
 		this.draw.on("select", function(event) {
 			editor.selection = event.detail.selection
 		})
+
+		this.initialized = this.backend.initialized
 	}
 
 	useUnits(system) {
@@ -823,10 +825,10 @@ export class FloorplanEditor {
 	}
 
 	varietyFrom(params) {
-		if (this.furniture_types[params.type] == null) {
+		if (this.backend.params.furniture[params.type] == null) {
 			throw new Error(params.type + ": Invalid furniture type")
 		}
-		let vars = this.furniture_types[params.type].varieties
+		let vars = this.backend.furniture[params.type].varieties
 		for (let v in vars) {
 			if (params.width == vars[v].width && params.depth == vars[v].depth) {
 				return v
