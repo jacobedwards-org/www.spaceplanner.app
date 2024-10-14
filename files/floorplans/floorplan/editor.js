@@ -519,6 +519,10 @@ export class FloorplanEditor {
 		return this.backend.addPoint(point)
 	}
 
+	movePoint(point, coordinate) {
+		return this.backend.addPoint(coordinate, getID(point, "points"))
+	}
+
 	remove(...elements) {
 		let later = []
 
@@ -547,10 +551,6 @@ export class FloorplanEditor {
 		}
 
 		this.backend.removeOrphans()
-	}
-
-	movePoint(point, coordinate) {
-		return this.backend.replacePoint(getID(point, "points"), coordinate)
 	}
 
 	pointAt(point) {

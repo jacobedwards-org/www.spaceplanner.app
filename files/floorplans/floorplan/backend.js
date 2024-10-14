@@ -451,20 +451,18 @@ export class FloorplanBackend {
 		delete this.cache[t][id]
 	}
 
-	addPoint(point, options) {
-		options = options ?? {}
-
-		if (typeof point.x !== "number" || typeof point.y !== "number") {
-			throw new Error(`Point's x (${point.x}) and y (${point.y}) are not numbers`)
-		}
-		return this.addData(options.replace ?? "points",
-			{ x: Math.round(point.x), y: Math.round(point.y) }, options)
-	}
-
-	replacePoint(id, newpoint, options) {
-		options = options ?? {}
-		options.replace = id
-		return this.addPoint(newpoint, options)
+	addPoint(params, id) {
+		const p = this.updatedObject(params, id, {
+			x: {
+				required: true,
+				parse: parsePos
+			},
+			y: {
+				required: true,
+				parse: parsePos 
+			}
+		})
+		return this.addData(id ?? "points", p)
 	}
 
 	removePoint(id, options) {
@@ -494,7 +492,6 @@ export class FloorplanBackend {
 		const validPoint = function(id) {
 			return idType(id) === "pnt" && backend.obj(id)
 		}
-
 		const m = this.updatedObject(params, id, {
 			type: {
 				required: true,
@@ -534,46 +531,28 @@ export class FloorplanBackend {
 	}
 
 	addFurniture(params, id) {
-		params = params ?? {}
+		const f = this.updatedObject(params, id, {
+			width: {
+				required: true,
+				parser: parseSize
+			},
+			depth: {
+				required: true,
+				parser: parseSize
+			},
+			type: {
+				required: true,
+				type: "string"
+			},
+			name: {
+				type: "string"
+			},
+			// Could do with verifying this
+			style: {
+				type: "string"
+			}
+		})
 
-		//let f = id ? this.reqObj(id) : {}
-		let f = {}
-
-		if (params.width != undefined) {
-			f.width = Math.round(params.width)
-			if (f.width <= 0) {
-				throw new Error(params.width + ": rounded width must be greater than zero")
-			}
-		}
-		if (params.depth != undefined) {
-			f.depth = Math.round(params.depth)
-			if (f.depth <= 0) {
-				throw new Error(params.depth + ": rounded depth must be greater than zero")
-			}
-		}
-		if (params.name != undefined) {
-			if (typeof params.name !== "string") {
-				throw new Error(params.name + ": Expected string name")
-			}
-			f.name = params.name
-		}
-		if (params.type != undefined) {
-			if (typeof params.type !== "string") {
-				throw new Error("Invalid type")
-			}
-			f.type = params.type
-		}
-
-		if (params.style != undefined) {
-			if (typeof params.style !== "string") {
-				throw new Error(params.style + ": Invalid style")
-			}
-			f.style = params.style
-		}
-
-		if (f.width == null || f.depth == null || f.type == null) {
-			throw new Error("Missing required parameters")
-		}
 		return this.addData(id ?? "furniture", f)
 	}
 
@@ -588,53 +567,41 @@ export class FloorplanBackend {
 
 	mapFurniture(params, id) {
 		let backend = this
-		const validInt = function(input, cur) {
-			let x = Math.round(input ?? cur)
-			if (isNaN(x)) {
-				throw new Error(input + " is NaN")
-			}
-			return x
-		}
-		let parsers = {
-			x: validInt,
-			y: validInt,
-			angle: function(input, cur) {
-				if (input == undefined) {
-					return cur ?? 0
-				}
-				let x = validInt(input)
-				if (x < 0 || x >= 360) {
-					throw new Error(input + ": Angle must be between 0 and 359 degrees")
-				}
-				return x
-			},
-			layout: function(input, cur) {
-				if (input == undefined) {
-					return cur ?? "1"
-				}
-				if (typeof input !== "string") {
-					throw new Error(input + ": Layout should be a string")
-				}
-				return input
-			},
-			furniture_id: function(id, cur) {
-				if (id == undefined) {
-					if (cur == null) {
-						throw new Error("Missing furniture id")
-					}
-					return cur
-				}
-				if (backend.obj(id) == undefined) {
-					throw new Error("invalid furniture id for furniture map")
-				}
-				return id
-			}
-		}
 
-		let fm = id ? this.reqObj(id) : {}
-		for (let param in parsers) {
-			fm[param] = parsers[param](params[param], fm ? fm[param] : undefined)
-		}
+		let fm = this.updatedObject(params, id, {
+			x: {
+				required: true,
+				parse: parsePos
+			},
+			y: {
+				required: true,
+				parse: parsePos
+			},
+			angle: {
+				required: true,
+				default: 0,
+				parse: function(input) {
+					let angle = validInt(input)
+					if (angle < 0 || angle >= 360) {
+						throw new Error(angle + ": Angle must be between 0 and 359 degrees")
+					}
+					return angle
+				}
+			},
+			layout: {
+				required: true,
+				default: "1",
+				validate: function(input) {
+					return typeof input === "string"
+				}
+			},
+			furniture_id: {
+				required: true,
+				validate: function(id) {
+					return backend.cache.furniture_maps[id] != null
+				}
+			}
+		})
 
 		return this.addData(id ?? "furniture_maps", fm)
 	}
@@ -651,13 +618,27 @@ export class FloorplanBackend {
 	updatedObject(params, id, vd) {
 		let obj = id ? structuredClone(this.reqObj(id)) : {}
 
+		params = structuredClone(params)
 		for (let k in vd) {
 			let vdk = vd[k]
-			if (vdk.required && params[k] === null) {
-				throw new Error(`Cannot delete required parameter ("${k}")`)
-			}
 			if (params[k] === undefined) {
+				if (obj[k] !== undefined || vdk.default === undefined) {
+					continue
+				}
+				params[k] = vdk.default
+					
+			}
+			if (params[k] === null) {
+				if (vdk.required) {
+					throw new Error(`Cannot delete required parameter ("${k}")`)
+				}
+				delete obj[k]
 				continue
+			}
+			if (typeof vdk.type === "string") {
+				if (typeof params[k] !== vdk.type) {
+					throw new Error(`Invalid value for "${k}" parameter (type was ${typeof params[k]} when expecting ${vdk.type}`)
+				}
 			}
 			if (typeof vdk.parse === "function") {
 				obj[k] = vdk.parse(params[k])
@@ -666,8 +647,8 @@ export class FloorplanBackend {
 					throw new Error(`Invalid value for "${k}" parameter ("${params[k]}")`)
 				}
 				obj[k] = params[k] 
-			} else {
-				throw new Error(`"${k}" parameter missing validate or parse function`)
+			} else if (typeof vdk.type !== "string") {
+				throw new Error(`"${k}" parameter missing type constraint, or validate or parse function`)
 			}
 		}
 
@@ -1074,4 +1055,20 @@ export function parsePath(path) {
 		throw new Error(path + ": Invalid path for type")
 	}
 	return idString(id)
+}
+
+function parseSize(size) {
+	let n = parsePos(size)
+	if (n <= 0) {
+		throw new Error("Size must be greater than 0")
+	}
+	return n
+}
+
+function parsePos(pos) {
+	let n = Math.round(pos)
+	if (isNaN(n)) {
+		throw new Error("Invalid coordinate (NaN)")
+	}
+	return n
 }
