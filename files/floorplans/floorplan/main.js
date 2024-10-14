@@ -1077,6 +1077,9 @@ function furnitureMenuX(editor, pointOrID) {
 				if (ev.target.name === "style" && ev.target.value === "default") {
 					params[ev.target.name] = null
 				} else {
+					if (ev.target.name === "angle") {
+						ev.target.value %= 360
+					}
 					params[ev.target.name] = ev.target.value.length === 0 ? null : ev.target.value
 				}
 				if (ev.target.name === "type") {
