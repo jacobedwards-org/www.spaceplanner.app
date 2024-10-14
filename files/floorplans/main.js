@@ -211,7 +211,7 @@ function create_floorplan_item(floorplan) {
 
 function create_floorplan(floorplan) {
 	let root = document.createElement("div")
-	root.setAttribute("class", "floorplan")
+	root.classList.add("class", "floorplan")
 
 	let aside = document.createElement("aside")
 
@@ -222,8 +222,10 @@ function create_floorplan(floorplan) {
 				{ button: ui.button("Save", "Save floorplan", "save"), func: commit_editable_floorplan_func(root, floorplan) },
 			)
 		)
+		aside.append(ui.button("Copy", "Copy floorplan", "copy", { handlers: { click: function() { copy_floorplan(floorplan) } } }))
 		aside.append(ui.button("Delete", "Delete floorplan", "trash", { handlers: { click: ask_delete_floorplan_func(root, floorplan) } }))
 	} else {
+		root.id = "adder"
 		aside.append(ui.button("Create", "Create floorplan", "create", { handlers: { click: editable_floorplan_create_func(root) } }))
 	}
 
@@ -293,4 +295,47 @@ function show_floorplans(floorplans) {
 	for (let i in floorplans) {
 		list.append(create_floorplan_item(floorplans[i]))
 	}
+}
+
+function insertFloorplan(floorplan) {
+	let e = create_floorplan_item(floorplan)
+
+	let adder = document.getElementById("adder")
+	if (adder) {
+		adder.parentElement.after(e)
+	} else {
+		let list = document.getElementById("floorplans")
+		list.prepend(create_floorplan(floorplan))
+	}
+}
+	
+
+function copy_floorplan(floorplan, name, depth) {
+	if (!name) {
+		name = floorplan.name + " (Copy)"
+	}
+	api.fetch("GET", `floorplans/${floorplan.user}/${floorplan.id}/data`)
+		.then(function(data) {
+			let f = structuredClone(floorplan)
+			f.name = name
+			return api.fetch("POST", "floorplans/:user", f)
+				.then(function(floorplan) {
+					insertFloorplan(floorplan)
+					return api.fetch("PUT", `floorplans/${floorplan.user}/${floorplan.id}/data`, data)
+						.catch(function(err) {
+							api.fetch("DELETE", `floorplans/:user/${floorplan.id}`)
+							throw err
+						})
+				})
+				.catch(function(err) {
+					depth = depth ?? 0
+					if (depth < 10 && err.message.indexOf('violates unique constraint "id"')) {
+						return copy_floorplan(floorplan, name + " (Copy)", depth + 1)
+					} else {
+						etc.error(err)
+						throw err
+					}
+				})
+		})
+	
 }
