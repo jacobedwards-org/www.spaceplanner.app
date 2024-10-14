@@ -981,7 +981,7 @@ function furnitureMenuX(editor, pointOrID) {
 		items[keys.width].input.value = userLength(editor, v.width)
 		params.depth = v.depth
 		items[keys.depth].input.value = userLength(editor, v.depth)
-		editor.addMappedFurniture(params, id)
+		tryUpdate()
 	}
 	const newVariety = function(init) {
 		let vars = editor.furniture_types[items[keys.type].input.value].varieties
@@ -1051,6 +1051,19 @@ function furnitureMenuX(editor, pointOrID) {
 			}
 		}
 	}
+	const tryUpdate = function() {
+			let err = menu.querySelector(".error")
+			if (err) {
+				err.remove()
+			}
+			for (let i in items) {
+				// If invalid, don't even try
+				if (!items[i].input.validity.valid) {
+					return
+				}
+			}
+			editor.addMappedFurniture(params, id)
+	}
 
 	let menu = makeMenu(items)
 	items[keys.type].input.value = params.type
@@ -1087,11 +1100,7 @@ function furnitureMenuX(editor, pointOrID) {
 					newStyle()
 				}
 			}
-			let err = menu.querySelector(".error")
-			if (err) {
-				err.remove()
-			}
-			editor.addMappedFurniture(params, id)
+			tryUpdate()
 		}
 		catch(err) {
 			etc.error(err, menu)
