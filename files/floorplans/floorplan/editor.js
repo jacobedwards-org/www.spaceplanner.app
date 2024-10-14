@@ -659,9 +659,6 @@ export class FloorplanEditor {
 					}
 				},
 				pointmaps: function(id, value) {
-					if (value.type !== "wall" && value.type !== "door") {
-						throw new Error("Only walls and doors currently supported")
-					}
 					let a = editor.backend.obj(value.a)
 					let b = editor.backend.obj(value.b)
 					let wall = editor.draw.findOneMax(byId(id))

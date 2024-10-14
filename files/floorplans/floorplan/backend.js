@@ -328,14 +328,9 @@ export class FloorplanBackend {
 			points: {},
 
 			/*
-			 * { pointMapId: { type: mapType*, from: pointId, to: pointId } }
-			 *
-			 * [*] The only map types I think are needed are wall and door
-			 * 	at the moment.
+			 * { pointMapId: { type: mapType, from: pointId, to: pointId } }
 			 */
 			pointmaps: {},
-
-			// There will be here more later, such as furnature
 
 			/*
 			 * Furniture definitions:
@@ -499,7 +494,7 @@ export class FloorplanBackend {
 			type: {
 				required: true,
 				validate: function(type) {
-					return type === "wall" || type === "door"
+					return type === "wall" || type === "door" || type === "window" || type === "railing"
 				}
 			},
 			a: {

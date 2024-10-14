@@ -353,7 +353,11 @@ function selector(things, select, options) {
 	}
 
 	let list = form.appendChild(document.createElement("ul"))
+	let isArray = Array.isArray(things)
 	for (let thing in things) {
+		if (isArray) {
+			thing = things[thing]
+		}
 		console.debug("selector", options.text ?? "something", thing)
 		let item = list.appendChild(document.createElement("li"))
 		let selector = item
