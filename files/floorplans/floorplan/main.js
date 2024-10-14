@@ -1084,6 +1084,10 @@ function furnitureMenuX(editor, pointOrID) {
 					newStyle()
 				}
 			}
+			let err = menu.querySelector(".error")
+			if (err) {
+				err.remove()
+			}
 			editor.addMappedFurniture(params, id)
 		}
 		catch(err) {
