@@ -622,7 +622,7 @@ export class FloorplanBackend {
 		for (let k in vd) {
 			let vdk = vd[k]
 			if (params[k] === undefined) {
-				if (obj[k] !== undefined || vdk.default === undefined) {
+				if (obj[k] !== undefined || vdk.default == undefined) {
 					continue
 				}
 				params[k] = vdk.default
@@ -639,6 +639,7 @@ export class FloorplanBackend {
 				if (typeof params[k] !== vdk.type) {
 					throw new Error(`Invalid value for "${k}" parameter (type was ${typeof params[k]} when expecting ${vdk.type}`)
 				}
+				obj[k] = params[k]
 			}
 			if (typeof vdk.parse === "function") {
 				obj[k] = vdk.parse(params[k])
@@ -646,14 +647,15 @@ export class FloorplanBackend {
 				if (!vdk.validate(params[k])) {
 					throw new Error(`Invalid value for "${k}" parameter ("${params[k]}")`)
 				}
-				obj[k] = params[k] 
+				obj[k] = params[k]
 			} else if (typeof vdk.type !== "string") {
 				throw new Error(`"${k}" parameter missing type constraint, or validate or parse function`)
 			}
 		}
 
 		for (let k in vd) {
-			if (vd[k].required && obj[k] == null) {
+			if (vd[k].required && obj[k] === undefined) {
+				console.warn(params, obj)
 				throw new Error(`Cannot omit required parameter ("${k}")`)
 			}
 		}
