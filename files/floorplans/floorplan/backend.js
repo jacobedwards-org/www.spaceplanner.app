@@ -455,11 +455,11 @@ export class FloorplanBackend {
 		const p = this.updatedObject(params, id, {
 			x: {
 				required: true,
-				parse: parsePos
+				parse: parseInt
 			},
 			y: {
 				required: true,
-				parse: parsePos 
+				parse: parseInt
 			}
 		})
 		return this.addData(id ?? "points", p)
@@ -534,11 +534,11 @@ export class FloorplanBackend {
 		const f = this.updatedObject(params, id, {
 			width: {
 				required: true,
-				parser: parseSize
+				parse: parseSize
 			},
 			depth: {
 				required: true,
-				parser: parseSize
+				parse: parseSize
 			},
 			type: {
 				required: true,
@@ -571,17 +571,17 @@ export class FloorplanBackend {
 		let fm = this.updatedObject(params, id, {
 			x: {
 				required: true,
-				parse: parsePos
+				parse: parseInt
 			},
 			y: {
 				required: true,
-				parse: parsePos
+				parse: parseInt
 			},
 			angle: {
 				required: true,
 				default: 0,
 				parse: function(input) {
-					let angle = validInt(input)
+					let angle = parseInt(input)
 					if (angle < 0 || angle >= 360) {
 						throw new Error(angle + ": Angle must be between 0 and 359 degrees")
 					}
@@ -598,7 +598,7 @@ export class FloorplanBackend {
 			furniture_id: {
 				required: true,
 				validate: function(id) {
-					return backend.cache.furniture_maps[id] != null
+					return idType(id) === "fur" && backend.obj(id)
 				}
 			}
 		})
@@ -1058,17 +1058,17 @@ export function parsePath(path) {
 }
 
 function parseSize(size) {
-	let n = parsePos(size)
+	let n = parseInt(size)
 	if (n <= 0) {
 		throw new Error("Size must be greater than 0")
 	}
 	return n
 }
 
-function parsePos(pos) {
+function parseInt(pos) {
 	let n = Math.round(pos)
 	if (isNaN(n)) {
-		throw new Error("Invalid coordinate (NaN)")
+		throw new Error("Invalid integer (NaN)")
 	}
 	return n
 }
