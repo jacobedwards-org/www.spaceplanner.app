@@ -914,17 +914,11 @@ function furnitureMenuX(editor, pointOrID) {
 	}
 
 	editor.finishAction()
-	let p
 	let id
-	let params
 	if (typeof pointOrID === "string") {
 		id = pointOrID
-		params = editor.backend.reqObj(id)
-		let fp = editor.backend.reqObj(params.furniture_id)
-		for (let k in fp) {
-			params[k] = fp[k]
-		}
 	} else {
+		let p
 		if (pointOrID == null) {
 			p = { x: 0, y: 0 }
 		} else if (typeof pointOrID === "object") {
@@ -939,7 +933,7 @@ function furnitureMenuX(editor, pointOrID) {
 			let s = editor.units.get("inch", 32)
 			v = { width: s, depth: s }
 		}
-		params = {
+		let params = {
 			x: p.x,
 			y: p.y,
 			type,
@@ -949,11 +943,16 @@ function furnitureMenuX(editor, pointOrID) {
 
 		}
 		id = editor.addMappedFurniture(params)
+
 		editor.finishAction()
 		editor.findObj(id).select()
 	}
 
-	/* We don't want to update these */
+	let params = structuredClone(editor.backend.reqObj(id))
+	let fp = editor.backend.reqObj(params.furniture_id)
+	for (let k in fp) {
+		params[k] = fp[k]
+	}
 	delete params.x
 	delete params.y
 
