@@ -828,7 +828,7 @@ export class FloorplanEditor {
 		if (this.backend.params.furniture[params.type] == null) {
 			throw new Error(params.type + ": Invalid furniture type")
 		}
-		let vars = this.backend.furniture[params.type].varieties
+		let vars = this.backend.params.furniture[params.type].varieties
 		for (let v in vars) {
 			if (params.width == vars[v].width && params.depth == vars[v].depth) {
 				return v

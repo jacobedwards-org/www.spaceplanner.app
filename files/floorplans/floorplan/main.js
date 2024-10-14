@@ -937,10 +937,10 @@ function furnitureMenuX(editor, pointOrID) {
 	}
 	const styles = function(type) {
 		let styles = ['default']
-		if (editor.furniture_types[type].styles == null) {
+		if (editor.backend.params.furniture[type].styles == null) {
 			return styles
 		}
-		return styles.concat(editor.furniture_types[type].styles)
+		return styles.concat(editor.backend.params.furniture[type].styles)
 	}
 
 	editor.finishAction()
@@ -955,7 +955,7 @@ function furnitureMenuX(editor, pointOrID) {
 			p = pointOrID
 		}
 		let type = "any"
-		let vars = editor.furniture_types[type].varieties
+		let vars = editor.backend.params.furniture[type].varieties
 		let v
 		if (def(vars)) {
 			v = def(vars)
@@ -988,7 +988,7 @@ function furnitureMenuX(editor, pointOrID) {
 
 	let items = [
 		menuItem("name", "Name", { attributes: { value: params.name ?? "" } }),
-		menuItem("type", "Type", { break: false, enum: editor.furniture_types, attributes: { value: params.type, required: true } }),
+		menuItem("type", "Type", { break: false, enum: editor.backend.params.furniture, attributes: { value: params.type, required: true } }),
 		menuItem("style", "Style"),
 		menuItem("variety", "Variety"),
 		menuItem("width", "Width", { attributes: { value: userLength(editor, params.width), required: true } }),
@@ -1006,7 +1006,7 @@ function furnitureMenuX(editor, pointOrID) {
 			return
 		}
 
-		let v = editor.furniture_types[type].varieties[variety]
+		let v = editor.backend.params.furniture[type].varieties[variety]
 		params.width = v.width
 		items[keys.width].input.value = userLength(editor, v.width)
 		params.depth = v.depth
@@ -1014,7 +1014,7 @@ function furnitureMenuX(editor, pointOrID) {
 		tryUpdate()
 	}
 	const newVariety = function(init) {
-		let vars = editor.furniture_types[items[keys.type].input.value].varieties
+		let vars = editor.backend.params.furniture[items[keys.type].input.value].varieties
 		if (vars == undefined) {
 			items[keys.variety].container.classList.add("hidden")
 			fromVariety()
@@ -1064,7 +1064,7 @@ function furnitureMenuX(editor, pointOrID) {
 		}
 	}
 	const updateVariety = function() {
-		let vars = editor.furniture_types[params.type].varieties
+		let vars = editor.backend.params.furniture[params.type].varieties
 		let cnt = 0
 		for (let k in vars) {
 			if (++cnt > 1) {
