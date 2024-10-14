@@ -295,32 +295,46 @@ function selectHandler(event, editor, state) {
 		    userLength(editor, editor.pointmapLength(groups.pntmap[0]))))
 	}
 
-	if (groups.pntmap !== undefined) {
-		let maps = {}
-		for (let i = 0; i < groups.pntmap.length; ++i) {
-			maps[groups.pntmap[i]] = editor.backend.cache.pointmaps[groups.pntmap[i]]
-		}
-		if (groups.pntmap.length > 0) {
-			const changeTypes = function(newvalue) {
-				editor.finishAction()
-				for (let id in maps) {
-					editor.mapPoints({ type: newvalue }, id)
+	if (groups.pntmap !== undefined || groups.pnt !== undefined) {
+		const getMaps = function() {
+			let maps = {}
+			if (groups.pnt) {
+				for (let i = 0; i < groups.pnt.length; ++i) {
+					for (let id in editor.backend.mappedPoints[groups.pnt[i]]) {
+						id = editor.backend.mappedPoints[groups.pnt[i]][id]
+						maps[id] = editor.backend.reqObj(id)
+					}
 				}
-				editor.finishAction()
 			}
-			let current
+			if (groups.pntmap) {
+				for (let i = 0; i < groups.pntmap.length; ++i) {
+					maps[groups.pntmap[i]] = editor.backend.cache.pointmaps[groups.pntmap[i]]
+				}
+			}
+			return maps
+		}
+		const changeTypes = function(newvalue) {
+			editor.finishAction()
+			const maps = getMaps()
 			for (let id in maps) {
-				if (current === undefined) {
-					current = maps[id].type
-				} else if (current !== maps[i].type) {
-					current = null
-					break;
-				}
+				editor.mapPoints({ type: newvalue }, id)
 			}
-			c.appendChild(
-				selector(editor.backend.params.pointmaps.types, changeTypes, { current, text: "Type:" })
-			)
+			editor.finishAction()
 		}
+
+		let current
+		const maps = getMaps()
+		for (let id in maps) {
+			if (current === undefined) {
+				current = maps[id].type
+			} else if (current !== maps[id].type) {
+				current = null
+				break;
+			}
+		}
+		c.appendChild(
+			selector(editor.backend.params.pointmaps.types, changeTypes, { current, text: "Type:" })
+		)
 	}
 
 	if (groups.furmap) {
