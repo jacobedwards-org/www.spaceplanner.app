@@ -960,7 +960,7 @@ function furnitureMenuX(editor, pointOrID) {
 		menuItem("name", "Name", { attributes: { value: params.name ?? "" } }),
 		menuItem("type", "Type", { break: false, enum: editor.furniture_types, attributes: { value: params.type, required: true } }),
 		menuItem("style", "Style"),
-		menuItem("variety", "Variety", { enum: editor.furniture_types[params.type].varieties, attributes: { value: editor.varietyFrom(params) } }),
+		menuItem("variety", "Variety"),
 		menuItem("width", "Width", { attributes: { value: userLength(editor, params.width), required: true } }),
 		menuItem("depth", "Depth", { attributes: { value: userLength(editor, params.depth), required: true } }),
 		menuItem("angle", "Angle", { attributes: { value: params.angle ?? 0, min: 0, max: 359, step: 1, type: "number", required: true } })
@@ -990,16 +990,37 @@ function furnitureMenuX(editor, pointOrID) {
 			fromVariety()
 			return
 		}
-		let v = menuItem("variety", "Variety", { enum: vars })
+
+		let cnt = 0
+		for (let k in vars) {
+			if (++cnt > 1) {
+				break
+			}
+		}
+
+		let v
+		if (cnt === 1) {
+			v = menuItem("variety", "Variety", { attributes: { type: "button", value: "Reset" } })
+		} else {
+			v = menuItem("variety", "Variety", { enum: vars, attributes: { value: editor.varietyFrom(params) } })
+		}
 		let c = makeItem(v)
 		items[keys.variety].container.replaceWith(c)
 		items[keys.variety] = v
-		items[keys.variety].input.value = editor.varietyFrom(params)
-		fromVariety(items[keys.type].input.value, init ? null : defKey(vars))
+		if (cnt > 1) {
+			items[keys.variety].input.value = editor.varietyFrom(params)
+		}
 
-		c.addEventListener("input", function(ev) {
-			fromVariety(items[keys.type].input.value, ev.target.value)
-		})
+		fromVariety(items[keys.type].input.value, init ? null : defKey(vars))
+		if (cnt > 1) {
+			c.addEventListener("input", function(ev) {
+				fromVariety(items[keys.type].input.value, ev.target.value)
+			})
+		} else {
+			c.addEventListener("click", function() {
+				fromVariety(items[keys.type].input.value, defKey(vars))
+			})
+		}
 	}
 	const newStyle = function() {
 		let typeStyles = styles(params.type)
