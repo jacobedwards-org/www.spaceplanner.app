@@ -500,20 +500,15 @@ function radioInputs(key, values, initial) {
 
 // keydown
 function undoRedoHandler(event, editor) {
-	if (event.ctrlKey) {
-		if (event.key === "z") {
-			editor.undo()
-		} else {
-			return
-		}
+	if (!event.ctrlKey) {
+		return
+	}
+	if (event.key === "z") {
+		editor.undo()
+	} else if (event.key === "y") {
+		editor.redo()	
 	} else {
-		if (event.key === "u") {
-			editor.undo()
-		} else if (event.key === "r") {
-			editor.redo()
-		} else {
-			return
-		}
+		return
 	}
 	handled(event)
 }
