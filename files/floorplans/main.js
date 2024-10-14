@@ -226,6 +226,12 @@ function create_floorplan(floorplan) {
 		aside.append(ui.button("Delete", "Delete floorplan", "trash", { handlers: { click: ask_delete_floorplan_func(root, floorplan) } }))
 	} else {
 		root.id = "adder"
+		root.addEventListener("keydown", function(ev) {
+			if (ev.key === "Enter") {
+				ev.preventDefault()
+				editable_floorplan_create_func(root)()
+			}
+		})
 		aside.append(ui.button("Create", "Create floorplan", "create", { handlers: { click: editable_floorplan_create_func(root) } }))
 	}
 
