@@ -138,7 +138,7 @@ function init() {
 	let undoRedo = document.createElement("li")
 	// These could be hidden when they wouldn't have any effect
 	undoRedo.append(ui.button("Undo",
-		"Undo last action (you may also press u or control-z)",
+		"Undo last action (you may also press control-z)",
 		"arrow-undo-circle", {
 			handlers: {
 				click: function() {
@@ -148,7 +148,7 @@ function init() {
 		})
 	)
 	undoRedo.append(ui.button("Redo",
-		"Redo next action (you may also press r)",
+		"Redo next action (you may also press control-y)",
 		"arrow-redo-circle", {
 			handlers: {
 				click: function() {
