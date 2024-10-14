@@ -1002,15 +1002,12 @@ function furnitureMenuX(editor, pointOrID) {
 		if (cnt === 1) {
 			v = menuItem("variety", "Variety", { attributes: { type: "button", value: "Reset" } })
 		} else {
-			v = menuItem("variety", "Variety", { enum: vars, attributes: { value: editor.varietyFrom(params) } })
+			v = menuItem("variety", "Variety", { enum: vars })
 		}
 		let c = makeItem(v)
 		items[keys.variety].container.replaceWith(c)
 		items[keys.variety] = v
-		if (cnt > 1) {
-			items[keys.variety].input.value = editor.varietyFrom(params)
-		}
-
+		updateVariety()
 		fromVariety(items[keys.type].input.value, init ? null : defKey(vars))
 		if (cnt > 1) {
 			c.addEventListener("input", function(ev) {
@@ -1019,6 +1016,7 @@ function furnitureMenuX(editor, pointOrID) {
 		} else {
 			c.addEventListener("click", function() {
 				fromVariety(items[keys.type].input.value, defKey(vars))
+				updateVariety()
 			})
 		}
 	}
@@ -1032,6 +1030,24 @@ function furnitureMenuX(editor, pointOrID) {
 			items[keys.style] = s
 			if (params.style != null) {
 				items[keys.style].input.value = params.style
+			}
+		}
+	}
+	const updateVariety = function() {
+		let vars = editor.furniture_types[params.type].varieties
+		let cnt = 0
+		for (let k in vars) {
+			if (++cnt > 1) {
+				break
+			}
+		}
+		if (cnt > 1) {
+			items[keys.variety].input.value = editor.varietyFrom(params)
+		} else if (cnt === 1) {
+			if (editor.varietyFrom(params)) {
+				items[keys.variety].input.setAttribute("disabled", true)
+			} else {
+				items[keys.variety].input.removeAttribute("disabled")
 			}
 		}
 	}
@@ -1056,7 +1072,7 @@ function furnitureMenuX(editor, pointOrID) {
 				}
 				ev.target.reportValidity()
 				params[ev.target.name] = u
-				items[keys.variety].input.value = editor.varietyFrom(params)
+				updateVariety()
 			} else {
 				if (ev.target.name === "style" && ev.target.value === "default") {
 					params[ev.target.name] = null
