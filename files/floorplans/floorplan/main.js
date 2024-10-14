@@ -330,6 +330,33 @@ function selectHandler(event, editor, state) {
 		c.appendChild(document.createElement("li"))
 			.appendChild(document.createTextNode("Length: " +
 		    userLength(editor, editor.pointmapLength(groups.pntmap[0]))))
+
+		let pm = editor.backend.reqObj(groups.pntmap[0])
+		if (pm.type === "door") {
+			const swingButton = function(backward) {
+				return ui.button(backward ? "prevswing" : "swing",
+					`Swing door${backward ? " backward" : ""} (you may also click, drag, and release on a door)`,
+					backward ? "arrow-back" : "arrow-forward", {
+					handlers: {
+						click: function() {
+							let pm = editor.backend.reqObj(groups.pntmap[0])
+							editor.mapPoints({ door_swing: (backward ? prevSwing : nextSwing)(pm.door_swing) }, groups.pntmap[0])
+						}
+					}
+				})
+			}
+			let swingOps = c.appendChild(document.createElement("li"))
+			swingOps.append(document.createTextNode("Swing: "))
+			swingOps.append(swingButton(true))
+			swingOps.append(swingButton(false))
+			swingOps.append(ui.button("Reset", "Reset door swing", null, {
+					handlers: {
+						click: function() {
+							editor.mapPoints({ door_swing: null }, groups.pntmap[0])
+						}
+					}
+				}))
+		}
 	}
 
 	if (groups.furmap) {
@@ -1346,4 +1373,30 @@ function precision(a) {
 		p++
 	}
 	return p
+}
+
+function nextSwing(swing) {
+	let next
+	if (!swing) {
+		next = 'a-'
+	} else if (swing[1] === '-') {
+		next = (swing[0] === 'a' ? 'b' : 'a') + '+'
+	} else {
+		next = swing[0] + '-'
+	}
+	console.debug("nextSwing", `${swing} -> ${next}`)
+	return next
+}
+
+function prevSwing(swing) {
+	let prev
+	if (!swing) {
+		prev = 'a-'
+	} else if (swing[1] === '+') {
+		prev = (swing[0] === 'a' ? 'b' : 'a') + '-'
+	} else {
+		prev = swing[0] + '+'
+	}
+	console.debug("prevSwing", `${swing} -> ${prev}`)
+	return prev
 }
