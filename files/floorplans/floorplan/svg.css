@@ -12,11 +12,24 @@
 	stroke: black;
 }
 
-#pointmaps > .selected {
-	stroke: blue;
-}
-
 #pointmaps > .door {
 	stroke-width: 140;
 	stroke-dasharray: 400 100;
+}
+
+#pointmaps > .window {
+	stroke: lightblue;
+	stroke-opacity: .75;
+	stroke-width: 200;
+}
+
+#pointmaps > .railing {
+	stroke: black;
+	stroke-opacity: .5;
+	stroke-width: 200;
+}
+
+#pointmaps > .selected {
+	stroke: blue;
+	stroke-opacity: 1;
 }
