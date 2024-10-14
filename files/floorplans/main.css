@@ -101,7 +101,7 @@ input.fp_synopsis, input.fp_address {
 
 .delete_dialog {
 	background-color: #F3F3F3;
-	position: absolute;
+	position: fixed;
 	top: 20vh;
 	left: 20vw;
 	width: 60vw;
