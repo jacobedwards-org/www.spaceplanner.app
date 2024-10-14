@@ -36,7 +36,7 @@ const modes = {
 			pointerdown: [selectionHandler, precisePointHandler, precisePointMapHandler, furnitureHandler],
 			pointermove: [precisePointHandler, furnitureHandler],
 			pointerup: [precisePointHandler, precisePointMapHandler, furnitureHandler],
-			keydown: [controlKeyHandler, zoomKeysHandler, undoRedoHandler],
+			keydown: [keyHandler],
 			dblclick: [precisePointMapHandler, furnitureHandler],
 			select: selectHandler
 		}
@@ -434,22 +434,29 @@ function selectionHandler(event, editor) {
 	escape()
 }
 
-function controlKeyHandler(ev, editor) {
-	if (ev.type === "keydown" && ev.key === "Escape") {
+function keyHandler(ev, editor) {
+	if (ev.key === "Escape") {
 		escape()
-	}
-}
-
-function zoomKeysHandler(event, editor) {
-	if (event.key === "+") {
+	} else if (ev.key === "+") {
 		editor.draw.zoom(editor.draw.zoom() * 1.25)
-	} else if (event.key === "-" || event.key === "_") {
+		editor.updateGrid()
+	} else if (ev.key === "-" || ev.key === "_") {
 		editor.draw.zoom(editor.draw.zoom() / 1.25)
+		editor.updateGrid()
 	} else {
-		return
+		if (!event.ctrlKey) {
+			return
+		}
+		if (event.key === "z") {
+			editor.undo()
+		} else if (event.key === "y") {
+			editor.redo()	
+		} else {
+			return
+		}
 	}
-	editor.updateGrid()
-	handled(event)
+
+	handled(ev)
 }
 
 function radioMenu(editor, key, values, initial, options) {
@@ -515,21 +522,6 @@ function radioInputs(key, values, initial) {
 		radios.push(label)
 	}
 	return radios
-}
-
-// keydown
-function undoRedoHandler(event, editor) {
-	if (!event.ctrlKey) {
-		return
-	}
-	if (event.key === "z") {
-		editor.undo()
-	} else if (event.key === "y") {
-		editor.redo()	
-	} else {
-		return
-	}
-	handled(event)
 }
 
 // pointerdown, pointermove, pointerup
