@@ -545,7 +545,7 @@ export class FloorplanEditor {
 		const pointsAngle = function(a, b) {
 			a = editor.backend.reqObj(a)
 			b = editor.backend.reqObj(b)
-			return new Vector2(a.x, a.y).angleTo(new Vector2(b.x, b.y))
+			return geometry.lineAngle(new Vector2(a.x, a.y), new Vector2(b.x, b.y))
 		}
 
 		for (let i in later) {
@@ -560,8 +560,7 @@ export class FloorplanEditor {
 						}
 
 						let a2 = pointsAngle(p, o2)
-						console.warn(a1,a2,a1-a2, geometry.deg(Math.abs(a1-a2)))
-						if (geometry.deg(Math.abs(a1 - a2)) < 1) {
+						if ((geometry.deg(Math.abs(a1 - a2)) % 180) < 1) {
 							editor.backend.mapPoints({ a: o, b: o2 })
 						}
 					}
