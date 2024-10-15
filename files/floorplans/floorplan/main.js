@@ -111,6 +111,9 @@ function init() {
 				},
 				push: function() {
 					suffix.data = ""
+				},
+				pusherror: function(err) {
+					notify("Failed to push: " + err)
 				}
 			}
 		}
