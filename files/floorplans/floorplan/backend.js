@@ -503,6 +503,7 @@ export class FloorplanBackend {
 		const m = this.updatedObject(params, id, {
 			type: {
 				required: true,
+				default: "wall",
 				validate: function(type) {
 					let types = backend.params.pointmaps.types
 					for (let i = 0; i < types.length; ++i) {
