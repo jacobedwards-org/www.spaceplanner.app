@@ -738,6 +738,15 @@ export class FloorplanBackend {
 		let backend = this
 		return api.fetch("PATCH", this.endpoint, patch)
 			.then(function(data) {
+				if (newpos < backend.serverPosition) {
+					for (let i = 0; i < patch.length; ++i) {
+						if (patch[i].op === "remove") {
+							let id = parsePath(patch[i].path)
+							backend.unmapID(id)
+						}
+					}
+				}
+
 				backend.serverPosition = newpos
 				updateIDs(backend, data)
 				for (let i in dirty) {
@@ -761,6 +770,11 @@ export class FloorplanBackend {
 
 		return api.fetch("PUT", this.endpoint, this.cache)
 			.then(function(data) {
+				for (let k in backend.serverIDs) {
+					if (backend.serverIDs[k] !== null) {
+						backend.unmapID(backend.serverIDs[k])
+					}
+				}
 				updateIDs(backend, data)
 				backend.serverPosition = backend.history.place
 			})
@@ -963,6 +977,16 @@ export class FloorplanBackend {
 		}
 		this.localIDs[serverID] = localID
 		this.serverIDs[localID] = serverID
+	}
+
+	unmapID(serverID) {
+		console.debug("Backend.unmapID", serverID)
+		let local = this.localIDs[serverID]
+		if (local == null) {
+			throw new Error(serverID + ": Expected mapped id")
+		}
+		this.serverIDs[local] = null
+		delete this.localIDs[serverID]
 	}
 
 	remapID(localID, serverID, options) {
