@@ -541,9 +541,31 @@ export class FloorplanEditor {
 			}
 		}
 
+		let editor = this
+		const pointsAngle = function(a, b) {
+			a = editor.backend.reqObj(a)
+			b = editor.backend.reqObj(b)
+			return new Vector2(a.x, a.y).angleTo(new Vector2(b.x, b.y))
+		}
+
 		for (let i in later) {
 			let t = backend.idType(later[i])
 			if (t === "pnt") {
+				let p = later[i]
+				for (let o in this.backend.mappedPoints[p]) {
+					let a1 = pointsAngle(p, o)
+					for (let o2 in this.backend.mappedPoints[p]) {
+						if (o2 === o) {
+							continue
+						}
+
+						let a2 = pointsAngle(p, o2)
+						console.warn(a1,a2,a1-a2, geometry.deg(Math.abs(a1-a2)))
+						if (geometry.deg(Math.abs(a1 - a2)) < 1) {
+							editor.backend.mapPoints({ a: o, b: o2 })
+						}
+					}
+				}
 				this.backend.removePoint(later[i], { unmap: true })
 			} else if (t === "fur") {
 				this.backend.removeFurniture(later[i])

@@ -175,6 +175,10 @@ export function rad(deg) {
 	return deg * Math.PI / 180
 }
 
+export function deg(rad) {
+	return rad * (180 / Math.PI)
+}
+
 export function length(a, b, length) {
 	if (!length) {
 		return a.distanceTo(b)
