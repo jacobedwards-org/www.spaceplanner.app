@@ -470,9 +470,6 @@ export class FloorplanBackend {
 				parse: parseInt
 			}
 		})
-		if (params.x === params.y) {
-			throw new Error(`${params.x}:${params.y}: Cannot map a point to itself`)
-		}
 		return this.addData(id ?? "points", p)
 	}
 
@@ -535,7 +532,9 @@ export class FloorplanBackend {
 				}
 			}
 		})
-
+		if (m.a === m.b) {
+			throw new Error(`${m.a}:${m.b}: Cannot map a point to itself`)
+		}
 		this.addData(this.whichPointMap(m.a, m.b) ?? "pointmaps", m)
 	}
 
