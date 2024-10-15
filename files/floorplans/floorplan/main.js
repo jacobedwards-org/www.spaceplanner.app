@@ -687,12 +687,46 @@ function precisePointHandler(event, editor, state) {
 		cleanup()
 	}
 
+	const onMap = function(p) {
+		let maps = editor.thingsAt(p, "#pointmaps")
+		let toMaps = editor.backend.mappedPoints[state.to]
+
+		let map
+		for (let i = 0; !map && i < maps.length; ++i) {
+			let mid = lib.getID(maps[i])
+			let good = true
+			for (let k in toMaps) {
+				if (toMaps[k] === mid) {
+					good = false
+					break
+				}
+			}
+			if (good) {
+				map = maps[i]
+			}
+		}
+
+		if (map == null) {
+			return null
+		}
+		return { point: map.whereIsPoint(p.x, p.y), map: map }
+	}
+
 	const commit = function() {
 		if (state.onPoint) {
 			for (let oth in editor.backend.mappedPoints[state.to]) {
 				editor.mapPoints({ a: state.onPoint, b: oth }, editor.backend.mappedPoints[state.to][oth])
 			}
 			editor.remove(state.to)
+		}
+
+		let on = onMap(state.to.vec())
+		if (on !== null) {
+			let mapD = editor.backend.reqObj(lib.getID(on.map))
+			editor.movePoint(state.to, on.point)
+			editor.mapPoints({ a: mapD.a, b: state.to })
+			editor.mapPoints({ a: mapD.b, b: state.to })
+			editor.remove(on.map)
 		}
 		editor.finishAction()
 		cleanup()
