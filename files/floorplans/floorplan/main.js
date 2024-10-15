@@ -1243,7 +1243,14 @@ function unitInput(editor, input, value) {
 
 
 function parseUserLength(editor, length) {
-	let a = length.replaceAll(" ", "").split(/([0-9.]+)/)
+	let a = length
+		.replaceAll(" ", "")
+		.replaceAll("‘", "'")
+		.replaceAll("’", "'")
+		.replaceAll("“", '"')
+		.replaceAll("”", '"')
+		.split(/([0-9.]+)/)
+
 	let amount
 	let rebuilt = []
 	for (let i in a) {
