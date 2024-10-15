@@ -756,7 +756,7 @@ export class FloorplanBackend {
 			})
 			.catch(function(err) {
 				console.error("Unable to PATCH floorplan, trying PUT", err)
-				backend.putServer()
+				return backend.putServer()
 			})
 	}
 
@@ -777,6 +777,11 @@ export class FloorplanBackend {
 				}
 				updateIDs(backend, data)
 				backend.serverPosition = backend.history.place
+				backend.cb("push")
+			})
+			.catch(function(err) {
+				backend.cb("pusherror", err)
+				throw err
 			})
 	}
 
