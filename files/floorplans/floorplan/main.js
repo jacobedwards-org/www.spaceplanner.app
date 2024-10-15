@@ -330,6 +330,29 @@ function selectHandler(event, editor, state) {
 		c.appendChild(document.createElement("li"))
 			.appendChild(document.createTextNode("Length: " +
 		    userLength(editor, editor.pointmapLength(groups.pntmap[0]))))
+		c.appendChild(document.createElement("li"))
+			.appendChild(ui.button("Subdivide", "Subdivide pointmap", null, {
+				handlers: {
+					click: function(ev) {
+						handled(ev)
+						let pm = editor.findObj(groups.pntmap[0])
+						let p
+						if (State.lastClick) {
+							// This will mostly work well, but if the user manages to click
+							// somewhere else and keep this selected it'll maybe not be where
+							// they want.
+							p = pm.closestPoint(new Vector2(State.lastClick.x, State.lastClick.y))
+						} else {
+							p = pm.interpolatedPoint(0.5)
+						}
+						let pid = editor.addPoint(p)
+						pm = editor.backend.reqObj(groups.pntmap[0])
+						editor.mapPoints({ a: pid, b: pm.a })
+						editor.mapPoints({ a: pid, b: pm.b })
+						editor.remove(groups.pntmap[0])
+					}
+				}
+			}))
 
 		let pm = editor.backend.reqObj(groups.pntmap[0])
 		if (pm.type === "door") {
