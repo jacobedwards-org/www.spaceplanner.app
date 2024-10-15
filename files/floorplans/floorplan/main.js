@@ -249,6 +249,10 @@ function selectHandler(event, editor, state) {
 	let c = document.createElement("li")
 	c.setAttribute("id", "selOps")
 
+	const refresh = function() {
+		selectHandler(event, editor, state)
+	}
+
 	c.appendChild(document.createTextNode("Selection: "))
 	c.append(ui.input("Delete", "Delete selected objects", {
 			attributes: { type: "button", value: "Delete" },
@@ -309,6 +313,7 @@ function selectHandler(event, editor, state) {
 				editor.mapPoints({ type: newvalue }, id)
 			}
 			editor.finishAction()
+			return refresh()
 		}
 
 		let current
