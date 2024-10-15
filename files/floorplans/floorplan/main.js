@@ -459,8 +459,8 @@ function selectionHandler(event, editor) {
 function keyHandler(ev, editor) {
 	if (ev.key === "Escape") {
 		escape()
-	} else if (ev.key === "Backspace" || ev.key === "Delete") {
-		editor.remove(...editor.draw.find(".selected").array())
+	/*} else if (ev.key === "Backspace" || ev.key === "Delete") {
+		editor.remove(...editor.draw.find(".selected").array())*/
 	} else if (ev.key === "+") {
 		editor.draw.zoom(editor.draw.zoom() * 1.25)
 		editor.updateGrid()
