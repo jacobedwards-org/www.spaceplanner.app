@@ -417,35 +417,24 @@ function selector(things, select, options) {
 	form.classList.add("selection")
 
 	if (options.text) {
-		form.appendChild(document.createTextNode(options.text))
+		form.appendChild(document.createTextNode(options.text + " "))
 	}
 
-	let list = form.appendChild(document.createElement("ul"))
+	let list = form.appendChild(document.createElement("select"))
+	list.addEventListener("change", function(event) { select(event.target.value) })
+
 	let isArray = Array.isArray(things)
 	for (let thing in things) {
 		if (isArray) {
 			thing = things[thing]
 		}
+
 		console.debug("selector", options.text ?? "something", thing)
-		let item = list.appendChild(document.createElement("li"))
-		let selector = item
-			.appendChild(ui.input(thing, "Select " + thing, {
-				attributes: { type: "button", value: thing },
-				handlers: { click: function(event) {
-					select(event.target.name)
-					event.target.parentNode.parentNode
-						.querySelectorAll("li > .selected")
-						.forEach(function(sel) {
-							sel.classList.remove("selected")
-						})
-					event.target.classList.add("selected")
-				}}
-			}))
-		selector.classList.add("selector")
-		if (thing == options.current) {
-			selector.classList.add("selected")
-		}
+		list.appendChild(document.createElement("option"))
+			.appendChild(document.createTextNode(thing))
 	}
+
+	list.value = options.current
 
 	return form
 }

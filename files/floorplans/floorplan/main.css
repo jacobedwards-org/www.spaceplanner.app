@@ -49,31 +49,6 @@ svg {
 	background-color: white;
 }
 
-.selection > ul {
-	display: inline;
-	padding: 0;
-	list-style: none;
-}
-
-.selection > ul > li {
-	display: inline;
-}
-
-.selector {
-	margin: .25em;
-	background: none;
-	border: none;
-	border-bottom: medium solid lightgrey;
-}
-
-.selector:hover {
-	border-color: grey;
-}
-
-.selector.selected {
-	border-color: blue;
-}
-
 aside.terminal {
 	position: absolute;
 	bottom: 5vh;
