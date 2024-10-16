@@ -638,12 +638,12 @@ function precisePointHandler(event, editor, state) {
 		options = options ?? {}
 
 		let points = editor.thingsAt(p, "#points")
-		let fid = lib.getID(state.from)
+		let fid = !state.moveOp ? lib.getID(state.from) : null
 		let tid = lib.getID(state.to)
 		delete state.onPoint
 		for (let i in points) {
 			let id = lib.getID(points[i])
-			if (id !== tid && id !== fid) {
+			if (id !== tid && (!fid || id !== fid)) {
 				state.onPoint = id
 				p = editor.backend.obj(id)
 			}
@@ -737,10 +737,14 @@ function precisePointHandler(event, editor, state) {
 
 	const commit = function() {
 		if (state.onPoint) {
-			for (let oth in editor.backend.mappedPoints[state.to]) {
-				editor.mapPoints({ a: state.onPoint, b: oth }, editor.backend.mappedPoints[state.to][oth])
+			let tid = lib.getID(state.to)
+			for (let oth in editor.backend.mappedPoints[tid]) {
+				if (oth !== state.onPoint) {
+					editor.mapPoints({ a: state.onPoint, b: oth }, editor.backend.mappedPoints[state.to][oth])
+				}
 			}
-			editor.remove(state.to)
+			editor.remove(tid)
+			state.to = editor.findObj(state.onPoint)
 		}
 
 		let on = onMap(state.to.vec())
@@ -778,6 +782,7 @@ function precisePointHandler(event, editor, state) {
 			if  (State.pointOp === 'Move') {
 				state.to = state.from
 				state.from = null
+				state.moveOp = true
 
 				// I want the first pointmap defined, but this for now
 				let m = editor.backend.mappedPoints[lib.getID(state.to)]
@@ -829,7 +834,7 @@ function precisePointHandler(event, editor, state) {
 			state.moveTimeout = setTimeout(doMove, 35)
 		}
 	} else if (event.type === "pointerup") {
-		if (state.from && state.from.inside(cursor.x, cursor.y)) {
+		if (!state.moveOp && state.from && state.from.inside(cursor.x, cursor.y)) {
 			revert()
 		} else {
 			// Not that it makes much difference, but should probably use
