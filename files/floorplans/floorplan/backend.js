@@ -432,10 +432,10 @@ export class FloorplanBackend {
 
 		console.debug("Backend.addData", id, value)
 		let t = idTable(id)
+		this.cache[t][id] = value
 		if (!options.nodiff) {
 			this.cb("patch",  this.history.addDiff("add", idPath(id), value, options))
 		}
-		this.cache[t][id] = value
 
 		return id
 	}
