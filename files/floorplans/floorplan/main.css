@@ -38,6 +38,10 @@ header > .toolbar > li {
 	padding-right: 1em;
 }
 
+#selOps {
+	float: right;
+}
+
 #selOps > * {
 	margin: 0 .5em;
 	display: inline;
