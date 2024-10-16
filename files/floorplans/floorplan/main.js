@@ -981,9 +981,28 @@ function enumSelection(input, values, selected) {
 }
 
 function furnitureMenu(editor, pointOrID) {
-	let oldMenu = document.getElementById("furniture_menu")
-	let menu = furnitureMenuX(editor, pointOrID)
+	let id
+	if (typeof pointOrID === "string") {
+		id = pointOrID
+	} else {
+		id = newFurniture(pointOrID)
+	}
+
+	let menu = document.createElement("div")
 	menu.id = "furniture_menu"
+	menu.classList.add("escapable")
+
+	let subs = []
+	menu.addEventListener("escape", function() {
+		editor.finishAction()
+		menu.remove()
+	})
+
+	subs.push(menu.appendChild(furnitureTools(editor, id)))
+	menu.append(document.createElement("hr"))
+	subs.push(menu.appendChild(furnitureParamsMenu(editor, id)))
+
+	let oldMenu = document.getElementById("furniture_menu")
 	if (oldMenu) {
 		oldMenu.replaceWith(menu)
 	} else {
@@ -991,7 +1010,29 @@ function furnitureMenu(editor, pointOrID) {
 	}
 }
 
-function furnitureMenuX(editor, pointOrID) {
+function furnitureTools(editor, id) {
+	let c = document.createElement("div")
+
+	c.append(ui.button("Duplicate", "Duplicate furniture parameters into a new piece", null, {
+		handlers: { click:
+			function() {
+				editor.finishAction()
+				let params = allFurnitureParams(editor, id)
+				params.x += params.width * .6
+				params.y -= params.depth * .6
+				delete params.name
+				delete params.furniture_id
+				editor.finishAction()
+				id = editor.addMappedFurniture(params)
+				editor.findObj(id).select()
+			}
+		}
+	}))
+
+	return c
+}
+
+function furnitureParamsMenu(editor, id) {
 	const def = function(obj) {
 		return obj[defKey(obj)]
 	}
@@ -1009,45 +1050,8 @@ function furnitureMenuX(editor, pointOrID) {
 	}
 
 	editor.finishAction()
-	let id
-	if (typeof pointOrID === "string") {
-		id = pointOrID
-	} else {
-		let p
-		if (pointOrID == null) {
-			p = { x: 0, y: 0 }
-		} else if (typeof pointOrID === "object") {
-			p = pointOrID
-		}
-		let type = "any"
-		let vars = editor.backend.params.furniture[type].varieties
-		let v
-		if (def(vars)) {
-			v = def(vars)
-		} else {
-			let s = editor.units.get("inch", 32)
-			v = { width: s, depth: s }
-		}
-		let params = {
-			x: p.x,
-			y: p.y,
-			type,
-			width: v.width,
-			depth: v.depth,
-			name: null
 
-		}
-		id = editor.addMappedFurniture(params)
-
-		editor.finishAction()
-		editor.findObj(id).select()
-	}
-
-	let params = structuredClone(editor.backend.reqObj(id))
-	let fp = editor.backend.reqObj(params.furniture_id)
-	for (let k in fp) {
-		params[k] = fp[k]
-	}
+	let params = allFurnitureParams(editor, id)
 	delete params.x
 	delete params.y
 
@@ -1161,6 +1165,7 @@ function furnitureMenuX(editor, pointOrID) {
 	}
 
 	let menu = makeMenu(items)
+	menu.classList.add("furniture_params_menu")
 	items[keys.type].input.value = params.type
 	newVariety(true)
 	newStyle()
@@ -1218,21 +1223,52 @@ function furnitureMenuX(editor, pointOrID) {
 			throw err
 		}
 	})
-	let commitHandler = function(ev) {
-		handled(ev)
-		editor.finishAction()
-		menu.remove()
-	}
-	menu.addEventListener("submit", commitHandler)
-	menu.addEventListener("escape", commitHandler)
 
 	return menu
 }
 
+function allFurnitureParams(editor, id) {
+	let params = structuredClone(editor.backend.reqObj(id))
+	let fp = editor.backend.reqObj(params.furniture_id)
+	for (let k in fp) {
+		params[k] = fp[k]
+	}
+	return params
+}
+
+function newFurniture(point) {
+	if (point == null) {
+		point = { x: 0, y: 0 }
+	}
+
+	let type = "any"
+	let vars = editor.backend.params.furniture[type].varieties
+	let v
+	if (def(vars)) {
+		v = def(vars)
+	} else {
+		let s = editor.units.get("inch", 32)
+		v = { width: s, depth: s }
+	}
+	let params = {
+		x: p.x,
+		y: p.y,
+		type,
+		width: v.width,
+		depth: v.depth,
+		name: null
+
+	}
+	id = editor.addMappedFurniture(params)
+
+	editor.finishAction()
+	editor.findObj(id).select()
+
+	return id
+}
+
 function makeMenu(items) {
 	let c = document.createElement("form")
-	c.classList.add("furniture_menu")
-	c.classList.add("escapable")
 
 	// In case I make c != form later
 	let form = c

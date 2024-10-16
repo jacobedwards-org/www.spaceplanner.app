@@ -91,7 +91,7 @@ aside.menu > form > input[type=radio] {
 	width: 100%;
 }
 
-.furniture_menu {
+#furniture_menu {
 	background-color: #EEE;
 	border: thin solid #CCC;
 	border-radius: .2em;
@@ -102,11 +102,11 @@ aside.menu > form > input[type=radio] {
 	width: fit-content;
 }
 
-.furniture_menu > label > input:is([name="width"], [name="depth"]) {
+.furniture_params_menu > label > input:is([name="width"], [name="depth"]) {
 	max-width: 6em;
 }
 
-.furniture_menu > label {
+.furniture_params_menu > label {
 	display: inline-block;
 	margin: .1em .2em;
 }

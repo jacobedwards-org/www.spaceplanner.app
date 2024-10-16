@@ -988,7 +988,7 @@ export class FloorplanBackend {
 		console.debug("Backend.unmapID", serverID)
 		let local = this.localIDs[serverID]
 		if (local == null) {
-			throw new Error(serverID + ": Expected mapped id")
+			console.warn(serverID + ": Expected mapped id (continuing)")
 		}
 		this.serverIDs[local] = null
 		delete this.localIDs[serverID]
