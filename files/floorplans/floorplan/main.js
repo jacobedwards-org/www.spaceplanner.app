@@ -985,7 +985,7 @@ function furnitureMenu(editor, pointOrID) {
 	if (typeof pointOrID === "string") {
 		id = pointOrID
 	} else {
-		id = newFurniture(pointOrID)
+		id = newFurniture(editor, pointOrID)
 	}
 
 	let menu = document.createElement("div")
@@ -1033,14 +1033,6 @@ function furnitureTools(editor, id) {
 }
 
 function furnitureParamsMenu(editor, id) {
-	const def = function(obj) {
-		return obj[defKey(obj)]
-	}
-	const defKey = function(obj) {
-		for (let i in obj) {
-			return i
-		}
-	}
 	const styles = function(type) {
 		let styles = ['default']
 		if (editor.backend.params.furniture[type].styles == null) {
@@ -1236,7 +1228,7 @@ function allFurnitureParams(editor, id) {
 	return params
 }
 
-function newFurniture(point) {
+function newFurniture(editor, point) {
 	if (point == null) {
 		point = { x: 0, y: 0 }
 	}
@@ -1251,15 +1243,15 @@ function newFurniture(point) {
 		v = { width: s, depth: s }
 	}
 	let params = {
-		x: p.x,
-		y: p.y,
+		x: point.x,
+		y: point.y,
 		type,
 		width: v.width,
 		depth: v.depth,
 		name: null
 
 	}
-	id = editor.addMappedFurniture(params)
+	let id = editor.addMappedFurniture(params)
 
 	editor.finishAction()
 	editor.findObj(id).select()
@@ -1523,4 +1515,14 @@ function prevSwing(swing) {
 	}
 	console.debug("prevSwing", `${swing} -> ${prev}`)
 	return prev
+}
+
+function def(obj) {
+	return obj[defKey(obj)]
+}
+
+function defKey(obj) {
+	for (let i in obj) {
+		return i
+	}
 }
