@@ -47,6 +47,8 @@ const modes = {
 let State = {
 	panZoom: 0,
 	pointOp: 'Create',
+	snapAngle: true,
+	snapPoints: true,
 	lastClick: null
 }
 
@@ -181,6 +183,18 @@ function run(editor) {
 
 	toolbar.append(undoRedo)
 	toolbar.append(item(addFurn))
+	toolbar.append(item(checkToggle("Angle snap", {
+			title: "Snap points to 45° angle",
+			off: function() { State.snapAngle = false },
+			on: function() { State.snapAngle = true },
+			value: State.snapAngle
+	})))
+	toolbar.append(item(checkToggle("Point snap", {
+			title: "Snap points to other points",
+			off: function() { State.snapPoints = false },
+			on: function() { State.snapPoints = true },
+			value: State.snapPoints
+	})))
 
 	if (debug) {
 		toolbar.append(item(
@@ -239,6 +253,39 @@ function run(editor) {
 	editor.draw.on("pinchZoomEnd", function() { State.panZoom &= ~zoomBit})
 	editor.draw.on("panStart", function() { State.panZoom |= panBit })
 	editor.draw.on("panEnd", function() { State.panZoom &= ~panBit })
+}
+
+function checkToggle(name, params) {
+	if (!params || !params.off || !params.on) {
+		throw new Error("Requires on and off values")
+	}
+
+	const run = function(value) {
+		if (value) {
+			params.on()
+		} else {
+			params.off()
+		}
+	}
+
+	let c = document.createElement("form")
+	c.classList.add("check_toggle")
+
+	let label = c.appendChild(document.createElement("label"))
+	label.append(document.createTextNode(name + ": "))
+
+	let input = c.appendChild(document.createElement("input"))
+	input.setAttribute("type", "checkbox")
+	input.setAttribute("checked", params.value ?? false)
+	input.addEventListener("change", function(ev) { run(ev.target.checked) })
+	if (params.title) {
+		input.setAttribute("title", params.title)
+	}
+
+	if (params.value) {
+		run(params.value)
+	}
+	return c
 }
 
 function selectHandler(event, editor, state) {
@@ -661,14 +708,6 @@ function precisePointHandler(event, editor, state) {
 		const ad = function(a, b) {
 			return Math.abs(a - b)
 		}
-		const updsnaps = function(snaps, k, from, test) {
-			let d = ad(from[k], test[k])
-			if (d <= params.threshold) {
-				if (!snaps[k] || d < snaps[k].d) {
-					snaps[k] = { d, v: test[k] }
-				}
-			}
-		}
 
 		// This is racy
 		state.moveTimeout = null
@@ -677,22 +716,36 @@ function precisePointHandler(event, editor, state) {
 			return
 		}
 
-		let snapped = snap(editor.units.snapTo(state.move, editor.unit), state.origin, 8)
+		let snapped = state.move
+		if (State.snapAngle) {
+			snapped = snap(editor.units.snapTo(state.move, editor.unit), state.origin, 8)
+		}
 
-		let points = editor.backend.cache.points
-		let snaps = {}
-		let exclude = lib.getID(state.to)
-		for (let p in points) {
-			if (p != exclude) {
-				updsnaps(snaps, "x", snapped, points[p])
-				updsnaps(snaps, "y", snapped, points[p])
+		if (State.snapPoints) {
+			const updsnaps = function(snaps, k, from, test) {
+				let d = ad(from[k], test[k])
+				if (d <= params.threshold) {
+					if (!snaps[k] || d < snaps[k].d) {
+						snaps[k] = { d, v: test[k] }
+					}
+				}
 			}
-		}
-		if (snaps.x != null) {
-			snapped.x = snaps.x.v
-		}
-		if (snaps.y != null) {
-			snapped.y = snaps.y.v
+
+			let points = editor.backend.cache.points
+			let snaps = {}
+			let exclude = lib.getID(state.to)
+			for (let p in points) {
+				if (p != exclude) {
+					updsnaps(snaps, "x", snapped, points[p])
+					updsnaps(snaps, "y", snapped, points[p])
+				}
+			}
+			if (snaps.x != null) {
+				snapped.x = snaps.x.v
+			}
+			if (snaps.y != null) {
+				snapped.y = snaps.y.v
+			}
 		}
 		updatePoint(snapped)
 	}
