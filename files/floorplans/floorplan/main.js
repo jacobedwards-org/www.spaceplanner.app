@@ -1058,7 +1058,7 @@ function furnitureMenuX(editor, pointOrID) {
 		menuItem("variety", "Variety"),
 		menuItem("width", "Width", { attributes: { value: userLength(editor, params.width), required: true } }),
 		menuItem("depth", "Depth", { attributes: { value: userLength(editor, params.depth), required: true } }),
-		menuItem("angle", "Angle", { attributes: { value: params.angle ?? 0, min: 0, max: 359, step: 1, type: "number", required: true } })
+		menuItem("angle", "Angle", { attributes: { value: params.angle ?? 0, min: 0, max: 359, step: 1, type: "range", required: true } })
 	]
 	let keys = {}
 	for (let i in items) {
@@ -1186,9 +1186,25 @@ function furnitureMenuX(editor, pointOrID) {
 					params[ev.target.name] = null
 				} else {
 					if (ev.target.name === "angle") {
-						ev.target.value %= 360
+						let a
+						if (ev.target.value.length === 0) {
+							a = 0
+						} else {
+							const snapOn = 45
+							const snapAt = 12
+							a = ev.target.value
+							let d = (a % snapOn)
+							if (d < snapAt) {
+								a -= d
+							} else if (d > (snapOn - snapAt)) {
+								a -= d - snapOn
+							}
+							a %= 360
+						}
+						params[ev.target.name] = a
+					} else {
+						params[ev.target.name] = ev.target.value.length === 0 ? null : ev.target.value
 					}
-					params[ev.target.name] = ev.target.value.length === 0 ? null : ev.target.value
 				}
 				if (ev.target.name === "type") {
 					newVariety()
