@@ -38,7 +38,8 @@ const modes = {
 			pointerup: [precisePointHandler, precisePointMapHandler, furnitureHandler],
 			keydown: [keyHandler],
 			dblclick: [precisePointMapHandler, furnitureHandler],
-			select: selectHandler
+			select: selectHandler,
+			reselect: selectHandler
 		}
 	}
 }
@@ -360,6 +361,37 @@ function selectHandler(event, editor, state) {
 		c.appendChild(document.createElement("li"))
 			.appendChild(document.createTextNode("Length: " +
 		    userLength(editor, editor.pointmapLength(groups.pntmap[0]))))
+
+		const dolengths = function(m, point) {
+			let intr = m.closestLinearInterpolation(new Vector2(point.x, point.y))
+			let points = m.vecs()
+			let len = geometry.length(points[0], points[1])
+			let al = len * intr
+			let bl = len * (1.0 - intr) 
+			if (!geometry.compareVecs(points[0], points[1])) {
+				let t = al
+				al = bl
+				bl = t
+			}
+
+			let it = c.appendChild(document.createElement("li"))
+			it.id = "pointmap_lengths"
+			it.append(document.createTextNode("("))
+			let a = it.appendChild(document.createElement("span"))
+			it.append(document.createTextNode(" × "))
+			let b = it.appendChild(document.createElement("span"))
+			it.append(document.createTextNode(")"))
+
+			a.textContent = userLength(editor, al)
+			b.textContent = userLength(editor, bl)
+		}
+		let m = editor.findObj(groups.pntmap[0])
+		dolengths(m, State.lastClick)
+		/*
+		 * In the future, I could change the function to update the values,
+		 * but it wouldn't work well on touch devices anyway.
+		 *m.on("pointermove", function(ev) { dolengths(m, editor.draw.point(ev.clientX, ev.clientY)) })
+		 */
 
 		let pm = editor.backend.reqObj(groups.pntmap[0])
 		if (pm.type === "door") {

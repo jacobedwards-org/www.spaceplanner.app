@@ -214,3 +214,17 @@ export function length(a, b, length) {
 export function lineAngle(p1, p2) {
 	return Math.atan2(p2.y - p1.y, p2.x - p1.x)
 }
+
+export function compareVecs(a, b) {
+	if (a.y !== b.y) {
+		return a.y < b.y
+	}
+	if (a.x < b.x) {
+		return true
+	}
+	return false
+}
+
+export function sortVecs(vecs) {
+	return vecs.sort(compareVecs)
+}
