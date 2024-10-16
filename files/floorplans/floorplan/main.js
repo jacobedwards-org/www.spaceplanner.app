@@ -335,9 +335,6 @@ function selectHandler(event, editor, state) {
 
 	if (groups.pntmap && cnt === 1) {
 		c.appendChild(document.createElement("li"))
-			.appendChild(document.createTextNode("Length: " +
-		    userLength(editor, editor.pointmapLength(groups.pntmap[0]))))
-		c.appendChild(document.createElement("li"))
 			.appendChild(ui.button("Subdivide", "Subdivide pointmap", null, {
 				handlers: {
 					click: function(ev) {
@@ -360,6 +357,9 @@ function selectHandler(event, editor, state) {
 					}
 				}
 			}))
+		c.appendChild(document.createElement("li"))
+			.appendChild(document.createTextNode("Length: " +
+		    userLength(editor, editor.pointmapLength(groups.pntmap[0]))))
 
 		let pm = editor.backend.reqObj(groups.pntmap[0])
 		if (pm.type === "door") {
