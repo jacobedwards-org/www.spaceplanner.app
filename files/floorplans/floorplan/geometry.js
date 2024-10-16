@@ -22,8 +22,16 @@ SVG.extend(SVG.Shape, {
 		return this.bbox().distanceTo(x, y)
 	},
 
+	insideT: function(x, y) {
+		const box = this.rbox(this.root())
+
+		return (
+			x > box.x && y > box.y && x < box.x + box.width && y < box.y + box.height
+		)
+	},
+
 	touching: function(x, y, minsize) {
-		let b = this.bbox()
+		let b = this.rbox(this.root())
 		if (b.width < minsize) {
 			b.x -= (minsize - b.width) / 2
 			b.width = minsize
@@ -123,6 +131,10 @@ SVG.extend(SVG.Line, {
 	// This must use x and y to be compatible with Shape's inside()
 	inside: function(x, y) {
 		return this.whereIsPoint(x, y) != null
+	},
+
+	insideT: function(x, y) {
+		return this.inside(x, y)
 	},
 
 	touching: function(x, y, width) {

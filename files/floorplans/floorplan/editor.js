@@ -596,7 +596,7 @@ export class FloorplanEditor {
 		let done = {}
 		let inside = []
 		for (let i = 0; i < children.length; ++i) {
-			if (children[i][options.method ?? "inside"](point.x, point.y, options.minsize)) {
+			if (children[i][options.method ?? "insideT"](point.x, point.y, options.minsize)) {
 				if (inside.push(children[i]) >= options.max) {
 					return inside
 				}
