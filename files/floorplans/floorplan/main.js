@@ -53,7 +53,6 @@ const modes = {
 			pointerup: [singlePointerHandler, selectionBoxHandler],
 			pointercancel: [singlePointerHandler, selectionBoxHandler],
 			keydown: keyHandler,
-			keydown: keyHandler,
 			select: selectHandler,
 			reselect: selectHandler
 		}
