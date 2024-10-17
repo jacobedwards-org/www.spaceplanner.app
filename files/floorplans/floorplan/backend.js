@@ -738,12 +738,10 @@ export class FloorplanBackend {
 		let backend = this
 		return api.fetch("PATCH", this.endpoint, patch)
 			.then(function(data) {
-				if (newpos < backend.serverPosition) {
-					for (let i = 0; i < patch.length; ++i) {
-						if (patch[i].op === "remove") {
-							let id = parsePath(patch[i].path)
-							backend.unmapID(id)
-						}
+				for (let i = 0; i < patch.length; ++i) {
+					if (patch[i].op === "remove") {
+						let id = parsePath(patch[i].path)
+						backend.unmapID(id)
 					}
 				}
 
