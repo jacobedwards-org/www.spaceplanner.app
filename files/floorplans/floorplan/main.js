@@ -8,7 +8,7 @@ import * as geometry from "./geometry.js"
 import * as backend from "./backend.js"
 import * as api from "/lib/api.js"
 
-const defaultMode = "Precise"
+const defaultMode = "Edit"
 const messageTimeout = 4000
 
 const buttons = {
@@ -25,12 +25,13 @@ const panBit = 1
 const zoomBit = 2
 
 const modes = {
-	None: {
+	View: {
 		handlers: {
-			contextmenu: preventDefaultHandler
+			contextmenu: preventDefaultHandler,
+			keydown: keyHandler
 		}
 	},
-	Precise: {
+	Edit: {
 		points: true,
 		handlers: {
 			contextmenu: preventDefaultHandler,
@@ -63,7 +64,6 @@ let State = {
 	pointOp: 'Create',
 	snapAngle: true,
 	snapPoints: true,
-	selectMode: false,
 	lastClick: null
 }
 
@@ -206,6 +206,17 @@ function run(editor) {
 			editor.fitToView()
 		}}
 	})))
+	toolbar.append(item(
+		selector(editor.modes, function(mode) {
+			if (mode === "View") {
+				editor.draw.unselect()
+				escape()
+			}
+			editor.useMode(mode)
+		},
+			{ current: editor.mode, text: "Mode:" }
+		)
+	))
 	toolbar.append(undoRedo)
 	toolbar.append(item(addFurn))
 	toolbar.append(item(checkToggle("Angle snap", {
@@ -220,19 +231,8 @@ function run(editor) {
 			on: function() { State.snapPoints = true },
 			value: State.snapPoints
 	})))
-	toolbar.append(item(checkToggle("Select mode", {
-			title: "Enter selection mode",
-			off: function() { editor.useMode(defaultMode); State.selectMode = false },
-			on: function() { editor.useMode("Select"); State.selectMode = true },
-			value: State.selectMode
-	})))
 
 	if (debug) {
-		toolbar.append(item(
-			selector(editor.modes, function(mode) { editor.useMode(mode) },
-				{ current: editor.mode, text: "Modes:" }
-			)
-		))
 		toolbar.append(item(
 			selector(editor.units.systems, function(system) { editor.useUnits(system) },
 				{ current: editor.unitSystem, text: "Units:" }
@@ -556,7 +556,7 @@ function selectionHandler(event, editor) {
 	}
 
 	if (sel != null) {
-		if (!State.selectMode) {
+		if (!editor.mode === "Select") {
 			sel.select()
 		} else {
 			let selection = addSelection(editor, sel, true)
@@ -567,7 +567,7 @@ function selectionHandler(event, editor) {
 			}
 		}
 	} else {
-		if (!State.selectMode) {
+		if (!editor.mode === "Select") {
 			editor.draw.select()
 		}
 		escape()
