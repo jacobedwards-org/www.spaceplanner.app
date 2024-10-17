@@ -176,3 +176,19 @@ a.pop {
 dd, p {
 	max-width: 65ch;
 }
+
+#wait {
+	position: fixed;
+	bottom: 0;
+	left: 0;
+	width: 100vw;
+	height: 2em;
+
+	display: flex;
+	justify-content: center;
+	align-items: center;
+
+	background-color: rgba(0, 0, 0, .8);
+	backdrop-filter: blur(1px);
+        color: white;
+}

@@ -1,12 +1,11 @@
 import * as etc from "/lib/etc.js"
 import * as api from "/lib/api.js"
+import * as ui from "/lib/ui.js"
 
 etc.handle_wrap(main)
 
 function main() {
-	let wait = document.body.appendChild(document.createElement("p"))
-	wait.appendChild(document.createTextNode("Please wait..."))
-	wait.id = "wait"
+	ui.wait("Please wait...")
 
 	etc.userService()
 		.then(function(service) {
@@ -21,7 +20,7 @@ function main() {
 							for (let service in services) {
 								addService(services[service])
 							}
-							wait.remove()
+							ui.wait()
 							document.getElementById("services")
 								.removeAttribute("hidden", false)
 						}

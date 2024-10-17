@@ -235,3 +235,20 @@ export function warning(content) {
 
 	return warning
 }
+
+export function wait(content) {
+	let wait = document.getElementById("wait")
+	if (!content) {
+		wait.remove()
+	}
+
+	if (!wait) {
+		wait = document.body.appendChild(document.createElement("div"))
+		wait.id = "wait"
+	}
+
+	if (typeof content === "string") {
+		content = document.createTextNode(content)
+	}
+	wait.replaceChildren(content)
+}
