@@ -836,6 +836,13 @@ function precisePointHandler(event, editor, state) {
 		cleanup()
 	}
 
+	if (State.panZoom) {
+		if (state.to) {
+			revert()
+		}
+		return
+	}
+
 	if (event.type === "pointermove") {
 		if (!primaryMove(event)) {
 			return
