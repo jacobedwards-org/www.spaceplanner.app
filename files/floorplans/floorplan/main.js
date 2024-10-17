@@ -193,6 +193,11 @@ function run(editor) {
 		}
 	}})
 
+	toolbar.append(item(ui.button("Fit to view", "Fit the floor plan into view", null, {
+		handlers: { click: function() {
+			editor.fitToView()
+		}}
+	})))
 	toolbar.append(undoRedo)
 	toolbar.append(item(addFurn))
 	toolbar.append(item(checkToggle("Angle snap", {
