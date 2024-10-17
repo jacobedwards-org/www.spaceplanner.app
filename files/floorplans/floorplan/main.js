@@ -72,6 +72,8 @@ const escapeEvent = new Event("escape")
 etc.handle_wrap(init)
 
 function init() {
+	ui.wait("Loading data...")
+
 	let floorplan_id = (new URLSearchParams(new URL(document.URL).search)).get("id")
 	if (!floorplan_id) {
 		document.location.href = "/floorplans"
@@ -140,6 +142,8 @@ function init() {
 }
 
 function run(editor) {
+	ui.wait("Initializing editor...")
+
 	editor.useUnits("imperial")
 	editor.draw.hide()
 
@@ -236,6 +240,7 @@ function run(editor) {
 	editor.draw.show()
 	editor.backend.pull()
 		.then(function() {
+			ui.wait()
 			if (editor.draw.findExactlyOne("#points").children().length === 0) {
 				editor.addPoint({ x: 0, y: 0 })
 			}

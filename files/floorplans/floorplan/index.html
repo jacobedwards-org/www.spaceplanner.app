@@ -10,6 +10,16 @@
 		<meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, maximum-scale=1, minimum-scale=1">
 	</head>
 	<body>
+		<noscript><p class="error">Unfortunately JavaScript must be enabled for this to function.</p></noscript>
+
+                <!--
+		  -- Inlined it here because there's a lot of module
+                  -- scripts to be fetched before they can run (and I'm
+                  -- not sure if one can start running before they're
+                  -- all loaded or not
+		  -->
+		<div id="wait">Loading scripts...</div>
+
 		<section id="editor">
 			<header>
 				<h1 class="fp_name">Floorplan</h1>
