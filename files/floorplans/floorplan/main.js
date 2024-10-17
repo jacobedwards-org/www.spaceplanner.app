@@ -48,7 +48,11 @@ const modes = {
 		points: true,
 		handlers: {
 			contextmenu: preventDefaultHandler,
-			pointerdown: selectionHandler,
+			pointerdown: [singlePointerHandler, selectionHandler, selectionBoxHandler],
+			pointermove: [singlePointerHandler, selectionBoxHandler],
+			pointerup: [singlePointerHandler, selectionBoxHandler],
+			pointercancel: [singlePointerHandler, selectionBoxHandler],
+			keydown: keyHandler,
 			keydown: keyHandler,
 			select: selectHandler,
 			reselect: selectHandler
@@ -569,6 +573,90 @@ function selectionHandler(event, editor) {
 			editor.draw.select()
 		}
 		escape()
+	}
+}
+
+// pointerdown, pointercancel, pointermove, pointerup
+function selectionBoxHandler(ev, editor, state) {
+	const cleanup = function() {
+		if (state.rect) {
+			state.rect.remove()
+		}
+		for (let k in state) {
+			delete state[k]
+		}
+	}
+	const useEv = function(ev) {
+		if (ev.pointerType === "mouse") {
+			if (ev.type === "pointermove") {
+				return true
+			}
+			return !primaryPointer(ev)
+		} else {
+			return primaryPointer(ev)
+		}
+	}
+
+	if (ev.type === "pointercancel") {
+		cleanup()
+		return
+	}
+
+	if (ev.type === "pointerdown" && useEv(ev)) {
+		handled(ev)
+		let p = editor.draw.point(ev.clientX, ev.clientY)
+		if (state.rect) {
+			console.error("selectionBoxHandler state got messed up")
+			cleanup()
+		}
+		state.origin = structuredClone(p)
+		state.rect = editor.ui.top.rect(0, 0)
+			.move(p.x, p.y)
+			.stroke({ width: 50, dasharray: [350, 350], color: "blue" })
+			.fill("rgba(0,0,1,.025)")
+		return
+	}
+
+	if (!state.rect) {
+		return
+	}
+
+	let p = editor.draw.point(ev.clientX, ev.clientY)
+	if (ev.type === "pointermove" && useEv(ev)) {
+		handled(ev)
+		let params = {}
+		if (state.origin.x > p.x) {
+			params.x = p.x
+			params.width = state.origin.x - p.x
+		} else {
+			params.x = state.origin.x
+			params.width = p.x - state.origin.x 
+		}
+		if (state.origin.y > p.y) {
+			params.y = p.y
+			params.height = state.origin.y - p.y
+		} else {
+			params.y = state.origin.y 
+			params.height = p.y - state.origin.y 
+		}
+		state.rect.move(params.x, params.y).size(params.width, params.height)
+	} else if (ev.type === "pointerup" && useEv(ev)) {
+		handled(ev)
+		let objects = editor.draw.find("#floorplan > :not(#furniture_layouts, #door_swings) > *, #furniture_layouts > * > *")
+		let s = state.rect.rbox(state.rect.root())
+		let selection = []
+		objects.each(function() {
+			let b = this.rbox(this.root())
+			if (((b.x >= s.x && b.x <= s.x2) || (b.x2 >= s.x && b.x2 <= s.x2)) &&
+			    ((b.y >= s.y && b.y <= s.y2) || (b.y2 >= s.y && b.y2 <= s.y2))) {
+				selection.push(this)
+			}
+				
+		})
+		if (selection.length > 0) {
+			addSelection(editor, selection).selectList()
+		}
+		cleanup()
 	}
 }
 
@@ -1611,6 +1699,14 @@ function escape() {
 		console.debug("Escape", e)
 		e.dispatchEvent(escapeEvent)
 	})
+}
+
+function primaryPointer(ev) {
+	if (ev.type === "pointermove") {
+		return primaryMove(ev)
+	} else {
+		return truelyPrimary(ev)
+	}
 }
 
 function truelyPrimary(ev) {
