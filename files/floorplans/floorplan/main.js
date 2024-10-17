@@ -35,7 +35,7 @@ const modes = {
 		handlers: {
 			contextmenu: preventDefaultHandler,
 			pointerdown: [singlePointerHandler, selectionHandler, precisePointHandler, precisePointMapHandler, furnitureHandler],
-			pointermove: [singlePointerHandler, precisePointHandler, furnitureHandler],
+			pointermove: [singlePointerHandler, precisePointHandler, precisePointMapHandler, furnitureHandler],
 			pointerup: [singlePointerHandler, precisePointHandler, precisePointMapHandler, furnitureHandler],
 			pointercancel: [singlePointerHandler,  selectionHandler, precisePointHandler, precisePointMapHandler, furnitureHandler],
 			keydown: [keyHandler],
@@ -1036,7 +1036,7 @@ function precisePointHandler(event, editor, state) {
 	handled(event)
 }
 
-// pointerdown, pointerup, dblclick
+// pointerdown, pointermove, pointerup
 function precisePointMapHandler(event, editor, state) {
 	const cleanup = function() {
 		for (let i in state) {
@@ -1054,12 +1054,14 @@ function precisePointMapHandler(event, editor, state) {
 		return
 	}
 
-	if (state.door && event.type === "pointerup") {
+	if (event.type === "pointermove") {
+		if (!state.door) {
+			return
+		}
 		handled(event)
 
 		let door = editor.findObj(state.doorID)
-		if (state.doorSwingFrom.distanceTo(cursor) < 500) {
-			cleanup()
+		if (state.doorSwingFrom.distanceTo(cursor) < params.threshold) {
 			return
 		}
 
@@ -1075,6 +1077,13 @@ function precisePointMapHandler(event, editor, state) {
 
 		let s = (o > 0 ? "+" : "-")
 		editor.backend.mapPoints({ door_swing: state.hinge + s }, state.doorID)
+	}
+
+	if (event.type === "pointerup") {
+		if (!state.door) {
+			return
+		}
+		handled(event)
 		editor.finishAction()
 		cleanup()
 		return
