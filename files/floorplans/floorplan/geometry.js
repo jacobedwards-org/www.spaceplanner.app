@@ -66,7 +66,7 @@ SVG.extend(SVG.Line, {
 			return (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x)
 		}
 		const t = this.vecs_top_first()
-  		return cross(point, t[1], t[0])
+		return cross(point, t[1], t[0])
 	},
 
 	/*

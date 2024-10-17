@@ -1,5 +1,5 @@
 let _settings = {
-        devapi: { name: "Developer API", type: "bool", brief: "Don't use the production API" }
+	devapi: { name: "Developer API", type: "bool", brief: "Don't use the production API" }
 }
 
 for (let k in _settings) {
@@ -12,7 +12,7 @@ for (let k in _settings) {
 		delete _settings[k]
 		continue
 	}
-        _settings[k].key = k
+	_settings[k].key = k
 }
 
 export const settings = _settings
@@ -29,23 +29,23 @@ export function setting(k, v) {
 }
 
 function getValue(k) {
-        let v = localStorage.getItem(storageKey(k))
-        console.log("dev.getValue", k, v)
-        if (settings[k].type === "bool") {
-                return v == "true"
-        } else if (settings[k].type === "string") {
-                return v
-        }
-        throw new Error("Invalid setting type")
+	let v = localStorage.getItem(storageKey(k))
+	console.log("dev.getValue", k, v)
+	if (settings[k].type === "bool") {
+		return v == "true"
+	} else if (settings[k].type === "string") {
+		return v
+	}
+	throw new Error("Invalid setting type")
 }
 
 function setValue(k, v) {
-        console.log("dev.setValue", k, v)
-        if (v == null) {
-                localStorage.removeItem(storageKey(k))
-        } else {
-                localStorage.setItem(storageKey(k), v)
-        }
+	console.log("dev.setValue", k, v)
+	if (v == null) {
+		localStorage.removeItem(storageKey(k))
+	} else {
+		localStorage.setItem(storageKey(k), v)
+	}
 }
 
 function storageKey(k) {

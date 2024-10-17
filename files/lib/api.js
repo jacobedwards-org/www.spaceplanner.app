@@ -29,7 +29,7 @@ function parse_response(response) {
 }
 
 function status(response) {
-        // response.code is from appleboy's golang JWT LoginHandler
+	// response.code is from appleboy's golang JWT LoginHandler
 	// May figure out how to change in the future
 	if (response.code >= 200 || response.code < 300) {
 		return Promise.resolve(response)
@@ -82,7 +82,7 @@ export function register(username, password, email, options) {
 
 export function login(username, password) {
 	let req = { "username": username, "password": password }
-        return api_fetch("POST", "tokens", req)
+	return api_fetch("POST", "tokens", req)
 		.then(function(resp) {
 			console.log("api.login", req)
 			update_token(resp.token)

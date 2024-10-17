@@ -4,9 +4,9 @@ import * as api from "/lib/api.js"
 etc.handle_wrap(main)
 
 function main() {
-        if (!api.authorized()) {
-                window.location.href = "/login"
-        }
+	if (!api.authorized()) {
+		window.location.href = "/login"
+	}
 
 	api.fetch("POST", "users/" + localStorage.getItem("username") + "/services/billingportal")
 		.then(function(body) {

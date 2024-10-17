@@ -78,11 +78,11 @@ export function userService() {
 }
 
 export function authorize() {
-        if (!api.authorized()) {
-                // Maybe add a parameter which has /login redirect
-                // back to the page that was trying to be accessed
-                window.location.href = "/login"
-        }
+	if (!api.authorized()) {
+		// Maybe add a parameter which has /login redirect
+		// back to the page that was trying to be accessed
+		window.location.href = "/login"
+	}
 	keep_authorized()
 }
 
@@ -108,17 +108,17 @@ function keep_authorized() {
 export function error(message, on) {
 	console.error("etc.error", message)
 
-        if (!on || !on.parentElement) {
-                on = document.body
-        }
+	if (!on || !on.parentElement) {
+		on = document.body
+	}
 
-        let err_elem = on.parentElement.querySelector(".error")
-        if (err_elem) {
-                err_elem.textContent = message
-        } else {
-                let err_elem = document.createElement("form")
+	let err_elem = on.parentElement.querySelector(".error")
+	if (err_elem) {
+		err_elem.textContent = message
+	} else {
+		let err_elem = document.createElement("form")
 		err_elem.addEventListener("submit", function(e) { e.preventDefault() })
-                err_elem.setAttribute("class", "error")
+		err_elem.setAttribute("class", "error")
 
 		let msg = document.createElement("p")
 		msg.appendChild(document.createTextNode(message))
@@ -126,8 +126,8 @@ export function error(message, on) {
 		let b = err_elem.appendChild(ui.button("Dismiss", "Dismiss error", "close"))
 		b.addEventListener("click", function(ev) { err_elem.remove(); ev.preventDefault() })
 
-                on.prepend(err_elem)
-        }
+		on.prepend(err_elem)
+	}
 }
 
 export function handle_wrap(func, on) {

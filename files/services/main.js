@@ -34,11 +34,11 @@ function main() {
 }
 
 function chooseService(service) {
-        console.log("Choose service", service.id)
+	console.log("Choose service", service.id)
 
-        if (!api.authorized()) {
-                window.location.href = "/register"
-        }
+	if (!api.authorized()) {
+		window.location.href = "/register"
+	}
 
 	api.verifiedEmail()
 		.then(function(email) {
