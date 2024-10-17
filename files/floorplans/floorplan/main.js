@@ -34,9 +34,10 @@ const modes = {
 		points: true,
 		handlers: {
 			contextmenu: preventDefaultHandler,
-			pointerdown: [selectionHandler, precisePointHandler, precisePointMapHandler, furnitureHandler],
-			pointermove: [precisePointHandler, furnitureHandler],
-			pointerup: [precisePointHandler, precisePointMapHandler, furnitureHandler],
+			pointerdown: [singlePointerHandler, selectionHandler, precisePointHandler, precisePointMapHandler, furnitureHandler],
+			pointermove: [singlePointerHandler, precisePointHandler, furnitureHandler],
+			pointerup: [singlePointerHandler, precisePointHandler, precisePointMapHandler, furnitureHandler],
+			pointercancel: [singlePointerHandler,  selectionHandler, precisePointHandler, precisePointMapHandler, furnitureHandler],
 			keydown: [keyHandler],
 			dblclick: [precisePointMapHandler, furnitureHandler],
 			select: selectHandler,
@@ -68,6 +69,7 @@ const debug = (new URLSearchParams(new URL(document.URL).search)).get("debug") !
 
 // turn off bubbling
 const escapeEvent = new Event("escape")
+const cancelEvent = new PointerEvent("pointercancel")
 
 etc.handle_wrap(init)
 
@@ -248,14 +250,7 @@ function run(editor) {
 			editor.fitToView()
 		})
 
-	let preventWhenSel = function(e) {
-		if (editor.draw.findOne(".selected")) {
-			e.preventDefault()
-		}
-	}
-
 	editor.draw.on("touchmove", function(e){ e.preventDefault() });
-	editor.draw.on("pinchZoomStart", preventWhenSel)
 	editor.draw.on("pinchZoomStart", function() { State.panZoom |= zoomBit })
 	editor.draw.on("pinchZoomEnd", function() { State.panZoom &= ~zoomBit})
 	editor.draw.on("panStart", function() { State.panZoom |= panBit })
@@ -1551,6 +1546,30 @@ function snap(point, on, directions) {
 
 function preventDefaultHandler(event) {
 	handled(event)
+}
+
+function singlePointerHandler(ev, editor, state) {
+	if (ev.type === "pointerdown") {
+		state[ev.pointerId] = true
+		console.warn("singlePointerHandler", ev.pointerId, true)
+	} else if (ev.type === "pointerup" || ev.type === "pointercancel") {
+		delete state[ev.pointerId]
+		console.warn("singlePointerHandler", ev.pointerId, false)
+	}
+
+	// Send all events but pointerdown on to the other handlers
+	if (ev.type !== "pointerdown" && ev.type !== "pointermove") {
+		return
+	}
+
+	let cnt = 0
+	for (let k in state) {
+		if (++cnt > 1) {
+			editor.draw.fire(cancelEvent);
+			handled(ev)
+			return
+		}
+	}
 }
 
 function notify(message, id) {
