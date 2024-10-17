@@ -326,8 +326,8 @@ function selectHandler(event, editor, state) {
 	)
 
 	let ids = []
-	for (let i in a) {
-		ids[i] = lib.getID(a[i])
+	for (let i = 0; i < a.length; ++i) {
+		ids.push(lib.getID(a[i]))
 	}
 
 	let groups = {}
