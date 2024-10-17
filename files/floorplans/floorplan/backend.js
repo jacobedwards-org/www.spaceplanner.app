@@ -912,6 +912,17 @@ export class FloorplanBackend {
 	}
 
 	removeOrphans() {
+		// The issue is that the origin point isn't stored
+		// on the server, so it's kind of randomized each time
+		// you fetch the data anew. Furthermore it means you're
+		// kind of stuck with the origin point even if you end
+		// up wanting to make a new place you're origin for
+		// whatever reason.
+		//   This will probably just be removed at some point
+		// but I'm not entirely sure yet.
+		console.error("removeOrphans is currently disabled")
+		return
+
 		let origin = this.originPoint()
 		if (origin == undefined) {
 			return
