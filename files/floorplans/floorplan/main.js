@@ -854,7 +854,7 @@ function precisePointHandler(event, editor, state) {
 		cleanup()
 	}
 
-	if (State.panZoom) {
+	if (State.panZoom || event.type === "pointercancel") {
 		if (state.to) {
 			revert()
 		}
@@ -963,6 +963,11 @@ function precisePointMapHandler(event, editor, state) {
 		}
 	}
 
+	if (event.type === "pointercancel") {
+		cleanup()
+		return
+	}
+
 	let cursor = editor.draw.point(event.clientX, event.clientY).vec()
 	if (editor.thingAt(cursor, "#points")) {
 		return
@@ -1054,7 +1059,7 @@ function furnitureHandler(ev, editor, state) {
 		}
 	}
 
-	if (state.panZoom) {
+	if (state.panZoom || ev.type === "pointercancel") {
 		cleanup()
 		return
 	}
