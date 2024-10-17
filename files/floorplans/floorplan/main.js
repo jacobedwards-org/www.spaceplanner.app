@@ -959,7 +959,7 @@ function precisePointHandler(event, editor, state) {
 				return
 			}
 
-			state.from = editor.selectedPoint()
+			state.from = editor.selectedOne("points")
 			if (!state.from) {
 				return
 			}

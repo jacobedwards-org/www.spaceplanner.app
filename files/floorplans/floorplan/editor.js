@@ -631,11 +631,6 @@ export class FloorplanEditor {
 		return inside
 	}
 
-	mapSelected(type) {
-		let points = this.selectedPoints()
-		return this.mapPoints({ type, a: points.a, b: points.b })
-	}
-
 	mapPoints(params, id) {
 		if (params.a) {
 			params.a = getID(params.a, "points")
@@ -658,19 +653,19 @@ export class FloorplanEditor {
 		return this.backend.addMappedFurniture(params, id)
 	}
 
-	selectedPoints() {
-		return {
-			a: this.selectedPoint(),
-			b: this.lastSelectedPoint()
+	selected(type) {
+		if (type === "furniture_maps") {
+			type = "furniture_layouts > * >"
 		}
+		return this.draw.find(`#${type} > .selected`)
 	}
 
-	selectedPoint() {
-		return this.draw.findOneMax("#points > .selected")
-	}
-
-	lastSelectedPoint() {
-		return this.draw.findOneMax("#points > .last_selected")
+	selectedOne(type) {
+		let sel = this.selected(type)
+		if (sel.length != 1) {
+			return null
+		}
+		return sel[0]
 	}
 
 	applyDiffs(diffs) {
