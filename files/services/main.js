@@ -11,7 +11,7 @@ function main() {
 	etc.userService()
 		.then(function(service) {
 			if (service) {
-				window.location.href = "/billing"
+				window.location.href = "/settings/billing"
 			} else {
 				api.fetch("GET", "services")
 					.then(function(services) {
