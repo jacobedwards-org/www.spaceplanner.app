@@ -33,3 +33,7 @@
 	stroke: blue;
 	stroke-opacity: 1;
 }
+
+#furniture_layouts > * > .selected {
+	filter: invert(8%) sepia(100%) saturate(7462%) hue-rotate(248deg) brightness(94%) contrast(144%);
+}
