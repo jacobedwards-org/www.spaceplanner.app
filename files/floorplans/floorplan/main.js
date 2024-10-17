@@ -984,7 +984,7 @@ function precisePointHandler(event, editor, state) {
 				init()
 			}
 
-			state.origin = state.from.vec()
+			state.origin = cursor
 		} else if (event.type === "pointerup") {
 			if (state.from) {
 				cleanup()
@@ -992,7 +992,7 @@ function precisePointHandler(event, editor, state) {
 				return
 			}
 		} else if (event.type === "pointermove" && state.origin != undefined &&
-		    state.origin.distanceTo(cursor) > 200) {
+		    state.origin.distanceTo(cursor) > params.threshold) {
 			state.to = editor.addPoint(cursor, true)
 			editor.mapPoints({ type: "wall", a: state.from, b: state.to})
 			state.to = editor.findObj(state.to)
