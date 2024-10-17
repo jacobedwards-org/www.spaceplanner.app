@@ -693,7 +693,7 @@ export class FloorplanEditor {
 							.select()
 					} else {
 						editor.draw.findOne("#points")
-							.circle(750)
+							.circle(400)
 							.cx(value.x).cy(value.y)
 							.attr({ id })
 							.addClass("point")
@@ -717,7 +717,7 @@ export class FloorplanEditor {
 					} else {
 						wall = editor.draw.findExactlyOne("#pointmaps")
 							.line(a.x, a.y, b.x, b.y)
-							.stroke({ color: "black", width: 550 })
+							.stroke({ color: "black", width: 350 })
 							.attr({ id })
 							.addClass(value.type)
 							.data("type", value.type)
