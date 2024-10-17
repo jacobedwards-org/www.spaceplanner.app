@@ -8,6 +8,7 @@ import * as geometry from "./geometry.js"
 import * as backend from "./backend.js"
 import * as api from "/lib/api.js"
 
+const defaultMode = "Precise"
 const messageTimeout = 4000
 
 const buttons = {
@@ -41,6 +42,16 @@ const modes = {
 			select: selectHandler,
 			reselect: selectHandler
 		}
+	},
+	Select: {
+		points: true,
+		handlers: {
+			contextmenu: preventDefaultHandler,
+			pointerdown: selectionHandler,
+			keydown: keyHandler,
+			select: selectHandler,
+			reselect: selectHandler
+		}
 	}
 }
 
@@ -49,6 +60,7 @@ let State = {
 	pointOp: 'Create',
 	snapAngle: true,
 	snapPoints: true,
+	selectMode: false,
 	lastClick: null
 }
 
@@ -134,7 +146,7 @@ function run(editor) {
 	for (let mode in modes) {
 		editor.addMode(mode, modes[mode])
 	}
-	editor.useMode("Precise")
+	editor.useMode(defaultMode)
 
 	let toolbar = document.querySelector("header")
 		.appendChild(document.createElement("ul"))
@@ -194,6 +206,12 @@ function run(editor) {
 			off: function() { State.snapPoints = false },
 			on: function() { State.snapPoints = true },
 			value: State.snapPoints
+	})))
+	toolbar.append(item(checkToggle("Select mode", {
+			title: "Enter selection mode",
+			off: function() { editor.useMode(defaultMode); State.selectMode = false },
+			on: function() { editor.useMode("Select"); State.selectMode = true },
+			value: State.selectMode
 	})))
 
 	if (debug) {
@@ -282,7 +300,8 @@ function checkToggle(name, params) {
 		input.setAttribute("title", params.title)
 	}
 
-	if (params.value) {
+	if (params.value != undefined) {
+		input.checked = params.value
 		run(params.value)
 	}
 	return c
@@ -303,6 +322,10 @@ function selectHandler(event, editor, state) {
 	const refresh = function() {
 		selectHandler(event, editor, state)
 	}
+
+	c.append(ui.button("Unselect", "Deselect selection", null, {
+		handlers: { click: function() { editor.draw.select() } }
+	}))
 
 	c.append(ui.input("Delete", "Delete selected objects", {
 			attributes: { type: "button", value: "Delete" },
@@ -519,6 +542,8 @@ function selector(things, select, options) {
 
 // pointerdown
 function selectionHandler(event, editor) {
+	let sel
+
 	if (event.pointerType === "mouse" && event.button === buttons.right) {
 		return
 	}
@@ -526,32 +551,47 @@ function selectionHandler(event, editor) {
 	let p = editor.draw.point(event.clientX, event.clientY)
 	State.lastClick = structuredClone(p)
 	let order = [ "#" + editor.layoutG(), "#points", "#pointmaps" ]
-	for (let i = 0; i < order.length; ++i) {
-		let x = editor.thingAt(p, order[i])
-		if (x) {
-			x.select()
-			return
+	for (let i = 0; !sel && i < order.length; ++i) {
+		sel = editor.thingAt(p, order[i])
+	}
+
+	if (!sel) {
+		let close = editor.thingsAt(p, order.join(","), { method: "touching", minsize: 3500 })
+		let dist
+		let closest
+		for (let i = 0; i < close.length; ++i) {
+			let tmp = close[i].distanceTo(p.x, p.y)
+			if (dist == null || tmp < dist) {
+				dist = tmp
+				closest = close[i]
+			}
 		}
+		sel = closest
 	}
 
-	let close = editor.thingsAt(p, order.join(","), { method: "touching", minsize: 3500 })
-	let dist
-	let closest
-	for (let i = 0; i < close.length; ++i) {
-		let tmp = close[i].distanceTo(p.x, p.y)
-		if (dist == null || tmp < dist) {
-			dist = tmp
-			closest = close[i]
+	if (sel != null) {
+		if (!State.selectMode) {
+			sel.select()
+		} else {
+			let selection = editor.draw.find(".selected")
+			let i = selection.indexOf(sel)
+			if (i >= 0) {
+				selection.splice(i, 1)
+			} else {
+				selection.push(sel)
+			}
+			if (selection.length === 0) {
+				editor.draw.select()
+			} else {
+				selection.selectList()
+			}
 		}
+	} else {
+		if (!State.selectMode) {
+			editor.draw.select()
+		}
+		escape()
 	}
-
-	if (closest != null) {
-		closest.select()
-		return
-	}
-
-	editor.draw.select()
-	escape()
 }
 
 function keyHandler(ev, editor) {
