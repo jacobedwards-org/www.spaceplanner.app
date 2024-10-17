@@ -1080,7 +1080,7 @@ function precisePointMapHandler(event, editor, state) {
 		return
 	}
 
-	let map = editor.thingAt(cursor, "#pointmaps")
+	let map = editor.selectedOne("pointmaps")
 	if (map == null) {
 		return
 	}
