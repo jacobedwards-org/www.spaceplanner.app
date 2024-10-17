@@ -323,7 +323,7 @@ function selectHandler(event, editor, state) {
 		selectHandler(event, editor, state)
 	}
 
-	c.append(ui.button("Unselect", "Deselect selection", null, {
+	c.append(ui.button("Unselect", "Unselect selection", null, {
 		handlers: { click: function() { editor.draw.select() } }
 	}))
 
