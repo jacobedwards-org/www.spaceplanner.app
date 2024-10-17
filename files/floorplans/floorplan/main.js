@@ -39,7 +39,6 @@ const modes = {
 			pointerup: [singlePointerHandler, precisePointHandler, precisePointMapHandler, furnitureHandler],
 			pointercancel: [singlePointerHandler,  selectionHandler, precisePointHandler, precisePointMapHandler, furnitureHandler],
 			keydown: [keyHandler],
-			dblclick: [precisePointMapHandler, furnitureHandler],
 			select: selectHandler,
 			reselect: selectHandler
 		}
