@@ -1551,10 +1551,8 @@ function preventDefaultHandler(event) {
 function singlePointerHandler(ev, editor, state) {
 	if (ev.type === "pointerdown") {
 		state[ev.pointerId] = true
-		console.warn("singlePointerHandler", ev.pointerId, true)
 	} else if (ev.type === "pointerup" || ev.type === "pointercancel") {
 		delete state[ev.pointerId]
-		console.warn("singlePointerHandler", ev.pointerId, false)
 	}
 
 	// Send all events but pointerdown on to the other handlers
