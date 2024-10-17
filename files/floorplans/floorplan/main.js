@@ -1089,24 +1089,6 @@ function precisePointMapHandler(event, editor, state) {
 
 	let id = lib.getID(map)
 	let data = editor.backend.obj(id)
-
-	// TODO: Stop using double click
-	// Explicitly check button in case UA isn't complient
-	if (event.type === "dblclick" && data.type === "wall" && event.button == buttons.left) {
-		handled(event)
-
-		let sub = map.whereIsPoint(cursor.x, cursor.y)
-		if (sub == null) {
-			throw new Error("Expected point on line")
-		}
-
-		sub = editor.addPoint(sub)
-		editor.mapPoints({ type: "wall", a: data.a, b: sub })
-		editor.mapPoints({ type: "wall", a: sub, b: data.b })
-		editor.remove(map)
-		return
-	}
-
 	if (data.type !== "door" || !truelyPrimary(event)) {
 		return
 	}
