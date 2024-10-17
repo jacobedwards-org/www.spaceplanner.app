@@ -495,6 +495,30 @@ export class FloorplanEditor {
 		grid.size(box.width + margin, box.height + margin).move(box.x - margin / 2, box.y - margin / 2)
 	}
 
+	fitToView() {
+		const adj = function(ns, t, pos, siz) {
+			t[pos] += (t[siz] - ns) / 2
+			t[siz] = ns
+		}
+		const add = function(d, t, pos, siz) {
+			return adj(t[siz] + d, t, pos, siz)
+		}
+
+		let bbox = this.draw.findOne("#floorplan").bbox()
+		let ft = this.units.get("foot")
+		let min = ft * 20
+		add(ft * 2, bbox, "x", "width")
+		if (bbox.width < min) {
+			adj(min, bbox, "x", "width")
+		}
+		add(ft * 2, bbox, "y", "height")
+		if (bbox.height < min) {
+			adj(min, bbox, "y", "height")
+		}
+		this.draw.viewbox(bbox)
+		this.updateGrid()
+	}
+
 	// Should be called after each user "action"
 	finishAction() {
 		this.backend.history.mark()
