@@ -562,13 +562,7 @@ function selectionHandler(event, editor) {
 		if (!State.selectMode) {
 			sel.select()
 		} else {
-			let selection = editor.draw.find(".selected")
-			let i = selection.indexOf(sel)
-			if (i >= 0) {
-				selection.splice(i, 1)
-			} else {
-				selection.push(sel)
-			}
+			let selection = addSelection(editor, sel, true)
 			if (selection.length === 0) {
 				editor.draw.select()
 			} else {
@@ -608,6 +602,25 @@ function keyHandler(ev, editor) {
 	}
 
 	handled(ev)
+}
+
+function addSelection(editor, objects, flip) {
+	if (!Array.isArray(objects)) {
+		objects = [objects]
+	}
+
+	let sel = editor.draw.find(".selected")
+	for (let i = 0; i < objects.length; ++i) {
+		let si = sel.indexOf(objects[i])
+		if (si >= 0) {
+			if (flip) {
+				sel.splice(si, 1)
+			}
+		} else {
+			sel.push(objects[i])
+		}
+	}
+	return sel
 }
 
 function radioMenu(editor, key, values, initial, options) {
