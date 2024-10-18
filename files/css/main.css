@@ -43,6 +43,7 @@ body {
 #bar > ul > * > a:not(.button) {
 	text-decoration: none;
 	color: black;
+	padding: .4em .4em;
 }
 
 #bar > ul > li {
