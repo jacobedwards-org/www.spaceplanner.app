@@ -15,6 +15,12 @@ if (dev.setting("devapi")) {
 
 console.log(`Floorplan API: ${config.proto}://${config.host}/${config.version}`)
 
+export class FetchError extends Error {
+	constructor(message, options) {
+		super(message, options)
+	}
+}
+
 function verify_response(response) {
 	let type = response.headers.get("Content-Type")
 	if (type != "application/json; charset=utf-8") {
@@ -56,6 +62,10 @@ function api_fetch(method, endpoint, body) {
 	}
 	
 	return fetch(config.proto + "://" + config.host + "/" + config.version + "/" + requestPath(endpoint), params)
+		.catch(function(neterr) {
+			console.warn("Fetch error:", neterr)
+			throw new FetchError(neterr)
+		})
 		.then(verify_response)
 		.then(parse_response)
 		.then(status)

@@ -132,10 +132,9 @@ function init() {
 				},
 				push: function() {
 					suffix.data = ""
+					status()
 				},
-				pusherror: function(err) {
-					notify("Failed to push: " + err)
-				}
+				pusherror: fetchError
 			}
 		}
 	})
@@ -1758,5 +1757,19 @@ function def(obj) {
 function defKey(obj) {
 	for (let i in obj) {
 		return i
+	}
+}
+
+function status(msg) {
+	let s = document.getElementById("status")
+	s.classList[msg instanceof Error ? "add" : "remove"]("error")
+	s.textContent = msg ?? ""
+}
+
+function fetchError(err) {
+	if (err instanceof api.FetchError) {
+		status("Network error: " + err)
+	} else {
+		status(err)
 	}
 }

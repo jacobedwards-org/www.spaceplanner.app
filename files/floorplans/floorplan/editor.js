@@ -522,17 +522,17 @@ export class FloorplanEditor {
 	// Should be called after each user "action"
 	finishAction() {
 		this.backend.history.mark()
-		this.backend.push()
+		return this.backend.push()
 	}
 
 	undo() {
 		this.backend.undo()
-		this.backend.push()
+		return this.backend.push()
 	}
 
 	redo() {
 		this.backend.redo()
-		this.backend.push()
+		return this.backend.push()
 	}
 
 	addPoint(point, force) {

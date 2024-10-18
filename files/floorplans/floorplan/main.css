@@ -27,6 +27,17 @@ header > h1 {
 	font-weight: normal;
 }
 
+#status {
+	font-size: smaller;
+	text-decoration: underline;
+}
+
+div:has(#status) {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
 header > .toolbar {
 	list-style: none;
 	padding: 0;
