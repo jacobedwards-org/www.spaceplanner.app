@@ -11,44 +11,19 @@ function init() {
 	etc.authorize()
 	etc.bar()
 
-	let display_button = document.getElementById("display_method")
-	if (!display_button) {
-		throw new Error("Expected #display_method")
-	}
-
-	let list = { button: ui.button("List", "Switch to list view", "list"), func: listview }
-	let grid = { button: ui.button("Grid", "Switch to grid view", "grid"), func: gridview }
-	let toggle
-	if (localStorage.getItem("fp_gridview")) {
-		toggle = ui.toggle(list, grid, { init: true })
-	} else {
-		toggle = ui.toggle(grid, list, { init: true })
-	}
-	display_button.replaceWith(toggle)
-
 	api.fetch("GET", "floorplans/:user")
 		.then(show_floorplans)
 		.catch(etc.error)
 }
 
-function listview() {
-	document.getElementById("floorplans").removeAttribute("class")
-	localStorage.removeItem("fp_gridview")
-}
-
-function gridview() {
-	document.getElementById("floorplans").setAttribute("class", "grid")
-	localStorage.setItem("fp_gridview", "list")
-}
-
 function commit_editable_floorplan_func(element, data) {
 	return function () {
 		let patches = []
-		let fields = Array.from(element.querySelectorAll('input.fp_name, input.fp_address, input.fp_synopsis'))
+		let fields = Array.from(element.querySelectorAll(".fp_metadata"))
 		let updated = false
 		let newdata = {}
 		for (let i in fields) {
-			let name = floorplan_info_name(fields[i].getAttribute("class"))
+			let name = fields[i].name
 			let value = fields[i].value
 			if (value.length === 0) {
 				value = null
@@ -86,7 +61,7 @@ function editable_floorplan_create_func(element) {
 		let data = {}
 		let fields = Array.from(element.querySelectorAll("header > input"))
 		for (let i in fields) {
-			let name = floorplan_info_name(fields[i].getAttribute("class"))
+			let name = fields[i].name
 			let value = fields[i].value
 			console.debug(fields[i], name, value)
 			if (value) {
@@ -122,20 +97,21 @@ function editable_floorplan_func(element, data) {
 		let parent = element.querySelector("header")
 		for (let i in editables) {
 			let input
-			let c = floorplan_info_class(editables[i])
-			let e = parent.querySelector("." + c) // .getElementsByClassName()
 			let memo = "Edit floorplan " + editables[i]
+			let e = parent.querySelector("." + editables[i])
+
+			input = ui.input(editables[i], memo, {
+				attributes: { value: e ? e.textContent : "" }
+			})
+			input.classList.add("fp_metadata")
+			input.classList.add(editables[i])
+			input.name = editables[i]
+
 			if (e) {
-				input = ui.input(editables[i], memo, {
-					attributes: { value: e.textContent }
-				})
-				input.setAttribute("class", c)
 				e.replaceWith(input)
 			} else {
-				input = ui.input(editables[i], memo)
-				input.setAttribute("class", c)
 				if (prev) {
-					if (prev.classList.contains("fp_name")) {
+					if (prev.name === "name") {
 						parent.append(input)
 					} else {
 						prev.after(input)
@@ -147,17 +123,6 @@ function editable_floorplan_func(element, data) {
 			prev = input
 		}
 	}
-}
-
-function floorplan_info_class(name) {
-	return "fp_" + name;
-}
-
-function floorplan_info_name(classname) {
-	if (!classname.match("^fp_")) {
-		throw new Error("Expected floorplan info class")
-	}
-	return classname.substring(3)
 }
 
 function delete_floorplan_func(item, floorplan) {
@@ -217,11 +182,18 @@ function create_floorplan(floorplan) {
 	let root = document.createElement("div")
 	root.classList.add("class", "floorplan")
 
-	let aside = document.createElement("aside")
+	let aside = document.createElement("div")
+	aside.classList.add("fp_ops")
 	if (floorplan) {
-		aside.append(ui.button("Edit", "Open floorplan editor", "create", { handlers: { click: function() { document.location.href = `./floorplan/?id=${floorplan.id}` } } }))
-		aside.append(ui.button("Copy", "Copy floorplan", "copy", { handlers: { click: function() { copy_floorplan(floorplan) } } }))
-		aside.append(ui.button("Delete", "Delete floorplan", "trash", { handlers: { click: ask_delete_floorplan_func(root, floorplan) } }))
+		let a = aside.appendChild(document.createElement("a"))
+		a.href = `./floorplan/?id=${floorplan.id}`
+		a.append(document.createTextNode("Editor"))
+
+		let ops = aside.appendChild(document.createElement("div"))
+		ops.classList.add("fp_buttons")
+
+		ops.append(ui.button("Copy", "Copy floorplan", null, { handlers: { click: function() { copy_floorplan(floorplan) } } }))
+		ops.append(ui.button("Delete", "Delete floorplan", null, { handlers: { click: ask_delete_floorplan_func(root, floorplan) } }))
 	} else {
 		root.id = "adder"
 		root.addEventListener("keydown", function(ev) {
@@ -230,11 +202,11 @@ function create_floorplan(floorplan) {
 				editable_floorplan_create_func(root)()
 			}
 		})
-		aside.append(ui.button("Create", "Create floorplan", "create", { handlers: { click: editable_floorplan_create_func(root) } }))
+		aside.append(ui.button("Create", "Create floorplan", null, { handlers: { click: editable_floorplan_create_func(root) } }))
 	}
 
-	root.append(aside)
 	let header = document.createElement("header")
+	header.append(aside)
 	root.append(header)
 
 	if (!floorplan) {
@@ -272,7 +244,8 @@ function create_floorplan(floorplan) {
 var create_field = {
 	name: function(text, id) {
 		let heading = document.createElement("h2")
-		heading.setAttribute("class", floorplan_info_class("name"))
+		heading.classList.add("fp_metadata")
+		heading.classList.add("name")
 		let link = document.createElement("a")
 		link.href = `./floorplan/?id=${id}`
 		link.appendChild(document.createTextNode(text))
@@ -282,14 +255,16 @@ var create_field = {
 	
 	synopsis: function(text) {
 		let synopsis = document.createElement("span")
-		synopsis.setAttribute("class", floorplan_info_class("synopsis"))
+		synopsis.classList.add("fp_metadata")
+		synopsis.classList.add("synopsis")
 		synopsis.appendChild(document.createTextNode(text))
 		return synopsis
 	},
 	
 	address: function(text) {
 		let address = document.createElement("address")
-		address.setAttribute("class", floorplan_info_class("address"))
+		address.classList.add("fp_metadata")
+		address.classList.add("address")
 		address.appendChild(document.createTextNode(text))
 		return address
 	}

@@ -1,41 +1,57 @@
-.floorplan > header > input[type="button"] {
-	float: right;
+#floorplans {
+	list-style: none;
 }
 
 #floorplans.grid {
 	list-style: none;
 	display: grid;
-	grid-template-columns: repeat(3, minmax(10em, 24em));
-	grid-column-gap: .5em;
+	justify-content: center;
+	grid-template-columns: repeat(auto-fit, minmax(15em, 25vw));
+	grid-column-gap: .65em;
 	grid-row-gap: 1em;
 	padding-left: 0;
 }
 
 #floorplans.grid > li {
-	aspect-ratio: 1;
+	//aspect-ratio: 1;
 }
 
 #floorplans.grid > li > .floorplan {
 	box-sizing: border-box;
 	display: block;
 	height: 100%;
-	border: medium solid black;
+	border: .15em solid grey;
 	border-radius: .4rem;
 	/* NOTE: Required for footers to be slapped on the bottom, not sure why */
 	position: relative;
 	overflow: hidden;
 }
 
-#floorplans.grid > li > .floorplan > header {
+.floorplan {
+	background-color: #FAFAFA;
+	padding: .5em .75em;
+}
+
+.floorplan > header {
 	padding: 4%;
-	background-color: rgba(0, 0, 0, .1);
 }
 
-#floorplans.grid > li > .floorplan > header > h2 {
-	margin: 0 0 .5rem 0;
+.floorplan > header > .fp_ops {
+	display: flex;
+	justify-content: space-between;
+	padding-bottom: .5em;
+	border-bottom: thin solid grey;
 }
 
-#floorplans.grid > li > .floorplan > footer {
+.floorplan > header > .fp_ops > a {
+	margin-right: .25em;
+}
+
+.floorplan > header > .fp_ops > .fp_buttons > input {
+	margin: 0 .2em;
+}
+
+.floorplan > footer {
 	background-color: rgba(0, 0, 0, .05);
 	position: absolute;
 	bottom: 0;
@@ -45,20 +61,8 @@
 	border-radius: .2rem 0 0 0;
 }
 
-#floorplans.grid > li > .floorplan:hover > footer {
+.floorplan:hover > footer {
 	opacity: 100%;
-}
-
-#floorplans.grid > li > .floorplan > header {
-	min-height: 25%;
-}
-
-#floorplans:not(.grid) > li > .floorplan {
-	margin: 2rem;
-}
-
-#floorplans:not(.grid) > li {
-	max-width: 32rem;
 }
 
 .name_div {
@@ -71,32 +75,39 @@
 	border: none;
 }
 
-.fp_name {
-	font-size: large;
-	margin-bottom: .25em;
+input.name, input.synopsis, input.address {
+	background-color: white;
+}
+
+/*
+ * Maybe I should give these elements two classes: fp_metadata and
+ * one of the following: */
+input.synopsis, input.address {
+	display: block;
+	max-width: 60%;
+}
+
+.name {
+	font-size: larger;
+	margin-top: .75em;
+	margin-bottom: .5em;
+	max-width: 90%;
 	display: inline;
 	
 }
 
-.fp_address {
+.address {
 	font-style: italic;
 	margin-bottom: .5em;
 }
 
-.fp_terms {
+.synopsis {
 	margin-top: 0;
 }
 
-.fp_address::before {
+.address::before {
 	content: "Address: ";
 	font-size: smaller;
-}
-
-/* Maybe I should give these elements two classes: fp_metadata and
- * one of the following: */
-input.fp_synopsis, input.fp_address {
-	display: block;
-	max-width: 60%;
 }
 
 .delete_dialog {
