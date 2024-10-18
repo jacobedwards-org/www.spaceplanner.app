@@ -53,15 +53,15 @@ export function bar(on) {
 				if (service == null) {
 					additem(left, link("Subscribe", "/services"))
 				} else {
-					additem(left, )
+					additem(left, link("Floorplans", "/floorplans"))
 				}
 			})
 			.catch(function() {
 				additem(left, link("Floorplans", "/floorplans"))
 			})
 
-		additem(right, link("Settings", "/settings", "settings"))
-		additem(right, link("Logout", "/logout", "log-out"))
+		additem(right, link("Settings", "/settings"))
+		additem(right, link("Logout", "/logout"))
 	}
 
 	on.prepend(nav)
