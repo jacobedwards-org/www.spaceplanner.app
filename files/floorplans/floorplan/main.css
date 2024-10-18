@@ -5,6 +5,14 @@ body {
 	width: 100vw;
 	height: calc(100vh - var(--bar-height));
 	background-color: white;
+
+	// Seems
+	touch-action: none;
+	overflow: hidden;
+}
+
+#bar {
+	position: fixed;
 }
 
 #editor {
@@ -14,14 +22,22 @@ body {
 	width: 100%;
 	height: 100%;
 	padding: 0;
+	position: fixed;
+}
+
+button, input, select {
+	font-size: large;
 }
 
 header {
+	position: fixed;
 	padding: .2em .5em;
+	width: 100vw;
 	border-bottom: thin solid lightgrey;
+	background-color: white;
 }
 
-header > h1 {
+h1.fp_name {
 	padding: 0;
 	margin: 0;
 	font-weight: normal;
