@@ -556,7 +556,7 @@ function selectionHandler(event, editor) {
 	}
 
 	if (sel != null) {
-		if (!editor.mode === "Select") {
+		if (editor.mode !== "Select") {
 			sel.select()
 		} else {
 			let selection = addSelection(editor, sel, true)
@@ -567,7 +567,7 @@ function selectionHandler(event, editor) {
 			}
 		}
 	} else {
-		if (!editor.mode === "Select") {
+		if (editor.mode !== "Select") {
 			editor.draw.select()
 		}
 		escape()
