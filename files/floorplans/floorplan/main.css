@@ -6,9 +6,11 @@ body {
 	height: calc(100vh - var(--bar-height));
 	background-color: white;
 
-	// Seems
-	touch-action: none;
 	overflow: hidden;
+}
+
+header, #bar, label {
+	touch-action: none;
 }
 
 #bar {
