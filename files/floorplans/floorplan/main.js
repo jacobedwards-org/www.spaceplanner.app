@@ -18,6 +18,7 @@ const buttons = {
 }
 
 const params = {
+	longpress: 250,
 	threshold: 650
 }
 
@@ -35,9 +36,9 @@ const modes = {
 		points: true,
 		handlers: {
 			contextmenu: preventDefaultHandler,
-			pointerdown: [singlePointerHandler, selectionHandler, selectionBoxHandler, precisePointHandler, precisePointMapHandler, furnitureHandler],
-			pointermove: [singlePointerHandler, selectionBoxHandler, precisePointHandler, precisePointMapHandler, furnitureHandler],
-			pointerup: [singlePointerHandler, selectionBoxHandler, precisePointHandler, precisePointMapHandler, furnitureHandler],
+			pointerdown: [singlePointerHandler, selectionHandler, selectionBoxHandler, precisePointHandler, precisePointMapHandler, furnitureHandler, addFurnitureHandler],
+			pointermove: [singlePointerHandler, selectionBoxHandler, precisePointHandler, precisePointMapHandler, furnitureHandler, addFurnitureHandler],
+			pointerup: [singlePointerHandler, selectionBoxHandler, precisePointHandler, precisePointMapHandler, furnitureHandler, addFurnitureHandler],
 			pointercancel: [singlePointerHandler,  selectionBoxHandler, precisePointHandler, precisePointMapHandler, furnitureHandler],
 			keydown: [keyHandler],
 			select: selectHandler,
@@ -1113,6 +1114,40 @@ function precisePointMapHandler(event, editor, state) {
 	} else {
 		console.log("Hmm", event)
 	}
+}
+
+// pointerdown, pointerup
+function addFurnitureHandler(ev, editor, state) {
+	const cleanup = function() {
+		if (state.timeout) {
+			clearTimeout(state.timeout)
+		}
+		for (let k in state) {
+			delete state[k]
+		}
+	}
+
+	let p = new Vector2(ev.clientX, ev.clientY)
+
+	if (!state.down) {
+		if (ev.type === "pointerdown") {
+			state.down = p
+			state.time = ev.timeStamp
+			state.timeout = setTimeout(function() {
+				furnitureMenu(editor, editor.draw.point(state.down.x, state.down.y).vec())
+				cleanup()
+			}, params.longpress)
+		}
+		return
+	}
+
+	if (ev.type === "pointermove") {
+		if (state.down.distanceTo(p) < 50) {
+			return
+		}
+	}
+
+	cleanup()
 }
 
 // pointerdown, pointerup, pointermove
