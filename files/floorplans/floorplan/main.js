@@ -35,10 +35,10 @@ const modes = {
 		points: true,
 		handlers: {
 			contextmenu: preventDefaultHandler,
-			pointerdown: [singlePointerHandler, selectionHandler, precisePointHandler, precisePointMapHandler, furnitureHandler],
-			pointermove: [singlePointerHandler, precisePointHandler, precisePointMapHandler, furnitureHandler],
-			pointerup: [singlePointerHandler, precisePointHandler, precisePointMapHandler, furnitureHandler],
-			pointercancel: [singlePointerHandler,  selectionHandler, precisePointHandler, precisePointMapHandler, furnitureHandler],
+			pointerdown: [singlePointerHandler, selectionHandler, selectionBoxHandler, precisePointHandler, precisePointMapHandler, furnitureHandler],
+			pointermove: [singlePointerHandler, selectionBoxHandler, precisePointHandler, precisePointMapHandler, furnitureHandler],
+			pointerup: [singlePointerHandler, selectionBoxHandler, precisePointHandler, precisePointMapHandler, furnitureHandler],
+			pointercancel: [singlePointerHandler,  selectionBoxHandler, precisePointHandler, precisePointMapHandler, furnitureHandler],
 			keydown: [keyHandler],
 			select: selectHandler,
 			reselect: selectHandler
@@ -588,7 +588,8 @@ function selectionBoxHandler(ev, editor, state) {
 			if (ev.type === "pointermove") {
 				return true
 			}
-			return !primaryPointer(ev)
+			let p = primaryPointer(ev)
+			return state.shiftStart ? p : !p
 		} else {
 			return primaryPointer(ev)
 		}
@@ -597,6 +598,10 @@ function selectionBoxHandler(ev, editor, state) {
 	if (ev.type === "pointercancel") {
 		cleanup()
 		return
+	}
+
+	if (ev.type === "pointerdown" && ev.shiftKey) {
+		state.shiftStart = true
 	}
 
 	if (ev.type === "pointerdown" && useEv(ev)) {
