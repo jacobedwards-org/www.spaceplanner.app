@@ -491,7 +491,7 @@ function selectHandler(event, editor, state) {
 					e.remove()
 				}
 			)
-		} else {
+		} else if (cnt === 1) {
 			furnitureMenu(editor, groups.furmap[0])
 		}
 	}
