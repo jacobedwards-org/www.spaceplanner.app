@@ -998,7 +998,9 @@ export class FloorplanBackend {
 		if (localID == null || serverID == null) {
 			throw new Error("Requires local and server ID")
 		}
-		if (!options.remap) {
+		if (options.remap) {
+			delete this.serverIDs[localID]
+		} else {
 			if (this.serverIDs[localID] != undefined) {
 				throw new Error("That local ID is already mapped to " + this.serverIDs[localID])
 			}
