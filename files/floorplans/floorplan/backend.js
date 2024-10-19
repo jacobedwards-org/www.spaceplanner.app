@@ -548,6 +548,7 @@ export class FloorplanBackend {
 	}
 
 	addFurniture(params, id) {
+		let backend = this
 		const f = this.updatedObject(params, id, {
 			width: {
 				required: true,
@@ -559,16 +560,32 @@ export class FloorplanBackend {
 			},
 			type: {
 				required: true,
-				type: "string"
+				type: "string",
+				validate: function(type) {
+					return backend.params.furniture[type] != null
+				}
 			},
 			name: {
-				type: "string"
+				type: "string",
+				validate: function(name) {
+					let maps = backend.cache.furniture
+					for (let k in maps) {
+						if (k != id && maps[k].name != null && maps[k].name === name) {
+							return false
+						}
+					}
+					return true
+				}
 			},
 			// Could do with verifying this
 			style: {
 				type: "string"
 			}
 		})
+
+		if (f.style != null && this.params.furniture[f.type].styles.indexOf(f.style) < 0) {
+			throw new Error(`${f.style} style for ${f.type} type: Invalid style for type`)
+		}
 
 		return this.addData(id ?? "furniture", f)
 	}
