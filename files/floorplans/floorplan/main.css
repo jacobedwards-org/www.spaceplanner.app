@@ -100,7 +100,8 @@ aside.menu > form > input[type=radio] {
 }
 
 #furniture_menu {
-	background-color: #EEE;
+	background-color: rgba(220, 220, 220, .9);
+	backdrop-filter: blur(1px);
 	border: thin solid #CCC;
 	border-radius: .2em;
 	padding: 1em;
