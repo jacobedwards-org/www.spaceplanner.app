@@ -112,7 +112,7 @@ class BackendHistory {
 			return d
 		}
 
-		let oldValue = oldDiff ? this.diffs[oldDiff].value : undefined
+		let oldValue = (oldDiff != null) ? this.diffs[oldDiff].value : undefined
 		if (op === "add") {
 			op = oldValue ? "replace" : "new"
 		} else {
