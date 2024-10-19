@@ -165,3 +165,54 @@ input.invalid {
 #demo_footer > a {
 	color: orange;
 }
+
+.toolgroup {
+	display: inline-block;
+	position: relative;
+}
+
+.toolgroup > button {
+	background-color: #FEFEFE;
+	border: thin solid lightgrey;
+	border-radius: .2em;
+	padding: .5em 1em;
+}
+
+.toolgroup > button:hover {
+	background-color: #F5F5F5;
+}
+
+.toolgroup > ul {
+	display: none;
+	list-style: none;
+	position: absolute;
+	background-color: #f9f9f9;
+	border: thin solid black;
+	width: fit-content;
+	min-width: 10em;
+	padding-left: 0;
+	width: 8em;
+	z-index: 1;
+}
+
+.toolgroup > ul > li:not(:first-child) {
+	border-top: thin solid lightgrey;
+}
+
+.toolgroup > ul > li {
+	padding: .5em;
+}
+
+.toolgroup > ul > li > input[type="button"] {
+	font-size: larger;
+	width: 100%;
+	height: 100%;
+}
+
+.toolgroup > ul > li > input[type="button"]:focus {
+	background: rgba(0,0,0,.05);
+}
+
+.toolgroup:hover ul {
+	display: block;
+}

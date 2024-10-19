@@ -18,7 +18,7 @@ const buttons = {
 }
 
 const params = {
-	longpress: 250,
+	longpress: 350,
 	threshold: 650
 }
 
@@ -201,12 +201,19 @@ function run(editor) {
 		}
 	}})
 
-	toolbar.append(item(ui.button("Fit to view", "Fit the floor plan into view", null, {
+	const newGroup = function(name) {
+		return toolbar.appendChild(item(toolGroup(name))).querySelector("ul")
+	}
+
+	let tg = newGroup("More...")
+
+	tg.append(item(addFurn))
+	tg.append(item(ui.button("Fit to view", "Fit the floor plan into view", null, {
 		handlers: { click: function() {
 			editor.fitToView()
 		}}
 	})))
-	toolbar.append(item(
+	tg.append(item(
 		selector(editor.modes, function(mode) {
 			if (mode === "View") {
 				editor.draw.unselect()
@@ -217,20 +224,20 @@ function run(editor) {
 			{ current: editor.mode, text: "Mode:" }
 		)
 	))
-	toolbar.append(undoRedo)
-	toolbar.append(item(addFurn))
-	toolbar.append(item(checkToggle("Angle snap", {
+	tg.append(item(checkToggle("Angle snap", {
 			title: "Snap points to 45° angle",
 			off: function() { State.snapAngle = false },
 			on: function() { State.snapAngle = true },
 			value: State.snapAngle
 	})))
-	toolbar.append(item(checkToggle("Point snap", {
+	tg.append(item(checkToggle("Point snap", {
 			title: "Snap points to other points",
 			off: function() { State.snapPoints = false },
 			on: function() { State.snapPoints = true },
 			value: State.snapPoints
 	})))
+
+	toolbar.append(undoRedo)
 
 	if (debug) {
 		toolbar.append(item(
@@ -1812,4 +1819,13 @@ function fetchError(err) {
 	} else {
 		status(err)
 	}
+}
+
+function toolGroup(name) {
+	let g = document.createElement("div")
+	g.classList.add("toolgroup")
+	let n = g.appendChild(document.createElement("button"))
+	n.textContent = name
+	g.append(document.createElement("ul"))
+	return g
 }
