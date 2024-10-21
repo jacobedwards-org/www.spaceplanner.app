@@ -998,8 +998,24 @@ export class FloorplanBackend {
 		if (localID == null || serverID == null) {
 			throw new Error("Requires local and server ID")
 		}
+
+		for (let lid in this.serverIDs) {
+			let sid = this.serverIDs[lid]
+			if (sid != null && this.localIDs[sid] !== lid) {
+				console.error("Corrupt ID map", structuredClone({ bsid: sid, blid: lid, server: this.serverIDs, local: this.localIDs }))
+				throw new Error("ID map is corrupted")
+			}
+		}
+		for (let sid in this.localIDs) {
+			let lid = this.localIDs[sid]
+			if (this.serverIDs[sid] != null || this.serverIDs[lid] !== sid) {
+				console.error("Corrupt ID map", structuredClone({ bsid: sid, blid: lid, server: this.serverIDs, local: this.localIDs }))
+				throw new Error("ID map is corrupted")
+			}
+		}
+
 		if (options.remap) {
-			delete this.serverIDs[localID]
+			this.serverIDs[localID] = null
 		} else {
 			if (this.serverIDs[localID] != undefined) {
 				throw new Error("That local ID is already mapped to " + this.serverIDs[localID])
