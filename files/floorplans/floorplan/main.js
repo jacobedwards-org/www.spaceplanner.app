@@ -207,7 +207,6 @@ function run(editor) {
 
 	let tg = newGroup("More...")
 
-	tg.append(item(addFurn))
 	tg.append(item(ui.button("Fit to view", "Fit the floor plan into view", null, {
 		handlers: { click: function() {
 			editor.fitToView()
@@ -238,6 +237,7 @@ function run(editor) {
 	})))
 
 	toolbar.append(undoRedo)
+	toolbar.append(item(addFurn))
 
 	if (debug) {
 		toolbar.append(item(
