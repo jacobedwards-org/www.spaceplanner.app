@@ -11,6 +11,27 @@ function init() {
 	etc.authorize()
 	etc.bar()
 
+	let f = document.getElementById("filter")
+	f.removeAttribute("disabled")
+	f.addEventListener("input", function(ev) {
+		document.querySelectorAll("#floorplans > li").forEach(function(item) {
+			if (item.querySelector("#adder")) {
+				return
+			}
+
+			let data = {}
+			let h = item.querySelector(".floorplan > header")
+			const tc = function(sel) {
+				const e = h.querySelector(sel)
+				return e ? e.textContent : null
+			}
+			data.name = tc(".name_div > h2 > a")
+			data.address = tc(".address")
+			data.synopsis = tc(".synopsis")
+			item.hidden = !matchFloorplan(data, ev.target.value)
+		})
+	})
+
 	api.fetch("GET", "floorplans/:user")
 		.then(show_floorplans)
 		.catch(etc.error)
@@ -322,5 +343,13 @@ function copy_floorplan(floorplan, name, depth) {
 					}
 				})
 		})
-	
+}
+
+function matchFloorplan(floorplan, exp) {
+	const ms = function(s, e) {
+		return s ? s.toLowerCase().includes(e) : false
+	}
+
+	exp = exp.toLowerCase()
+	return ms(floorplan.name, exp) || ms(floorplan.address, exp) || ms(floorplan.synopsis, exp)
 }
