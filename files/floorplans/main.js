@@ -273,7 +273,7 @@ var create_field = {
 		heading.append(link)
 		return heading
 	},
-	
+
 	synopsis: function(text) {
 		let synopsis = document.createElement("span")
 		synopsis.classList.add("fp_metadata")
@@ -281,7 +281,7 @@ var create_field = {
 		synopsis.appendChild(document.createTextNode(text))
 		return synopsis
 	},
-	
+
 	address: function(text) {
 		let address = document.createElement("address")
 		address.classList.add("fp_metadata")
@@ -290,7 +290,7 @@ var create_field = {
 		return address
 	}
 }
-	
+
 function show_floorplans(floorplans) {
 	let list = document.getElementById("floorplans")
 	if (!list) {
@@ -314,7 +314,6 @@ function insertFloorplan(floorplan) {
 		list.prepend(create_floorplan(floorplan))
 	}
 }
-	
 
 function copy_floorplan(floorplan, name, depth) {
 	if (!name) {
