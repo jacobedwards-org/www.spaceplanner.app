@@ -1023,8 +1023,8 @@ export class FloorplanBackend {
 		}
 		for (let sid in this.localIDs) {
 			let lid = this.localIDs[sid]
-			if (this.serverIDs[sid] != null || this.serverIDs[lid] !== sid) {
-				console.error("Corrupt ID map", structuredClone({ bsid: sid, blid: lid, server: this.serverIDs, local: this.localIDs }))
+			if (lid == null || this.serverIDs[lid] !== sid) {
+				console.error("Corrupt ID map x", structuredClone({ bsid: sid, blid: lid, server: this.serverIDs, local: this.localIDs }))
 				throw new Error("ID map is corrupted")
 			}
 		}
