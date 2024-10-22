@@ -1,4 +1,5 @@
 import * as api from "/lib/api.js"
+import { AsyncLock } from "/lib/async-lock.js"
 
 // Sequence numbers for uniqueKey
 let sequences = {}
@@ -318,6 +319,8 @@ export class FloorplanBackend {
 			throw new Error("Invalid floorplan given")
 		}
 		this.floorplan = floorplan
+
+		this.lock = new AsyncLock();
 
 		if (options.callbacks) {
 			this.callbacks = options.callbacks
@@ -731,48 +734,51 @@ export class FloorplanBackend {
 			return this.putServer()
 		}
 
-		let newpos = this.history.place
-		let dirty = this.history.between(this.serverPosition, newpos)
-		if (dirty.length === 0) {
-			console.log("Not updating server: already up to date")
-			return Promise.resolve()
-		}
-
-		let patch = []
-		for (let i in dirty) {
-			let op = dirty[i].op
-			let id = parsePath(dirty[i].path)
-			let value = dirty[i].value ? this.remapIDsValue(dirty[i].value, this.serverIDs) : null
-			if (op === "new" || this.serverIDs[id] == null) {
-				patch.push({ op: op, path: dirty[i].path, value: value })
-			} else {
-				patch.push({ op: op, path: idPath(this.serverIDs[id]), value })
-			}
-		}
-
-		console.debug("Backend.push (patch)", patch)
-
 		let backend = this
-		return api.fetch("PATCH", this.endpoint, patch)
-			.then(function(data) {
-				for (let i = 0; i < patch.length; ++i) {
-					if (patch[i].op === "remove") {
-						let id = parsePath(patch[i].path)
-						backend.unmapID(id)
-					}
-				}
+		const locked = function() {
+			let newpos = backend.history.place
+			let dirty = backend.history.between(backend.serverPosition, newpos)
+			if (dirty.length === 0) {
+				console.log("Not updating server: already up to date")
+				return Promise.resolve()
+			}
 
-				backend.serverPosition = newpos
-				updateIDs(backend, data)
-				for (let i in dirty) {
-					delete dirty[i].dirty
+			let patch = []
+			for (let i in dirty) {
+				let op = dirty[i].op
+				let id = parsePath(dirty[i].path)
+				let value = dirty[i].value ? backend.remapIDsValue(dirty[i].value, backend.serverIDs) : null
+				if (op === "new" || backend.serverIDs[id] == null) {
+					patch.push({ op: "new", path: dirty[i].path, value: value })
+				} else {
+					patch.push({ op: op, path: idPath(backend.serverIDs[id]), value })
 				}
-				backend.cb("push")
-			})
-			.catch(function(err) {
-				console.error("Unable to PATCH floorplan, trying PUT", err)
-				return backend.putServer()
-			})
+			}
+
+			console.debug("Backend.push (patch)", patch)
+
+			return api.fetch("PATCH", backend.endpoint, patch)
+				.then(function(data) {
+					for (let i = 0; i < patch.length; ++i) {
+						if (patch[i].op === "remove") {
+							let id = parsePath(patch[i].path)
+							backend.unmapID(id)
+						}
+					}
+
+					backend.serverPosition = newpos
+					updateIDs(backend, data)
+					for (let i in dirty) {
+						delete dirty[i].dirty
+					}
+					backend.cb("push")
+				})
+				.catch(function(err) {
+					console.error("Unable to PATCH floorplan, trying PUT", err)
+					return backend.putServer()
+				})
+		}
+		return this.lock.acquire("data", locked)
 	}
 
 	putServer() {
@@ -783,21 +789,28 @@ export class FloorplanBackend {
 		// WARNING: This needs a lock
 		let backend = this
 
-		return api.fetch("PUT", this.endpoint, this.cache)
-			.then(function(data) {
-				for (let k in backend.serverIDs) {
-					if (backend.serverIDs[k] !== null) {
-						backend.unmapID(backend.serverIDs[k])
+		return this.lock.acquire("data", function() {
+			return api.fetch("PUT", backend.endpoint, backend.cache)
+				.then(function(data) {
+					for (let k in backend.serverIDs) {
+						if (backend.serverIDs[k] !== null) {
+							backend.unmapID(backend.serverIDs[k])
+						}
 					}
-				}
-				updateIDs(backend, data)
-				backend.serverPosition = backend.history.place
-				backend.cb("push")
-			})
-			.catch(function(err) {
-				backend.cb("pusherror", err)
-				throw err
-			})
+					updateIDs(backend, data)
+					backend.serverPosition = backend.history.place
+					backend.cb("push")
+				})
+				.catch(function(err) {
+					if (!(err instanceof api.FetchError)) {
+						console.error(err, "Not a fetch error; undoing and trying again")
+						backend.undo()
+						return backend.push()
+					}
+					backend.cb("pusherror", err)
+					throw err
+				})
+		})
 	}
 
 	/*
@@ -818,15 +831,17 @@ export class FloorplanBackend {
 		}
 
 		let backend = this
-		return api.fetch("GET", this.endpoint)
-			.then(function(data) {
-				data = backend.toLocalIDs(data)
-				let diff = gendiff("", backend.cache, data)
-				console.debug("Backend.Pull (diff)", diff)
-				backend.applyDiff(diff, { clean: true })
-				backend.cb("pull")
-				backend.serverPosition = backend.history.place
-			})
+		return this.lock.acquire("data", function() {
+			return api.fetch("GET", backend.endpoint)
+				.then(function(data) {
+					data = backend.toLocalIDs(data)
+					let diff = gendiff("", backend.cache, data)
+					console.debug("Backend.Pull (diff)", diff)
+					backend.applyDiff(diff, { clean: true })
+					backend.cb("pull")
+					backend.serverPosition = backend.history.place
+				})
+		})
 	}
 
 	applyDiff(diff, options) {
@@ -1073,8 +1088,8 @@ function updateIDs(backend, newdata) {
 			let x = newdata[t][srvID]
 			if (x.old_id != null) {
 				backend.remapID(x.old_id, srvID)
-			} else {
-				backend.remapID(srvID, srvID)
+			} else if (!backend.localIDs[srvID]) {
+				backend.mapID(backend.newID(idType(srvID)), srvID)
 			}
 		}
 	}
