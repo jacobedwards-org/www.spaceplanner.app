@@ -598,8 +598,10 @@ function selectionBoxHandler(ev, editor, state) {
 			}
 			let p = primaryPointer(ev)
 			return state.shiftStart ? p : !p
-		} else {
+		} else if (editor.mode === "Select") {
 			return primaryPointer(ev)
+		} else {
+			return false
 		}
 	}
 
