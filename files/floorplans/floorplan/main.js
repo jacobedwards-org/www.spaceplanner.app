@@ -1139,7 +1139,7 @@ function addFurnitureHandler(ev, editor, state) {
 	let p = new Vector2(ev.clientX, ev.clientY)
 
 	if (!state.down) {
-		if (ev.type === "pointerdown") {
+		if (ev.pointerType === "mouse" && ev.type === "pointerdown") {
 			state.down = p
 			state.time = ev.timeStamp
 			state.timeout = setTimeout(function() {
