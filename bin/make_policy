@@ -1,0 +1,11 @@
+#!/bin/sh
+
+title="$(sed -nE '/^# +/ { s///; p; q; }' < "$1")"
+echo "<html><head>
+	<title>Spaceplanner $title</title>
+	<link rel="stylesheet" type="text/css" href="./main.css">
+</head><body>"
+
+smu < "$1"
+
+echo "</body></html>"

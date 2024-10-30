@@ -23,7 +23,7 @@ update_libs:
 .endfor
 
 update_policies:
-	for p in ./files/policies/*.md; do smu < $$p > $${p%.md}.html; done
+	for p in ./files/policies/*.md; do ./bin/make_policy $$p > $${p%.md}.html; done
 
 clean:
 	rm -rf lib/
