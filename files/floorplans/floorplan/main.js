@@ -19,7 +19,7 @@ const buttons = {
 
 const params = {
 	longpress: 350,
-	threshold: 650
+	threshold: 400
 }
 
 const panBit = 1
