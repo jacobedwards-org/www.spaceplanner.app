@@ -19,6 +19,7 @@ const buttons = {
 
 const params = {
 	longpress: 350,
+	notMoveRadius: 20,
 	threshold: 400
 }
 
@@ -1151,7 +1152,7 @@ function addFurnitureHandler(ev, editor, state) {
 	}
 
 	if (ev.type === "pointermove") {
-		if (state.down.distanceTo(p) < 50) {
+		if (state.down.distanceTo(p) < params.notMoveRadius) {
 			return
 		}
 	}
