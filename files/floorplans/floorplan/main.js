@@ -1165,7 +1165,7 @@ function furnitureHandler(ev, editor, state) {
 		// racy
 		if (state.move) {
 			let id = state.moving.attr("id")
-			editor.mapFurniture({ x: state.move.x, y: state.move.y }, id)
+			editor.mapFurniture({ x: state.move.x + state.offset.x, y: state.move.y + state.offset.y }, id)
 			delete state.move
 			state.moved = true
 		}
@@ -1194,6 +1194,8 @@ function furnitureHandler(ev, editor, state) {
 		handled(ev)
 		state.moving = sel[0]
 		state.origin = press
+		let m = editor.backend.reqObj(lib.getID(sel[0]))
+		state.offset = { x: m.x - state.origin.x, y: m.y - state.origin.y }
 		return
 	}
 
