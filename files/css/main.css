@@ -161,8 +161,8 @@ a.button:hover {
 }
 
 a.button {
-	padding: .4em .8em;
-	border-radius: .6em;
+	padding: .3em .8em;
+	border-radius: .25em;
 	text-decoration: none;
 	border: thin solid lightgrey;
 	color: black;

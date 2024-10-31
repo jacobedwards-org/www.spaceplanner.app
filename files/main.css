@@ -17,12 +17,16 @@ aside {
 	max-width: 30ch;
 }
 
-ul.points {
-	/*list-style-type: none;
-	padding-left: 0;*/
+ul.points > li {
+	max-width: max(40ch, 40vw);
 }
 
-ul.points > li {
-	margin-bottom: 1em;
-	max-width: max(40ch, 40vw);
+a.ir {
+	display: inline-block;
+	padding: .2em .8em;
+	border-radius: 1em;
+	background-color: blue;
+	color: white;
+	font-weight: bold;
+	text-decoration: none;
 }
