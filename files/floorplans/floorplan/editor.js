@@ -338,6 +338,7 @@ export class FloorplanEditor {
 		this.layout = "1"
 
 		this.ui.top = this.draw.group().attr({ id: "top" })
+		this.ui.labels = this.draw.group().attr({ id: "labels" })
 
 		// Resize grid when appropriate
 		this.draw.on("zoom", function(event) {
@@ -472,6 +473,19 @@ export class FloorplanEditor {
 			grid.attr("visibility", "hidden")
 		} else {
 			grid.fill(this.grids[system].url()).attr("visibility", null)
+		}
+	}
+
+	furnitureLabels(show) {
+		console.debug("Editor.furnitureLabels",	show)
+		const l = this.ui.labels
+		if (show === undefined) {
+			return l.hasClass("hidden")
+		}
+		if (show) {
+			l.addClass("hidden")
+		} else {
+			l.removeClass("hidden")
 		}
 	}
 
@@ -785,6 +799,24 @@ export class FloorplanEditor {
 						})
 					}
 					fm.cx(value.x).cy(value.y)
+
+					let tid = id + "_text"
+					let text = editor.draw.findOne(byId(tid))
+					if (!f.name) {
+						if (text) {
+							text.remove()
+						}
+					} else {
+						if (!text) {
+							text = editor.ui.labels.text(f.name) 
+								.attr({ id: tid })
+								.font('size', '8in')
+						} else {
+							text.plain(f.name)
+						}
+						text.cx(value.x).cy(value.y)
+					}
+
 					fm.transform({
 						rotate: value.angle
 					})

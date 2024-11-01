@@ -213,6 +213,11 @@ function run(editor) {
 			editor.fitToView()
 		}}
 	})))
+	tg.append(item(ui.button("Furniture labels", "Toggle furniture label visability", null, {
+		handlers: { click: function() {
+			editor.furnitureLabels(!editor.furnitureLabels())
+		}}
+	})))
 	tg.append(item(
 		selector(editor.modes, function(mode) {
 			if (mode === "View") {
