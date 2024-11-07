@@ -480,12 +480,12 @@ export class FloorplanEditor {
 		console.debug("Editor.furnitureLabels",	show)
 		const l = this.ui.labels
 		if (show === undefined) {
-			return l.hasClass("hidden")
+			return !l.hasClass("hidden")
 		}
 		if (show) {
-			l.addClass("hidden")
-		} else {
 			l.removeClass("hidden")
+		} else {
+			l.addClass("hidden")
 		}
 	}
 
