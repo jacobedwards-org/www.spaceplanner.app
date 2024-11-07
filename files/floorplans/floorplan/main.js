@@ -156,6 +156,7 @@ function run(editor) {
 		editor.addMode(mode, modes[mode])
 	}
 	editor.useMode(defaultMode)
+	editor.furnitureLabels(false)
 
 	let toolbar = document.querySelector("header")
 		.appendChild(document.createElement("ul"))
