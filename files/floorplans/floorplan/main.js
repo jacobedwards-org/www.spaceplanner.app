@@ -266,8 +266,6 @@ function run(editor) {
 			editor.fitToView()
 		})
 
-	document.querySelector("header")
-		.addEventListener("touchstart", function(e) { e.preventDefault() })
 	editor.draw.on("touchstart", function(e){ e.preventDefault() });
 	editor.draw.on("touchmove", function(e){ e.preventDefault() });
 	editor.draw.on("pinchZoomStart", function() { State.panZoom |= zoomBit })
