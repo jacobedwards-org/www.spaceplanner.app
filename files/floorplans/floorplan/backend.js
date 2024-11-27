@@ -320,7 +320,7 @@ export class FloorplanBackend {
 		}
 		this.floorplan = floorplan
 
-		this.lock = new AsyncLock();
+		this.lock = new AsyncLock({ timeout: 15 * 1000 });
 
 		if (options.callbacks) {
 			this.callbacks = options.callbacks
