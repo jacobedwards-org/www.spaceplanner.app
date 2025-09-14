@@ -1450,7 +1450,7 @@ function furnitureParamsMenu(editor, id) {
 							a = 0
 						} else {
 							const snapOn = 45
-							const snapAt = 12
+							const snapAt = 6
 							a = ev.target.value
 							let d = (a % snapOn)
 							if (d < snapAt) {
