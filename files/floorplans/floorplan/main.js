@@ -66,7 +66,8 @@ let State = {
 	pointOp: 'Create',
 	snapAngle: true,
 	snapPoints: true,
-	lastClick: null
+	lastClick: null,
+	furnRotationSnap: true
 }
 
 const debug = (new URLSearchParams(new URL(document.URL).search)).get("debug") != undefined
@@ -241,6 +242,12 @@ function run(editor) {
 			off: function() { State.snapPoints = false },
 			on: function() { State.snapPoints = true },
 			value: State.snapPoints
+	})))
+	tg.append(item(checkToggle("Furniture angle snap", {
+			title: "Snap furniture rotation at 45 degree angles",
+			off: function() { State.furnRotationSnap = false },
+			on: function() { State.furnRotationSnap = true },
+			value: State.furnRotationSnap
 	})))
 
 	toolbar.append(undoRedo)
@@ -1448,9 +1455,11 @@ function furnitureParamsMenu(editor, id) {
 						let a
 						if (ev.target.value.length === 0) {
 							a = 0
+						} else if (!State.furnRotationSnap) {
+							a = ev.target.value
 						} else {
 							const snapOn = 45
-							const snapAt = 6
+							const snapAt = 15
 							a = ev.target.value
 							let d = (a % snapOn)
 							if (d < snapAt) {
