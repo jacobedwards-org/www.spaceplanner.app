@@ -1,5 +1,10 @@
 body {
-	font-size: larger;
+	font-size: largest;
+	max-width: 30em;
+	padding: 1em;
+	line-height: 1.4;
+	margin-left: auto;
+	margin-right: auto;
 }
 
 h1 {
