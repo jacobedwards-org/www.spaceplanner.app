@@ -520,6 +520,15 @@ export class FloorplanEditor {
 		grid.size(box.width + margin, box.height + margin).move(box.x - margin / 2, box.y - margin / 2)
 	}
 
+	viewbox(bbox) {
+		let orig = this.draw.viewbox()
+		if (bbox) {
+			this.draw.viewbox(bbox)
+			this.updateGrid()
+		}
+		return orig
+	}
+
 	fitToView() {
 		const adj = function(ns, t, pos, siz) {
 			t[pos] += (t[siz] - ns) / 2
@@ -540,8 +549,7 @@ export class FloorplanEditor {
 		if (bbox.height < min) {
 			adj(min, bbox, "y", "height")
 		}
-		this.draw.viewbox(bbox)
-		this.updateGrid()
+		return this.viewbox(bbox)
 	}
 
 	// Should be called after each user "action"
