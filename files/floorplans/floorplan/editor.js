@@ -226,6 +226,17 @@ class Units {
 		return name
 	}
 
+	systemUnits(system) {
+		let units = []
+		let u = this.systems[system]
+
+		do {
+			units.push(u)
+			 u = this.data[u].next
+		} while (u);
+		return units
+	}
+
 	separate(units, system, options) {
 		options = options ?? {}
 		let parts = []
