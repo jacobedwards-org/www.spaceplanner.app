@@ -68,7 +68,8 @@ let State = {
 	snapPoints: true,
 	unit: null,
 	lastClick: null,
-	furnRotationSnap: true
+	furnRotationSnap: true,
+	printing: false
 }
 
 const debug = (new URLSearchParams(new URL(document.URL).search)).get("debug") != undefined
@@ -143,9 +144,43 @@ function init() {
 		}
 	})
 
+	handleprint(editor)
 	editor.initialized
 		.then(function() { run(editor) })
 		.catch(etc.error)
+}
+
+function handleprint(editor) {
+	let oview
+
+	function start() {
+		if (State.printing)
+			return
+		State.printing = true
+		oview = editor.fitToView();
+	}
+
+	function end() {
+		if (!State.printing)
+			return
+		State.printing = false
+		if (oview)
+			editor.viewbox(oview)
+		else
+			console.error("Expected oview to be set")
+	}
+
+	window.matchMedia('print')
+	    .addEventListener('change', function(ev) {
+		if (ev.matches) {
+			start();
+		} else {
+			end();
+		}
+	});
+
+	window.addEventListener('beforeprint', start);
+	window.addEventListener('afterprint', end);
 }
 
 function run(editor) {
