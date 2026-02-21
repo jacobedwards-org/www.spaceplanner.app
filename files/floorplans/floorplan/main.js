@@ -66,6 +66,7 @@ let State = {
 	pointOp: 'Create',
 	snapAngle: true,
 	snapPoints: true,
+	unit: null,
 	lastClick: null,
 	furnRotationSnap: true
 }
@@ -249,6 +250,14 @@ function run(editor) {
 			on: function() { State.furnRotationSnap = true },
 			value: State.furnRotationSnap
 	})))
+	let units = ["", editor.units.systemUnits(editor.unitSystem)].flat()
+	tg.append(item(
+		selector(units, function(unit) {
+			State.unit = (unit == "" ? null : unit)
+		},
+			{ current: State.unit ? State.unit : "", text: "Default unit:" }
+		)
+	))
 
 	toolbar.append(undoRedo)
 	toolbar.append(item(addFurn))
@@ -1623,6 +1632,13 @@ function unitInput(editor, input, value) {
 
 
 function parseUserLength(editor, length) {
+	if (State.unit) {
+		let amount = Number(length)
+		if (amount) {
+			return editor.units.get(State.unit, amount)
+		}
+	}
+
 	let a = length
 		.replaceAll(" ", "")
 		.replaceAll("‘", "'")
@@ -1657,6 +1673,11 @@ function parseUserLength(editor, length) {
 }
 
 function userLength(editor, units) {
+	if (State.unit != null) {
+		return (units / editor.units.get(State.unit))
+			.toFixed(2).replace(/\.?0*$/, "")
+	}
+
 	let a = editor.units.separate(units, editor.unitSystem, { whole: true })
 	let words = []
 	for (let i in a) {
