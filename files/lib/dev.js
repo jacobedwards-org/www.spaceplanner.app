@@ -1,5 +1,6 @@
 let _settings = {
-	devapi: { name: "Developer API", type: "bool", brief: "Don't use the production API" }
+	devapi: { name: "Developer API", type: "bool", brief: "Use the Developer API URL." },
+	apiurl: { name: "Developer API URL", type: "string", brief: "URL for the Developer API." }
 }
 
 for (let k in _settings) {

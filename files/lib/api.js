@@ -8,9 +8,13 @@ let config = {
 
 if (dev.setting("devapi")) {
 	console.warn("Using testing API")
-	config.proto = "http"
-	let url = new URL(document.URL)
+	let apiurl = dev.setting("apiurl")
+	let url = new URL(apiurl ? apiurl : document.URL)
+	config.proto = url.protocol.replace(/:$/, "")
 	config.host = url.host
+	if (url.pathname) {
+		config.version = url.pathname.replace(/^\//, "")
+	}
 }
 
 console.log(`Floorplan API: ${config.proto}://${config.host}/${config.version}`)
